@@ -1,5 +1,5 @@
 import { desc } from "drizzle-orm";
-import { installedApps } from "@newguildplus/shared";
+import { installedApps, safeParseAppManifest } from "@newguildplus/shared";
 import { requireAdminSession } from "../../../utils/auth";
 import { getDb } from "../../../utils/db";
 
@@ -9,11 +9,16 @@ export default defineEventHandler(async (event) => {
 
   const appsRows = await db.select().from(installedApps).orderBy(desc(installedApps.updatedAt));
 
+  const apps = appsRows.map((row) => ({
+    ...row,
+    manifestValid: safeParseAppManifest(row.manifest).success
+  }));
+
   return {
-    apps: appsRows,
+    apps,
     stats: {
-      installed: appsRows.length,
-      active: appsRows.filter((item) => item.status === "active").length
+      installed: apps.length,
+      active: apps.filter((item) => item.status === "active").length
     }
   };
 });

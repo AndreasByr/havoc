@@ -19,6 +19,7 @@ type AdminAppsResponse = {
     verified: boolean;
     repositoryUrl: string | null;
     updatedAt: string;
+    manifestValid: boolean;
   }>;
   stats: {
     installed: number;
@@ -30,21 +31,29 @@ const { data, pending, error, refresh } = await useFetch<AdminAppsResponse>("/ap
 
 const sideloadForm = reactive({
   githubUrl: "",
-  activate: false,
-  verified: false
+  activate: false
 });
 
+const sideloadError = ref<string | null>(null);
+
 const sideload = async () => {
-  await $fetch("/api/admin/apps/sideload", {
-    method: "POST",
-    body: {
-      githubUrl: sideloadForm.githubUrl.trim(),
-      activate: sideloadForm.activate,
-      verified: sideloadForm.verified
-    }
-  });
-  sideloadForm.githubUrl = "";
-  await refresh();
+  sideloadError.value = null;
+  try {
+    await $fetch("/api/admin/apps/sideload", {
+      method: "POST",
+      body: {
+        githubUrl: sideloadForm.githubUrl.trim(),
+        activate: sideloadForm.activate
+      }
+    });
+    sideloadForm.githubUrl = "";
+    await refresh();
+  } catch (e: unknown) {
+    const msg = (e as { data?: { message?: string }; message?: string })?.data?.message
+      ?? (e as { message?: string })?.message
+      ?? t("adminApps.sideloadError");
+    sideloadError.value = msg;
+  }
 };
 
 const toggleStatus = async (appId: string, status: "active" | "inactive" | "error") => {
@@ -107,25 +116,20 @@ const sourceLabel = (source: "marketplace" | "sideloaded") => {
             v-model="sideloadForm.githubUrl"
             :label="$t('adminApps.githubManifestUrl')"
             type="url"
-            placeholder="https://github.com/owner/repo/blob/main/manifest.json"
+            placeholder="https://github.com/owner/repo"
            
           />
           <UiRetroCheckbox
             v-model="sideloadForm.activate"
             :label="$t('adminApps.directActivate')"
-            :description="$t('adminApps.directActivate')"
-           
+            :description="$t('adminApps.directActivateDescription')"
+
             size="sm"
           />
         </div>
-        <UiRetroCheckbox
-          v-model="sideloadForm.verified"
-          :label="$t('adminApps.markVerified')"
-          :description="$t('adminApps.markVerified')"
-         
-          size="sm"
-        />
-        <p class="text-sm opacity-75">{{ $t("adminApps.allowedSources") }}</p>
+<p class="text-sm opacity-75">{{ $t("adminApps.allowedSources") }}</p>
+
+        <p v-if="sideloadError" class="text-sm text-error">{{ sideloadError }}</p>
 
         <div class="flex justify-end">
           <button class="btn btn-primary" @click="sideload">{{ $t("adminApps.sideloadInstall") }}</button>
@@ -137,9 +141,10 @@ const sourceLabel = (source: "marketplace" | "sideloaded") => {
       <div class="card-body">
         <h2 class="card-title">{{ $t("adminApps.installedAppsTitle") }}</h2>
         <div v-if="pending" class="loading loading-spinner loading-md" />
-        <div v-else-if="error" class="alert alert-error">{{ $t("adminApps.loadError") }}</div>
-        <div v-else-if="!(data?.apps || []).length" class="alert alert-info">{{ $t("adminApps.empty") }}</div>
-        <div v-else class="space-y-4">
+        <template v-else>
+          <div v-if="error" class="alert alert-error">{{ $t("adminApps.loadError") }}</div>
+          <div v-else-if="!(data?.apps || []).length" class="alert alert-info">{{ $t("adminApps.empty") }}</div>
+          <div v-if="(data?.apps || []).length" class="space-y-4">
           <article
             v-for="app in data?.apps || []"
             :key="app.id"
@@ -154,6 +159,7 @@ const sourceLabel = (source: "marketplace" | "sideloaded") => {
                 <span class="badge" :class="app.status === 'active' ? 'badge-success' : app.status === 'error' ? 'badge-error' : 'badge-ghost'">
                   {{ statusLabel(app.status) }}
                 </span>
+                <span v-if="!app.manifestValid" class="badge badge-error">{{ $t("adminApps.incompatible") }}</span>
                 <span class="badge" :class="app.verified ? 'badge-success' : 'badge-warning'">
                   {{ app.verified ? $t("adminApps.verified") : $t("adminApps.unverified") }}
                 </span>
@@ -171,7 +177,8 @@ const sourceLabel = (source: "marketplace" | "sideloaded") => {
               </a>
             </div>
           </article>
-        </div>
+          </div>
+        </template>
       </div>
     </div>
   </section>

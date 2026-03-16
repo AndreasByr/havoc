@@ -13,6 +13,8 @@ export interface RuntimeInstalledApp {
   repositoryUrl: string | null;
   manifest: AppManifest | null;
   config: Record<string, unknown>;
+  /** Transpiled CJS code bundles: filePath → CJS source string */
+  codeBundle: Record<string, string>;
   installedAt: Date;
   updatedAt: Date;
 }
@@ -40,6 +42,7 @@ async function loadInstalledApps() {
         repositoryUrl: row.repositoryUrl,
         manifest: parsedManifest.success ? parsedManifest.data : null,
         config: (row.config as Record<string, unknown>) || {},
+        codeBundle: (row.codeBundle as Record<string, string>) || {},
         installedAt: row.installedAt,
         updatedAt: row.updatedAt
       } satisfies RuntimeInstalledApp;
@@ -62,7 +65,12 @@ export default defineNitroPlugin((nitroApp) => {
   };
 
   nitroApp.hooks.hook("request", async (event) => {
-    event.context.installedApps = await refresh(false);
+    try {
+      event.context.installedApps = await refresh(false);
+    } catch (err) {
+      console.error("[app-loader] Failed to load installed apps for request:", err);
+      event.context.installedApps = [];
+    }
   });
 
   nitroApp.hooks.hook("app-registry:refresh", async () => {
