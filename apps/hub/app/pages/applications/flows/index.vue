@@ -8,6 +8,11 @@ const router = useRouter();
 
 useCookie<string>("guildora_applications_last_path", { sameSite: "lax" }).value = "/applications/flows";
 
+type FlowValidationWarning = {
+  key: string;
+  category: "graph" | "settings" | "environment";
+};
+
 type FlowItem = {
   id: string;
   name: string;
@@ -15,6 +20,7 @@ type FlowItem = {
   createdBy: string | null;
   createdAt: string;
   updatedAt: string;
+  warnings: FlowValidationWarning[];
 };
 
 type FlowsResponse = {
@@ -147,6 +153,12 @@ const deleteFlow = async (flowId: string) => {
                 {{ t(`applications.status.${flow.status}`) }}
               </span>
             </div>
+            <div v-if="flow.warnings.length > 0" class="flow-warnings">
+              <div v-for="warning in flow.warnings" :key="warning.key" class="flow-warning">
+                <Icon name="proicons:warning" class="flow-warning-icon" />
+                <span>{{ t(`applications.warnings.${warning.key}`) }}</span>
+              </div>
+            </div>
             <p class="mt-1 text-sm" style="color: var(--color-base-content-secondary)">
               {{ new Date(flow.updatedAt).toLocaleDateString() }}
             </p>
@@ -215,5 +227,25 @@ const deleteFlow = async (flowId: string) => {
 .flow-badge--inactive {
   background: color-mix(in srgb, var(--color-warning) 15%, transparent);
   color: var(--color-warning);
+}
+
+.flow-warnings {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.flow-warning {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  color: var(--color-warning);
+}
+
+.flow-warning-icon {
+  flex-shrink: 0;
+  font-size: 1rem;
 }
 </style>

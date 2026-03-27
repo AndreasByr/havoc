@@ -71,6 +71,8 @@ const toggleStatus = async (appId: string, status: "active" | "inactive" | "erro
       body: { status: nextStatus }
     });
     await Promise.all([refresh(), refreshNuxtData("sidebar-navigation")]);
+  } catch {
+    await refresh();
   } finally {
     actionPending.value = false;
   }

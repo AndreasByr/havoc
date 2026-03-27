@@ -85,7 +85,7 @@ export default defineEventHandler(async (event) => {
   const code = typeof query.code === "string" ? query.code : null;
   const state = typeof query.state === "string" ? query.state : null;
   const isDev = import.meta.dev || process.env.NODE_ENV === "development";
-  const devBypassEnabled = config.authDevBypass === true;
+  const devBypassEnabled = isDev && config.authDevBypass === true;
   const superadminDiscordId = typeof config.superadminDiscordId === "string" ? config.superadminDiscordId : "";
 
   const normalizeReturnTo = (rawValue: string | null | undefined, fallback = "/dashboard") => {
@@ -244,8 +244,10 @@ export default defineEventHandler(async (event) => {
     }
 
     const existingUser = await getUserByDiscordId(discordUser.id);
+    const hasCustomAvatar = existingUser?.avatarSource === "upload";
+
     let localAvatarUrl: string | null = null;
-    if (discordUser.avatar) {
+    if (discordUser.avatar && !hasCustomAvatar) {
       try {
         localAvatarUrl = await persistDiscordAvatarLocally(discordUser.id, discordUser.avatar);
       } catch (avatarError) {
@@ -256,10 +258,14 @@ export default defineEventHandler(async (event) => {
     const primaryDiscordRoleName = botMember.member
       ? resolvePrimaryDiscordRoleName(botMember.member.roleIds, guildRoles)
       : null;
-    const resolvedAvatarUrl = localAvatarUrl ?? existingUser?.avatarUrl ?? null;
-    const avatarSource = localAvatarUrl
-      ? "local"
-      : existingUser?.avatarSource ?? null;
+    const resolvedAvatarUrl = hasCustomAvatar
+      ? existingUser.avatarUrl
+      : localAvatarUrl ?? existingUser?.avatarUrl ?? null;
+    const avatarSource = hasCustomAvatar
+      ? "upload"
+      : localAvatarUrl
+        ? "local"
+        : existingUser?.avatarSource ?? null;
 
     const dbUser = await ensureCommunityUser({
       discordId: discordUser.id,

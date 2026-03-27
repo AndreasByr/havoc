@@ -1,5 +1,6 @@
 import { and, desc, eq, isNull } from "drizzle-orm";
-import { type GuildoraDatabase, voiceSessions } from "@guildora/shared";
+import { voiceSessions } from "@guildora/shared";
+import type { GuildoraDatabase } from "@guildora/shared/db/client";
 
 const MINUTE_MS = 60_000;
 

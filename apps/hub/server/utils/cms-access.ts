@@ -1,5 +1,6 @@
 import { desc } from "drizzle-orm";
-import { cmsAccessSettings, type GuildoraDatabase } from "@guildora/shared";
+import { cmsAccessSettings } from "@guildora/shared";
+import type { GuildoraDatabase } from "@guildora/shared/db/client";
 
 export interface CmsAccessConfig {
   allowModeratorAccess: boolean;

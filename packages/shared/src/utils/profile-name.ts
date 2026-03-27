@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { DisplayNameField } from "../types/profile";
 
 export const PROFILE_NAME_DELIMITER = " | ";
 
@@ -66,4 +67,50 @@ export function parseProfileName(profileName: string): ProfileNameParts {
     ingameName,
     rufname: rawRufname.length > 0 ? rawRufname : null
   };
+}
+
+// ─── Template-aware functions ────────────────────────────────────────────
+
+export function serializeFromTemplate(
+  template: DisplayNameField[],
+  values: Record<string, string>
+): string {
+  const parts = template.map((field) => {
+    const raw = values[field.key] ?? "";
+    return sanitizeProfileNamePart(String(raw));
+  });
+  // Trim trailing empty parts
+  while (parts.length > 0 && parts[parts.length - 1] === "") {
+    parts.pop();
+  }
+  return parts.join(PROFILE_NAME_DELIMITER);
+}
+
+export function parseWithTemplate(
+  displayName: string,
+  template: DisplayNameField[]
+): Record<string, string> {
+  const normalized = displayName.trim();
+  const segments = normalized.split(PROFILE_NAME_DELIMITER).map((s) => s.trim());
+  const result: Record<string, string> = {};
+  for (let i = 0; i < template.length; i++) {
+    result[template[i].key] = i < segments.length ? segments[i] : "";
+  }
+  return result;
+}
+
+export function validateWithTemplate(
+  template: DisplayNameField[],
+  values: Record<string, string>
+): Record<string, string> {
+  const validated: Record<string, string> = {};
+  for (const field of template) {
+    const raw = values[field.key] ?? "";
+    const sanitized = sanitizeProfileNamePart(raw);
+    if (field.required && sanitized.length === 0) {
+      throw new Error(`Field "${field.label}" is required.`);
+    }
+    validated[field.key] = sanitized;
+  }
+  return validated;
 }

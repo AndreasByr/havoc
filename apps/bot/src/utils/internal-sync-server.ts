@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import { createServer } from "node:http";
-import { Collection, REST, Routes, SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, type Client } from "discord.js";
+import { ChannelType, Collection, REST, Routes, SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, type Client } from "discord.js";
 import { eq } from "drizzle-orm";
 import { installedApps, safeParseAppManifest, applicationTokens } from "@guildora/shared";
 import type { BotCommand } from "../types";
@@ -732,6 +732,216 @@ export function startInternalSyncServer(client: Client, commands: Collection<str
 
         await (channel as { send: Function }).send(body.message);
         json(res, 200, { ok: true });
+        return;
+      }
+
+      // ─── GuildAI Action Endpoints ──────────────────────────────────
+
+      // POST /internal/guild/members/:discordId/kick
+      const kickMatch = pathname.match(/^\/internal\/guild\/members\/([^/]+)\/kick$/);
+      if (method === "POST" && kickMatch) {
+        const discordId = decodeURIComponent(kickMatch[1] || "");
+        if (!discordId) { jsonError(res, 400, "MISSING_DISCORD_ID", "Missing discord id"); return; }
+
+        const bodyRaw = await readBody(req);
+        let body: { reason?: string } = {};
+        try { body = JSON.parse(bodyRaw); } catch { /* no body is ok */ }
+
+        const guild = await getGuild(client, guildId);
+        try {
+          const member = await guild.members.fetch(discordId);
+          if (!member.kickable) {
+            jsonError(res, 400, "SYNC_FAILED", "Member is not kickable (higher role or bot owner)");
+            return;
+          }
+          await member.kick(body.reason || "Kicked via GuildAI");
+          json(res, 200, { ok: true });
+        } catch (error) {
+          if (isMissingPermissionsError(error)) {
+            jsonError(res, 403, "SYNC_FAILED", "Missing permissions to kick this member");
+          } else {
+            throw error;
+          }
+        }
+        return;
+      }
+
+      // POST /internal/guild/members/:discordId/ban
+      const banMatch = pathname.match(/^\/internal\/guild\/members\/([^/]+)\/ban$/);
+      if (method === "POST" && banMatch) {
+        const discordId = decodeURIComponent(banMatch[1] || "");
+        if (!discordId) { jsonError(res, 400, "MISSING_DISCORD_ID", "Missing discord id"); return; }
+
+        const bodyRaw = await readBody(req);
+        let body: { reason?: string; deleteMessageSeconds?: number } = {};
+        try { body = JSON.parse(bodyRaw); } catch { /* no body is ok */ }
+
+        const guild = await getGuild(client, guildId);
+        try {
+          const member = await guild.members.fetch(discordId);
+          if (!member.bannable) {
+            jsonError(res, 400, "SYNC_FAILED", "Member is not bannable (higher role or bot owner)");
+            return;
+          }
+          await member.ban({
+            reason: body.reason || "Banned via GuildAI",
+            deleteMessageSeconds: body.deleteMessageSeconds
+          });
+          json(res, 200, { ok: true });
+        } catch (error) {
+          if (isMissingPermissionsError(error)) {
+            jsonError(res, 403, "SYNC_FAILED", "Missing permissions to ban this member");
+          } else {
+            throw error;
+          }
+        }
+        return;
+      }
+
+      // GET /internal/guild/channels/list — list all text channels
+      if (method === "GET" && pathname === "/internal/guild/channels/list") {
+        const guild = await getGuild(client, guildId);
+        const channels = await guild.channels.fetch();
+        const textChannels: Array<{ id: string; name: string }> = [];
+        for (const [, channel] of channels) {
+          if (!channel) continue;
+          if (channel.type !== ChannelType.GuildText) continue;
+          textChannels.push({ id: channel.id, name: channel.name });
+        }
+        json(res, 200, { channels: textChannels });
+        return;
+      }
+
+      // POST /internal/guild/channels/create
+      if (method === "POST" && pathname === "/internal/guild/channels/create") {
+        const bodyRaw = await readBody(req);
+        let body: { name?: string; type?: string; parentId?: string } = {};
+        try { body = JSON.parse(bodyRaw); } catch { jsonError(res, 400, "INVALID_JSON_BODY", "Invalid JSON body"); return; }
+
+        if (!body.name || typeof body.name !== "string") {
+          jsonError(res, 400, "INVALID_JSON_BODY", "Missing channel name");
+          return;
+        }
+
+        const typeMap: Record<string, ChannelType> = {
+          text: ChannelType.GuildText,
+          voice: ChannelType.GuildVoice,
+          category: ChannelType.GuildCategory,
+          forum: ChannelType.GuildForum,
+          stage: ChannelType.GuildStageVoice
+        };
+        const channelType = typeMap[body.type || "text"] || ChannelType.GuildText;
+
+        const guild = await getGuild(client, guildId);
+        try {
+          const channel = await guild.channels.create({
+            name: body.name,
+            type: channelType,
+            parent: body.parentId || undefined
+          });
+          json(res, 200, { ok: true, channelId: channel.id, channelName: channel.name });
+        } catch (error) {
+          if (isMissingPermissionsError(error)) {
+            jsonError(res, 403, "SYNC_FAILED", "Missing permissions to create channel");
+          } else {
+            throw error;
+          }
+        }
+        return;
+      }
+
+      // PATCH /internal/guild/channels/:channelId — move channel to category
+      const moveChannelMatch = pathname.match(/^\/internal\/guild\/channels\/([^/]+)$/);
+      if (method === "PATCH" && moveChannelMatch) {
+        const channelId = decodeURIComponent(moveChannelMatch[1] || "");
+        if (!channelId) { jsonError(res, 400, "MISSING_CHANNEL_ID", "Missing channel id"); return; }
+
+        const bodyRaw = await readBody(req);
+        let body: { parentId?: string | null } = {};
+        try { body = JSON.parse(bodyRaw); } catch { jsonError(res, 400, "INVALID_JSON_BODY", "Invalid JSON body"); return; }
+
+        const guild = await getGuild(client, guildId);
+        try {
+          const channel = await guild.channels.fetch(channelId);
+          if (!channel) {
+            jsonError(res, 404, "CHANNEL_NOT_FOUND", "Channel not found");
+            return;
+          }
+          if (!("setParent" in channel)) {
+            jsonError(res, 400, "SYNC_FAILED", "Channel type does not support moving");
+            return;
+          }
+          await (channel as { setParent: Function }).setParent(body.parentId ?? null);
+          json(res, 200, { ok: true, channelId: channel.id, parentId: body.parentId ?? null });
+        } catch (error) {
+          if (isMissingPermissionsError(error)) {
+            jsonError(res, 403, "SYNC_FAILED", "Missing permissions to move channel");
+          } else {
+            throw error;
+          }
+        }
+        return;
+      }
+
+      // DELETE /internal/guild/channels/:channelId
+      const deleteChannelMatch = pathname.match(/^\/internal\/guild\/channels\/([^/]+)$/);
+      if (method === "DELETE" && deleteChannelMatch) {
+        const channelId = decodeURIComponent(deleteChannelMatch[1] || "");
+        if (!channelId) { jsonError(res, 400, "MISSING_CHANNEL_ID", "Missing channel id"); return; }
+
+        const guild = await getGuild(client, guildId);
+        try {
+          const channel = await guild.channels.fetch(channelId);
+          if (!channel) {
+            jsonError(res, 404, "CHANNEL_NOT_FOUND", "Channel not found");
+            return;
+          }
+          if (!channel.deletable) {
+            jsonError(res, 400, "SYNC_FAILED", "Channel is not deletable");
+            return;
+          }
+          await channel.delete();
+          json(res, 200, { ok: true });
+        } catch (error) {
+          if (isMissingPermissionsError(error)) {
+            jsonError(res, 403, "SYNC_FAILED", "Missing permissions to delete channel");
+          } else {
+            throw error;
+          }
+        }
+        return;
+      }
+
+      // DELETE /internal/guild/channels/:channelId/messages/:messageId
+      const deleteMessageMatch = pathname.match(/^\/internal\/guild\/channels\/([^/]+)\/messages\/([^/]+)$/);
+      if (method === "DELETE" && deleteMessageMatch) {
+        const channelId = decodeURIComponent(deleteMessageMatch[1] || "");
+        const messageId = decodeURIComponent(deleteMessageMatch[2] || "");
+        if (!channelId) { jsonError(res, 400, "MISSING_CHANNEL_ID", "Missing channel id"); return; }
+        if (!messageId) { jsonError(res, 400, "MISSING_MESSAGE_ID", "Missing message id"); return; }
+
+        const channel = await client.channels.fetch(channelId).catch(() => null);
+        if (!channel || !("messages" in channel)) {
+          jsonError(res, 404, "CHANNEL_NOT_FOUND", "Channel not found or not text-based");
+          return;
+        }
+
+        try {
+          const ch = channel as { messages: { fetch: Function } };
+          const msg = await ch.messages.fetch(messageId).catch(() => null);
+          if (!msg || !("delete" in msg)) {
+            jsonError(res, 404, "NOT_FOUND", "Message not found");
+            return;
+          }
+          await (msg as { delete: Function }).delete();
+          json(res, 200, { ok: true });
+        } catch (error) {
+          if (isMissingPermissionsError(error)) {
+            jsonError(res, 403, "SYNC_FAILED", "Missing permissions to delete message");
+          } else {
+            throw error;
+          }
+        }
         return;
       }
 

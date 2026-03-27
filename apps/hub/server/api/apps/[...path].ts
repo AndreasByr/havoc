@@ -5,6 +5,7 @@ import { requireSession } from "../../utils/auth";
 import { hasRequiredRoles, refreshAppRegistry } from "../../utils/apps";
 import { createAppDb } from "../../utils/app-db";
 import { getDb } from "../../utils/db";
+import { isDevRoleSwitcherEnabled } from "../../utils/dev-role-switcher";
 
 export default defineEventHandler(async (event) => {
   const session = await requireSession(event);
@@ -27,6 +28,10 @@ export default defineEventHandler(async (event) => {
   const app = apps.find((a) => a.appId === appId);
   if (!app || !app.manifest) {
     throw createError({ statusCode: 404, statusMessage: `App '${appId}' not found or not active.` });
+  }
+
+  if (app.source === "sideloaded" && !isDevRoleSwitcherEnabled(event)) {
+    throw createError({ statusCode: 403, statusMessage: "Sideloaded apps are only available in development mode." });
   }
 
   const fullPath = `/api/apps/${appId}/${restPath}`;

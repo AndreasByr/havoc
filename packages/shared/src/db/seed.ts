@@ -3,7 +3,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { eq } from "drizzle-orm";
 import { createDb } from "./client";
-import { communityRoles, permissionRoles } from "./schema";
+import { communityCustomFields, communityRoles, permissionRoles } from "./schema";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, "../../../../.env") });
@@ -75,6 +75,46 @@ async function run() {
         })
         .where(eq(communityRoles.name, role.name));
       console.log(`Community role updated: ${role.name}`);
+    }
+  }
+
+  const defaultCustomFields = [
+    {
+      key: "mod_tags",
+      label: "Tags",
+      inputType: "multiselect_search",
+      isDefault: true,
+      userCanView: false,
+      userCanEdit: false,
+      modCanView: true,
+      modCanEdit: true,
+      sortOrder: 10
+    },
+    {
+      key: "mod_note",
+      label: "Moderator-Notiz",
+      inputType: "textarea",
+      isDefault: true,
+      userCanView: false,
+      userCanEdit: false,
+      modCanView: true,
+      modCanEdit: true,
+      sortOrder: 20
+    }
+  ] as const;
+
+  for (const field of defaultCustomFields) {
+    const existing = await db
+      .select()
+      .from(communityCustomFields)
+      .where(eq(communityCustomFields.key, field.key))
+      .limit(1);
+
+    if (existing.length === 0) {
+      await db.insert(communityCustomFields).values(field);
+      console.log(`Inserted default custom field: ${field.key}`);
+    } else {
+      console.log(`Default custom field already exists: ${field.key}`);
     }
   }
 }

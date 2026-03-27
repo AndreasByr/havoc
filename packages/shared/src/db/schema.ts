@@ -16,6 +16,7 @@ import { relations, sql } from "drizzle-orm";
 import type { GuildoraAppManifest } from "../types/app-manifest";
 import type { LocaleCode } from "../types/locale";
 import type { ApplicationFlowGraph, ApplicationFlowSettings } from "../types/application-flow";
+import type { DisplayNameField } from "../types/profile";
 
 export const absenceStatusEnum = pgEnum("absence_status", ["away", "maintenance"]);
 export const appInstallStatusEnum = pgEnum("app_install_status", ["active", "inactive", "error"]);
@@ -37,7 +38,7 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .defaultNow()
     .notNull()
-    .$onUpdateFn(() => sql`now()`)
+    .$onUpdateFn(() => new Date())
 });
 
 export const profiles = pgTable("profiles", {
@@ -54,7 +55,7 @@ export const profiles = pgTable("profiles", {
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .defaultNow()
     .notNull()
-    .$onUpdateFn(() => sql`now()`)
+    .$onUpdateFn(() => new Date())
 });
 
 export const permissionRoles = pgTable("permission_roles", {
@@ -77,7 +78,7 @@ export const communityRoles = pgTable("community_roles", {
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .defaultNow()
     .notNull()
-    .$onUpdateFn(() => sql`now()`)
+    .$onUpdateFn(() => new Date())
 });
 
 export const userPermissionRoles = pgTable(
@@ -112,7 +113,7 @@ export const selectableDiscordRoles = pgTable("selectable_discord_roles", {
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .defaultNow()
     .notNull()
-    .$onUpdateFn(() => sql`now()`)
+    .$onUpdateFn(() => new Date())
 });
 
 export const userDiscordRoles = pgTable(
@@ -183,7 +184,7 @@ export const installedApps = pgTable("installed_apps", {
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .defaultNow()
     .notNull()
-    .$onUpdateFn(() => sql`now()`)
+    .$onUpdateFn(() => new Date())
 });
 
 export const appKv = pgTable(
@@ -216,7 +217,7 @@ export const appMarketplaceSubmissions = pgTable("app_marketplace_submissions", 
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .defaultNow()
     .notNull()
-    .$onUpdateFn(() => sql`now()`)
+    .$onUpdateFn(() => new Date())
 });
 
 export const themeSettings = pgTable("theme_settings", {
@@ -240,7 +241,7 @@ export const themeSettings = pgTable("theme_settings", {
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .defaultNow()
     .notNull()
-    .$onUpdateFn(() => sql`now()`),
+    .$onUpdateFn(() => new Date()),
   updatedBy: uuid("updated_by").references(() => users.id, { onDelete: "set null" })
 });
 
@@ -248,10 +249,18 @@ export const cmsAccessSettings = pgTable("cms_access_settings", {
   id: serial("id").primaryKey(),
   allowModeratorAccess: boolean("allow_moderator_access").notNull().default(true),
   allowModeratorAppsAccess: boolean("allow_moderator_apps_access").notNull().default(true),
+  modDeleteUsers: boolean("mod_delete_users").notNull().default(false),
+  modManageApplications: boolean("mod_manage_applications").notNull().default(false),
+  modAccessCommunitySettings: boolean("mod_access_community_settings").notNull().default(false),
+  modAccessDesign: boolean("mod_access_design").notNull().default(false),
+  modAccessApps: boolean("mod_access_apps").notNull().default(false),
+  modAccessDiscordRoles: boolean("mod_access_discord_roles").notNull().default(false),
+  modAccessCustomFields: boolean("mod_access_custom_fields").notNull().default(false),
+  modAccessPermissions: boolean("mod_access_permissions").notNull().default(false),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .defaultNow()
     .notNull()
-    .$onUpdateFn(() => sql`now()`),
+    .$onUpdateFn(() => new Date()),
   updatedBy: uuid("updated_by").references(() => users.id, { onDelete: "set null" })
 });
 
@@ -260,10 +269,11 @@ export const communitySettings = pgTable("community_settings", {
   communityName: text("community_name"),
   discordInviteCode: text("discord_invite_code"),
   defaultLocale: text("default_locale").$type<LocaleCode>().notNull().default("en"),
+  displayNameTemplate: jsonb("display_name_template").$type<DisplayNameField[]>().default([]),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .defaultNow()
     .notNull()
-    .$onUpdateFn(() => sql`now()`),
+    .$onUpdateFn(() => new Date()),
   updatedBy: uuid("updated_by").references(() => users.id, { onDelete: "set null" })
 });
 
@@ -274,13 +284,14 @@ export const applicationFlows = pgTable("application_flows", {
   name: text("name").notNull(),
   status: applicationFlowStatusEnum("status").notNull().default("draft"),
   flowJson: jsonb("flow_json").$type<ApplicationFlowGraph>().notNull(),
+  draftFlowJson: jsonb("draft_flow_json").$type<ApplicationFlowGraph>(),
   settingsJson: jsonb("settings_json").$type<ApplicationFlowSettings>().notNull(),
   createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .defaultNow()
     .notNull()
-    .$onUpdateFn(() => sql`now()`)
+    .$onUpdateFn(() => new Date())
 });
 
 export const applicationFlowEmbeds = pgTable("application_flow_embeds", {
@@ -295,7 +306,7 @@ export const applicationFlowEmbeds = pgTable("application_flow_embeds", {
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .defaultNow()
     .notNull()
-    .$onUpdateFn(() => sql`now()`)
+    .$onUpdateFn(() => new Date())
 });
 
 export const applicationTokens = pgTable(
@@ -340,7 +351,7 @@ export const applications = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .defaultNow()
       .notNull()
-      .$onUpdateFn(() => sql`now()`)
+      .$onUpdateFn(() => new Date())
   },
   (table) => [
     index("applications_flow_id_idx").on(table.flowId),
@@ -381,13 +392,47 @@ export const applicationModeratorNotifications = pgTable(
   (table) => [primaryKey({ columns: [table.flowId, table.userId] })]
 );
 
+// ─── Community Custom Fields & Tags ──────────────────────────────────────
+
+export const communityCustomFields = pgTable("community_custom_fields", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  key: text("key").notNull().unique(),
+  label: text("label").notNull(),
+  description: text("description"),
+  inputType: text("input_type").notNull(),
+  options: jsonb("options").$type<string[]>(),
+  sliderMin: integer("slider_min"),
+  sliderMax: integer("slider_max"),
+  sliderStep: integer("slider_step"),
+  required: boolean("required").notNull().default(false),
+  active: boolean("active").notNull().default(true),
+  isDefault: boolean("is_default").notNull().default(false),
+  userCanView: boolean("user_can_view").notNull().default(false),
+  userCanEdit: boolean("user_can_edit").notNull().default(false),
+  modCanView: boolean("mod_can_view").notNull().default(false),
+  modCanEdit: boolean("mod_can_edit").notNull().default(false),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull()
+    .$onUpdateFn(() => new Date())
+});
+
+export const communityTags = pgTable("community_tags", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull().unique(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" })
+});
+
 export const applicationAccessSettings = pgTable("application_access_settings", {
   id: serial("id").primaryKey(),
   allowModeratorAccess: boolean("allow_moderator_access").notNull().default(true),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .defaultNow()
     .notNull()
-    .$onUpdateFn(() => sql`now()`),
+    .$onUpdateFn(() => new Date()),
   updatedBy: uuid("updated_by").references(() => users.id, { onDelete: "set null" })
 });
 
@@ -416,7 +461,8 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   updatedCmsAccessSettings: many(cmsAccessSettings),
   createdApplicationFlows: many(applicationFlows),
   reviewedApplications: many(applications, { relationName: "application_reviewer" }),
-  applicationModeratorNotifications: many(applicationModeratorNotifications)
+  applicationModeratorNotifications: many(applicationModeratorNotifications),
+  createdCommunityTags: many(communityTags)
 }));
 
 export const profilesRelations = relations(profiles, ({ one, many }) => ({
@@ -524,6 +570,15 @@ export const cmsAccessSettingsRelations = relations(cmsAccessSettings, ({ one })
 export const communitySettingsRelations = relations(communitySettings, ({ one }) => ({
   updatedByUser: one(users, {
     fields: [communitySettings.updatedBy],
+    references: [users.id]
+  })
+}));
+
+// ─── Community Custom Fields & Tags Relations ────────────────────────────
+
+export const communityTagsRelations = relations(communityTags, ({ one }) => ({
+  createdByUser: one(users, {
+    fields: [communityTags.createdBy],
     references: [users.id]
   })
 }));

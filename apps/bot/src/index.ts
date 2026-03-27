@@ -12,6 +12,7 @@ import { registerGuildMemberAddEvent } from "./events/guildMemberAdd";
 import { registerInteractionCreateEvent } from "./events/interactionCreate";
 import { registerReadyEvent } from "./events/ready";
 import { registerVoiceStateUpdateEvent } from "./events/voiceStateUpdate";
+import { registerMessageCreateEvent } from "./events/messageCreate";
 import { loadInstalledAppHooks } from "./utils/app-hooks";
 import { ensureBaseRoles } from "./utils/community";
 import { loadAndDeployAppCommands, startInternalSyncServer } from "./utils/internal-sync-server";
@@ -24,7 +25,7 @@ if (!token) {
 }
 
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildVoiceStates]
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildVoiceStates, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent]
 });
 
 const commands = new Collection<string, BotCommand>();
@@ -36,6 +37,7 @@ registerReadyEvent(client);
 registerInteractionCreateEvent(client, commands);
 registerGuildMemberAddEvent(client);
 registerVoiceStateUpdateEvent(client);
+registerMessageCreateEvent(client);
 
 ensureBaseRoles()
   .then(() => logger.info("Base roles ensured."))

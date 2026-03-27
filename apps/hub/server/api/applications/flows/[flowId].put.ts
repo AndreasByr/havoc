@@ -7,7 +7,7 @@ import { readBodyWithSchema, requireRouterParam } from "../../../utils/http";
 import { getDb } from "../../../utils/db";
 import {
   getFlowById,
-  validateFlowGraph,
+  validateFlowActivation,
   handleFlowStatusChange,
   handleEmbedFieldUpdate
 } from "../../../utils/application-flows";
@@ -16,7 +16,8 @@ const updateFlowSchema = z.object({
   name: z.string().min(1).max(200).optional(),
   status: z.enum(["draft", "active", "inactive"]).optional(),
   flowJson: z.any().optional(),
-  settingsJson: z.any().optional()
+  settingsJson: z.any().optional(),
+  action: z.enum(["publish", "discard"]).optional()
 });
 
 export default defineEventHandler(async (event) => {
@@ -30,16 +31,43 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: "Flow not found." });
   }
 
+  if (body.action === "publish") {
+    const draftJson = (flow as Record<string, unknown>).draftFlowJson as ApplicationFlowGraph | null;
+    if (!draftJson) {
+      throw createError({ statusCode: 400, statusMessage: "No unpublished changes to publish." });
+    }
+    await db
+      .update(applicationFlows)
+      .set({ flowJson: draftJson, draftFlowJson: null, updatedAt: new Date() })
+      .where(eq(applicationFlows.id, flowId));
+
+    const updated = await getFlowById(db, flowId);
+    return { flow: updated };
+  }
+
+  if (body.action === "discard") {
+    await db
+      .update(applicationFlows)
+      .set({ draftFlowJson: null, updatedAt: new Date() })
+      .where(eq(applicationFlows.id, flowId));
+
+    const updated = await getFlowById(db, flowId);
+    return { flow: updated };
+  }
+
   const oldStatus = flow.status as ApplicationFlowStatus;
   const newStatus = (body.status ?? oldStatus) as ApplicationFlowStatus;
   const newSettings = (body.settingsJson ?? flow.settingsJson) as ApplicationFlowSettings;
   const newFlowJson = (body.flowJson ?? flow.flowJson) as ApplicationFlowGraph;
 
-  // Validate flow graph structure when activating
-  if (body.flowJson && body.status === "active") {
-    const errors = validateFlowGraph(newFlowJson);
-    if (errors.length > 0) {
-      throw createError({ statusCode: 400, statusMessage: `Flow validation failed: ${errors[0]}` });
+  if (newStatus === "active" && body.status === "active") {
+    const warnings = validateFlowActivation(newFlowJson, newSettings);
+    if (warnings.length > 0) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: `Cannot activate flow: ${warnings[0].key}`,
+        data: { warnings }
+      });
     }
   }
 
@@ -50,19 +78,23 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // Update the flow
   const updateData: Record<string, unknown> = { updatedAt: new Date() };
   if (body.name !== undefined) updateData.name = body.name;
   if (body.status !== undefined) updateData.status = body.status;
-  if (body.flowJson !== undefined) updateData.flowJson = newFlowJson;
   if (body.settingsJson !== undefined) updateData.settingsJson = newSettings;
+
+  if (body.flowJson !== undefined && !body.status) {
+    updateData.draftFlowJson = newFlowJson;
+  }
+  if (body.flowJson !== undefined && body.status) {
+    updateData.flowJson = newFlowJson;
+  }
 
   await db
     .update(applicationFlows)
     .set(updateData)
     .where(eq(applicationFlows.id, flowId));
 
-  // Handle embed field update if flow is active and embed-related fields changed
   if (newStatus === "active" && body.settingsJson && !body.status) {
     const oldSettings = flow.settingsJson as ApplicationFlowSettings;
     const embedFieldsChanged =

@@ -6,14 +6,12 @@ import {
 } from "@guildora/shared";
 import { requireAdminSession } from "../../utils/auth";
 import { getDb } from "../../utils/db";
-import { loadApplicationAccessConfig } from "../../utils/application-access";
 
 export default defineEventHandler(async (event) => {
   await requireAdminSession(event);
   const db = getDb();
 
-  const [accessConfig, flows, allNotifications] = await Promise.all([
-    loadApplicationAccessConfig(db),
+  const [flows, allNotifications] = await Promise.all([
     db.select({ id: applicationFlows.id, name: applicationFlows.name }).from(applicationFlows),
     db.select().from(applicationModeratorNotifications).where(eq(applicationModeratorNotifications.enabled, true))
   ]);
@@ -38,7 +36,6 @@ export default defineEventHandler(async (event) => {
   });
 
   return {
-    accessConfig,
     notificationOverview
   };
 });

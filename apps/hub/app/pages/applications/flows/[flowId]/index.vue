@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ApplicationFlowGraph } from "@guildora/shared";
-import type { Node } from "@vue-flow/core";
+import type { Node, Edge } from "@vue-flow/core";
 import { useFlowBuilder } from "~/composables/useFlowBuilder";
 
 definePageMeta({
@@ -17,6 +17,7 @@ type FlowResponse = {
     name: string;
     status: string;
     flowJson: ApplicationFlowGraph;
+    draftFlowJson: ApplicationFlowGraph | null;
   };
 };
 
@@ -26,26 +27,39 @@ const {
   nodes,
   edges,
   saveStatus,
+  publishStatus,
+  hasUnpublishedChanges,
   canUndo,
   canRedo,
   loadGraph,
   onGraphChange,
   undo,
-  redo
+  redo,
+  publishChanges,
+  discardChanges
 } = useFlowBuilder(flowId);
 
-// Load graph when data arrives
+// Load graph when data arrives — prefer draftFlowJson over flowJson
 watch(data, (d) => {
-  if (d?.flow?.flowJson) {
-    loadGraph(d.flow.flowJson);
+  if (d?.flow) {
+    const graph = d.flow.draftFlowJson ?? d.flow.flowJson;
+    loadGraph(graph);
+    hasUnpublishedChanges.value = d.flow.draftFlowJson !== null;
   }
 }, { immediate: true });
 
-// Selected node for sidebar
+// Selected node for sidebar / selected edge for deletion
 const selectedNode = ref<Node | null>(null);
+const selectedEdge = ref<Edge | null>(null);
 
 function onNodeClick(node: Node) {
   selectedNode.value = node;
+  selectedEdge.value = null;
+}
+
+function onEdgeClick(edge: Edge) {
+  selectedEdge.value = edge;
+  selectedNode.value = null;
 }
 
 function onCloseSidebar() {
@@ -58,6 +72,22 @@ function onUpdateNodeData(nodeId: string, newData: Record<string, unknown>) {
     node.data = newData;
     onGraphChange();
   }
+}
+
+function onUngroupNode(nodeId: string) {
+  const node = nodes.value.find((n) => n.id === nodeId);
+  if (!node || !node.parentNode) return;
+
+  const parent = nodes.value.find((n) => n.id === node.parentNode);
+  if (parent) {
+    node.position = {
+      x: node.position.x + parent.position.x,
+      y: node.position.y + parent.position.y,
+    };
+  }
+  node.parentNode = undefined;
+  node.extent = undefined;
+  onGraphChange();
 }
 
 function onDeleteNode(nodeId: string) {
@@ -78,7 +108,11 @@ function onKeydown(event: KeyboardEvent) {
     event.preventDefault();
   }
   if (event.key === "Delete" || event.key === "Backspace") {
-    if (selectedNode.value && !["start"].includes(selectedNode.value.type || "")) {
+    if (selectedEdge.value) {
+      edges.value = edges.value.filter((e) => e.id !== selectedEdge.value!.id);
+      selectedEdge.value = null;
+      onGraphChange();
+    } else if (selectedNode.value && !["start"].includes(selectedNode.value.type || "")) {
       onDeleteNode(selectedNode.value.id);
     }
   }
@@ -120,10 +154,14 @@ onUnmounted(() => {
       <div class="flow-builder__body">
         <ApplicationsFlowBuilderFlowToolbar
           :save-status="saveStatus"
+          :publish-status="publishStatus"
+          :has-unpublished-changes="hasUnpublishedChanges"
           :can-undo="canUndo"
           :can-redo="canRedo"
           @undo="undo"
           @redo="redo"
+          @publish="publishChanges"
+          @discard="discardChanges"
         />
 
         <ApplicationsFlowBuilderFlowCanvas
@@ -132,6 +170,7 @@ onUnmounted(() => {
           @nodes-change="(n) => (nodes = n)"
           @edges-change="(e) => (edges = e)"
           @node-click="onNodeClick"
+          @edge-click="onEdgeClick"
           @graph-change="onGraphChange"
         />
 
@@ -141,6 +180,7 @@ onUnmounted(() => {
           :nodes="nodes"
           @update-node-data="onUpdateNodeData"
           @delete-node="onDeleteNode"
+          @ungroup-node="onUngroupNode"
           @close="onCloseSidebar"
         />
       </div>

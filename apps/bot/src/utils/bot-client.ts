@@ -116,6 +116,26 @@ export function createBotClient(client: Client): BotClient {
       }
     },
 
+    async listTextChannels() {
+      try {
+        const guildId = process.env.DISCORD_GUILD_ID;
+        if (!guildId) return [];
+        const guild = client.guilds.cache.get(guildId);
+        if (!guild) return [];
+        const channels = await guild.channels.fetch();
+        const result: Array<{ id: string; name: string }> = [];
+        for (const [, channel] of channels) {
+          if (!channel) continue;
+          if (channel.type !== ChannelType.GuildText) continue;
+          result.push({ id: channel.id, name: channel.name });
+        }
+        return result;
+      } catch (err) {
+        logger.error("[bot-client] Failed to list text channels", err);
+        return [];
+      }
+    },
+
     async listVoiceChannelsByCategory(categoryId: string) {
       try {
         // Derive guild from the category channel

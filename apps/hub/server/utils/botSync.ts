@@ -81,11 +81,15 @@ async function requestBotInternal<T>(path: string, options?: { method?: "GET" | 
     headers.Authorization = `Bearer ${token}`;
   }
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+
   try {
     return await $fetch<T>(`${baseUrl}${path}`, {
       method: options?.method || "GET",
       headers,
-      body: (options?.body ?? undefined) as Record<string, unknown> | undefined
+      body: (options?.body ?? undefined) as Record<string, unknown> | undefined,
+      signal: controller.signal
     });
   } catch (error) {
     const maybeError = error as {
@@ -107,6 +111,8 @@ async function requestBotInternal<T>(path: string, options?: { method?: "GET" | 
     }
 
     throw new BotBridgeError("UNKNOWN", maybeError?.message || "Bot bridge request failed.", maybeError?.statusCode);
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
@@ -266,6 +272,93 @@ export async function sendDiscordDm(
     console.error("[botSync] Failed to send DM:", error);
     return null;
   }
+}
+
+// ─── GuildAI Action Bridge Functions ──────────────────────────────────────
+
+export async function kickDiscordMember(
+  discordId: string,
+  reason?: string
+): Promise<{ ok: boolean } | null> {
+  const { baseUrl } = getBotRequestConfig();
+  if (!baseUrl) return null;
+
+  const encodedDiscordId = encodeURIComponent(discordId);
+  return requestBotInternal<{ ok: boolean }>(
+    `/internal/guild/members/${encodedDiscordId}/kick`,
+    { method: "POST", body: { reason } }
+  );
+}
+
+export async function banDiscordMember(
+  discordId: string,
+  reason?: string,
+  deleteMessageSeconds?: number
+): Promise<{ ok: boolean } | null> {
+  const { baseUrl } = getBotRequestConfig();
+  if (!baseUrl) return null;
+
+  const encodedDiscordId = encodeURIComponent(discordId);
+  return requestBotInternal<{ ok: boolean }>(
+    `/internal/guild/members/${encodedDiscordId}/ban`,
+    { method: "POST", body: { reason, deleteMessageSeconds } }
+  );
+}
+
+export async function createDiscordChannel(
+  name: string,
+  type?: string,
+  parentId?: string
+): Promise<{ ok: boolean; channelId: string; channelName: string } | null> {
+  const { baseUrl } = getBotRequestConfig();
+  if (!baseUrl) return null;
+
+  return requestBotInternal<{ ok: boolean; channelId: string; channelName: string }>(
+    "/internal/guild/channels/create",
+    { method: "POST", body: { name, type, parentId } }
+  );
+}
+
+export async function moveDiscordChannel(
+  channelId: string,
+  parentId: string | null
+): Promise<{ ok: boolean; channelId: string; parentId: string | null } | null> {
+  const { baseUrl } = getBotRequestConfig();
+  if (!baseUrl) return null;
+
+  const encodedChannelId = encodeURIComponent(channelId);
+  return requestBotInternal<{ ok: boolean; channelId: string; parentId: string | null }>(
+    `/internal/guild/channels/${encodedChannelId}`,
+    { method: "PATCH", body: { parentId } }
+  );
+}
+
+export async function deleteDiscordChannel(
+  channelId: string
+): Promise<{ ok: boolean } | null> {
+  const { baseUrl } = getBotRequestConfig();
+  if (!baseUrl) return null;
+
+  const encodedChannelId = encodeURIComponent(channelId);
+  return requestBotInternal<{ ok: boolean }>(
+    `/internal/guild/channels/${encodedChannelId}`,
+    { method: "DELETE" }
+  );
+}
+
+export async function deleteDiscordMessage(
+  channelId: string,
+  messageId: string
+): Promise<{ ok: boolean } | null> {
+  const { baseUrl } = getBotRequestConfig();
+  if (!baseUrl) return null;
+
+  const encodedChannelId = encodeURIComponent(channelId);
+  const encodedMessageId = encodeURIComponent(messageId);
+  return requestBotInternal<{ ok: boolean }>(
+    `/internal/guild/channels/${encodedChannelId}/messages/${encodedMessageId}`,
+    { method: "DELETE" }
+  );
 }
 
 export async function sendChannelMessage(

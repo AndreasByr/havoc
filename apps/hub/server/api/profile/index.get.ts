@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import {
   parseProfileName,
+  parseWithTemplate,
   users,
   voiceSessions
 } from "@guildora/shared";
@@ -12,7 +13,7 @@ import { buildEditableDiscordRolesForUser } from "../../utils/discord-roles";
 import { jsonResponse } from "../../utils/jsonResponse";
 import { loadUserCommunityRolesMap, loadUserPermissionRolesMap, loadUserProfilesMap } from "../../utils/user-directory";
 import { calculateVoiceMinutesFromSessions, classifyVoiceActivity } from "../../utils/voice";
-import { loadCommunitySettingsLocale } from "../../utils/community-settings";
+import { loadCommunitySettingsLocale, loadDisplayNameTemplate } from "../../utils/community-settings";
 
 export default defineEventHandler(async (event) => {
   const db = getDb();
@@ -68,6 +69,10 @@ export default defineEventHandler(async (event) => {
   const hours7d = Math.round((minutes7d / 60) * 100) / 100;
   const parsedName = parseProfileName(userRow.displayName);
   const permissionRolesForUser = permissionMap.get(requestedUserId) || [];
+  const displayNameTemplate = await loadDisplayNameTemplate(db);
+  const displayNameParts = displayNameTemplate.length > 0
+    ? parseWithTemplate(userRow.displayName, displayNameTemplate)
+    : undefined;
 
   const body = {
     id: userRow.id,
@@ -75,7 +80,10 @@ export default defineEventHandler(async (event) => {
     profileName: userRow.displayName,
     ingameName: parsedName.ingameName,
     rufname: parsedName.rufname,
+    displayNameTemplate,
+    displayNameParts,
     avatarUrl: userRow.avatarUrl,
+    avatarSource: userRow.avatarSource,
     permissionRoles: permissionRolesForUser,
     roles: permissionRolesForUser,
     communityRole: communityMap.get(requestedUserId)?.name ?? null,

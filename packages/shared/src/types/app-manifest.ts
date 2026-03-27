@@ -82,7 +82,7 @@ export const appManifestApiRouteSchema = z.object({
   requiredRoles: roleListSchema
 });
 
-export const appManifestBotHookSchema = z.enum(["onRoleChange", "onMemberJoin", "onVoiceActivity", "onInteraction"]);
+export const appManifestBotHookSchema = z.enum(["onRoleChange", "onMemberJoin", "onVoiceActivity", "onInteraction", "onMessage"]);
 
 export const appManifestBotCommandSchema = z.object({
   name: z.string().regex(/^[-_a-z0-9]{1,32}$/, "Command name must be 1–32 lowercase letters, digits, dashes or underscores."),

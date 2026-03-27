@@ -162,14 +162,19 @@ async function loadPage(currentPagePath: string) {
       const data = vue.ref<unknown>(null);
       const pending = vue.ref(true);
       const error = vue.ref<unknown>(null);
-      try {
-        data.value = await $fetch(url, opts);
-      } catch (e: unknown) {
-        error.value = e;
-      } finally {
-        pending.value = false;
+      async function refresh() {
+        pending.value = true;
+        error.value = null;
+        try {
+          data.value = await $fetch(url, opts);
+        } catch (e: unknown) {
+          error.value = e;
+        } finally {
+          pending.value = false;
+        }
       }
-      return { data, pending, error };
+      await refresh();
+      return { data, pending, error, refresh };
     }
   };
 

@@ -33,8 +33,8 @@ const guildRoles = ref<GuildRole[]>([]);
 const rolesLoading = ref(true);
 onMounted(async () => {
   try {
-    const result = await $fetch<{ roles: GuildRole[] }>("/api/admin/discord-roles");
-    guildRoles.value = result.roles.filter((r) => !r.managed).sort((a, b) => b.position - a.position);
+    const result = await $fetch<{ guildRoles: GuildRole[] }>("/api/admin/discord-roles");
+    guildRoles.value = result.guildRoles.filter((r) => !r.managed).sort((a, b) => b.position - a.position);
   } catch {
     // Non-critical
   } finally {
@@ -67,16 +67,6 @@ watch(data, (d) => {
     settings.value = { ...settings.value, ...d.flow.settingsJson };
   }
 }, { immediate: true });
-
-// Display name template preview
-const displayNamePreview = computed(() => {
-  const template = settings.value.displayNameTemplate;
-  if (!template) return "";
-  return template.replace(/\{[^}]+\}/g, "Example");
-});
-
-const displayNameLength = computed(() => displayNamePreview.value.length);
-const displayNameWarning = computed(() => displayNameLength.value > 32);
 
 const save = async () => {
   saving.value = true;
@@ -213,32 +203,6 @@ const save = async () => {
               </label>
             </div>
           </div>
-        </div>
-      </div>
-
-      <!-- Display Name Template -->
-      <div class="settings-section">
-        <h2 class="settings-section__title">{{ t("applications.settings.displayNameTemplate") }}</h2>
-        <p class="text-sm mb-3" style="color: var(--color-base-content-secondary)">
-          {{ t("applications.settings.displayNameDescription") }}
-        </p>
-        <input
-          v-model="settings.displayNameTemplate"
-          type="text"
-          class="input input-sm w-full"
-          placeholder="{vorname} | {clan-tag}"
-        />
-        <div v-if="settings.displayNameTemplate" class="mt-2 text-sm">
-          <span style="color: var(--color-base-content-secondary)">{{ t("applications.settings.preview") }}</span>
-          <span :style="{ color: displayNameWarning ? 'var(--color-warning)' : 'var(--color-base-content)' }">
-            {{ displayNamePreview }}
-          </span>
-          <span class="ml-2" :style="{ color: displayNameWarning ? 'var(--color-warning)' : 'var(--color-base-content-secondary)' }">
-            ({{ displayNameLength }}/32)
-          </span>
-          <span v-if="displayNameWarning" class="ml-1" style="color: var(--color-warning)">
-            {{ t("applications.settings.exceedsNicknameLimit") }}
-          </span>
         </div>
       </div>
 

@@ -51,7 +51,7 @@ export const setupCommand: BotCommand = {
       return;
     }
 
-    const configuredHubUrl = process.env.NUXT_PUBLIC_HUB_URL || process.env.HUB_URL || "http://localhost:3003";
+    const configuredHubUrl = process.env.NUXT_PUBLIC_HUB_URL || "http://localhost:3003";
     const hubUrl = configuredHubUrl.replace(/\/+$/, "");
     const targetChannel =
       interaction.options.getChannel("channel", false, [ChannelType.GuildText]) ?? interaction.channel;

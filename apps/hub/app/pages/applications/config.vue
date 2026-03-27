@@ -8,7 +8,6 @@ const { t } = useI18n();
 useCookie<string>("guildora_applications_last_path", { sameSite: "lax" }).value = "/applications/config";
 
 type ConfigResponse = {
-  accessConfig: { allowModeratorAccess: boolean };
   notificationOverview: Array<{
     flowId: string;
     flowName: string;
@@ -16,29 +15,7 @@ type ConfigResponse = {
   }>;
 };
 
-const { data, pending, error, refresh } = await useFetch<ConfigResponse>("/api/applications/config");
-
-const saving = ref(false);
-const allowModeratorAccess = ref(true);
-
-watch(data, (d) => {
-  if (d?.accessConfig) {
-    allowModeratorAccess.value = d.accessConfig.allowModeratorAccess;
-  }
-}, { immediate: true });
-
-const save = async () => {
-  saving.value = true;
-  try {
-    await $fetch("/api/applications/config", {
-      method: "PUT",
-      body: { allowModeratorAccess: allowModeratorAccess.value }
-    });
-    await Promise.all([refresh(), refreshNuxtData("sidebar-navigation")]);
-  } finally {
-    saving.value = false;
-  }
-};
+const { data, pending, error } = await useFetch<ConfigResponse>("/api/applications/config");
 
 // Cleanup trigger
 const cleanupPending = ref(false);
@@ -61,12 +38,7 @@ const runCleanup = async () => {
 
 <template>
   <section class="space-y-6">
-    <div class="flex items-center justify-between">
-      <h1 class="text-2xl font-semibold">{{ t("applications.config") }}</h1>
-      <button class="btn btn-primary btn-sm" :disabled="saving" @click="save">
-        {{ t("common.save") }}
-      </button>
-    </div>
+    <h1 class="text-2xl font-semibold">{{ t("applications.config") }}</h1>
 
     <div v-if="pending" class="flex justify-center py-12">
       <span class="loading loading-spinner loading-md" />
@@ -74,15 +46,6 @@ const runCleanup = async () => {
     <div v-else-if="error" class="alert alert-error">{{ t("common.error") }}</div>
 
     <template v-else>
-      <!-- Access Settings -->
-      <div class="config-section">
-        <h2 class="config-section__title">{{ t("applications.configPage.access") }}</h2>
-        <label class="flex items-center gap-3 cursor-pointer">
-          <input v-model="allowModeratorAccess" type="checkbox" class="toggle toggle-sm" />
-          <span class="text-sm">{{ t("applications.configPage.allowModeratorAccess") }}</span>
-        </label>
-      </div>
-
       <!-- Notification Overview -->
       <div class="config-section">
         <h2 class="config-section__title">{{ t("applications.configPage.moderatorNotifications") }}</h2>

@@ -45,3 +45,22 @@ export function requirePositiveIntRouterParam(
   }
   return parsed;
 }
+
+const DEFAULT_PAGE_SIZE = 50;
+const MAX_PAGE_SIZE = 100;
+
+export function parsePaginationQuery(query: Record<string, unknown>) {
+  const page = Math.max(1, Number.parseInt(typeof query.page === "string" ? query.page : "1", 10) || 1);
+  const limit = Math.min(MAX_PAGE_SIZE, Math.max(1, Number.parseInt(typeof query.limit === "string" ? query.limit : String(DEFAULT_PAGE_SIZE), 10) || DEFAULT_PAGE_SIZE));
+  return { page, limit };
+}
+
+export function paginateArray<T>(items: T[], page: number, limit: number) {
+  const total = items.length;
+  const totalPages = Math.ceil(total / limit);
+  const offset = (page - 1) * limit;
+  return {
+    items: items.slice(offset, offset + limit),
+    pagination: { page, limit, total, totalPages }
+  };
+}

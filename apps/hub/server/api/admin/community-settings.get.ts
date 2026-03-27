@@ -9,7 +9,12 @@ export default defineEventHandler(async (event) => {
   await requireAdminSession(event);
   const db = getDb();
   const [row] = await db
-    .select({ communityName: communitySettings.communityName, discordInviteCode: communitySettings.discordInviteCode, defaultLocale: communitySettings.defaultLocale })
+    .select({
+      communityName: communitySettings.communityName,
+      discordInviteCode: communitySettings.discordInviteCode,
+      defaultLocale: communitySettings.defaultLocale,
+      displayNameTemplate: communitySettings.displayNameTemplate
+    })
     .from(communitySettings)
     .where(eq(communitySettings.id, COMMUNITY_SETTINGS_SINGLETON_ID))
     .limit(1);
@@ -17,6 +22,7 @@ export default defineEventHandler(async (event) => {
   return {
     communityName: row?.communityName ?? null,
     discordInviteCode: row?.discordInviteCode ?? null,
-    defaultLocale: normalizeCommunityDefaultLocale(row?.defaultLocale, "en")
+    defaultLocale: normalizeCommunityDefaultLocale(row?.defaultLocale, "en"),
+    displayNameTemplate: row?.displayNameTemplate ?? []
   };
 });

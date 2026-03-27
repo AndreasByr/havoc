@@ -8,6 +8,7 @@ const props = withDefaults(
     disabled?: boolean;
     id?: string;
     size?: "md" | "sm" | "xs";
+    bare?: boolean;
     hint?: string;
     error?: string;
   }>(),
@@ -16,6 +17,7 @@ const props = withDefaults(
     disabled: false,
     id: undefined,
     size: "md",
+    bare: false,
     hint: undefined,
     error: undefined,
   }
@@ -26,7 +28,10 @@ const inputId = computed(() => props.id || `checkbox-field-${autoId}`);
 </script>
 
 <template>
-  <div class="field" :class="[`field--${size}`, { 'field--error': !!error }]">
+  <div v-if="bare" class="flex items-center">
+    <input :id="inputId" v-model="model" type="checkbox" class="toggle toggle-sm" :disabled="disabled">
+  </div>
+  <div v-else class="field" :class="[`field--${size}`, { 'field--error': !!error }]">
     <label class="field__label" :for="inputId">{{ label }}</label>
     <label class="checkbox-field" :for="inputId">
       <input :id="inputId" v-model="model" type="checkbox" class="checkbox-field__input" :disabled="disabled">

@@ -40,7 +40,7 @@ const { data: branding } = await useFetch<{ logoDataUrl: string | null; communit
 });
 
 const currentUser = computed(() => {
-  return (user.value as { profileName?: string; permissionRoles?: string[]; roles?: string[] } | null) || null;
+  return (user.value as { profileName?: string; avatarUrl?: string | null; permissionRoles?: string[]; roles?: string[] } | null) || null;
 });
 
 const permissionRoles = computed(() => currentUser.value?.permissionRoles ?? currentUser.value?.roles ?? []);
@@ -51,12 +51,11 @@ const mobileExpandedIds = ref<string[]>([]);
 
 const iconNames = {
   dashboard: "proicons:home",
-  members: "proicons:person",
-  profile: "proicons:person",
-  moderation: "proicons:shield",
-  admin: "proicons:lock",
+  members: "proicons:person-multiple",
+  settings: "proicons:settings",
   apps: "proicons:grid",
-  cms: "proicons:document"
+  cms: "proicons:document",
+  dev: "proicons:code"
 } as const;
 
 const fallbackRail = computed(() => {
@@ -64,12 +63,12 @@ const fallbackRail = computed(() => {
   const hasAnyRole = (...required: string[]) => required.some((role) => roles.includes(role));
   const items: Array<{ id: string; to: string; label: string; labelKey?: string; iconPath: string; visible: boolean }> = [
     { id: "dashboard", to: localePath("/dashboard"), label: t("nav.dashboard"), labelKey: "nav.dashboard", iconPath: iconNames.dashboard, visible: true },
+    { id: "profile", to: localePath("/profile/customize"), label: t("nav.profile"), labelKey: "nav.profile", iconPath: "proicons:person", visible: true },
     { id: "members", to: localePath("/members"), label: t("nav.members"), labelKey: "nav.members", iconPath: iconNames.members, visible: true },
-    { id: "profile", to: localePath("/profile"), label: t("nav.profile"), labelKey: "nav.profile", iconPath: iconNames.profile, visible: true },
-    { id: "moderation", to: localePath("/mod"), label: t("nav.moderation"), labelKey: "nav.moderation", iconPath: iconNames.moderation, visible: hasAnyRole("moderator", "admin", "superadmin") },
-    { id: "admin", to: localePath("/admin"), label: t("nav.admin"), labelKey: "nav.admin", iconPath: iconNames.admin, visible: hasAnyRole("admin", "superadmin") },
+    { id: "settings", to: localePath("/settings"), label: t("nav.settings"), labelKey: "nav.settings", iconPath: iconNames.settings, visible: hasAnyRole("moderator", "admin", "superadmin") },
     { id: "apps", to: localePath("/apps"), label: t("nav.apps"), labelKey: "nav.apps", iconPath: iconNames.apps, visible: hasAnyRole("moderator", "admin", "superadmin") },
-    { id: "cms", to: localePath("/cms"), label: t("nav.cms"), labelKey: "nav.cms", iconPath: iconNames.cms, visible: hasAnyRole("moderator", "admin", "superadmin") }
+    { id: "cms", to: localePath("/cms"), label: t("nav.cms"), labelKey: "nav.cms", iconPath: iconNames.cms, visible: hasAnyRole("moderator", "admin", "superadmin") },
+    { id: "dev", to: localePath("/dev"), label: t("nav.dev"), labelKey: "nav.dev", iconPath: iconNames.dev, visible: useRuntimeConfig().public.isDev === true }
   ];
 
   return items.filter((item) => item.visible).map((item, index) => ({
@@ -356,10 +355,16 @@ watch(() => route.path, () => {
         </div>
 
         <div class="px-4 py-4">
-          <div class="mb-3">
-            <p class="text-sm font-medium">{{ currentUser?.profileName || $t("internalNav.defaultMember") }}</p>
-            <p class="text-xs opacity-65">{{ permissionRoles.join(", ") || $t("internalNav.defaultPermissionRole") }}</p>
-          </div>
+          <NuxtLink :to="localePath('/profile/customize')" class="mb-3 flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-base-content/5">
+            <div class="size-9 shrink-0 overflow-hidden rounded-full bg-base-300">
+              <img v-if="currentUser?.avatarUrl" :src="currentUser.avatarUrl" alt="" class="size-full object-cover" />
+              <span v-else class="flex size-full items-center justify-center text-xs font-semibold uppercase text-base-content/50">{{ (currentUser?.profileName || "?").slice(0, 2) }}</span>
+            </div>
+            <div class="min-w-0">
+              <p class="truncate text-sm font-medium">{{ currentUser?.profileName || $t("internalNav.defaultMember") }}</p>
+              <p class="truncate text-xs opacity-65">{{ permissionRoles.join(", ") || $t("internalNav.defaultPermissionRole") }}</p>
+            </div>
+          </NuxtLink>
           <NuxtLink :to="localePath('/marketplace')" class="btn btn-ghost w-full">{{ $t("nav.marketplace") }}</NuxtLink>
         </div>
       </template>

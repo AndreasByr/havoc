@@ -19,8 +19,7 @@ const inputTypeI18nMap: Record<string, string> = {
   yes_no: "yesNo",
   date: "date",
   file_upload: "fileUpload",
-  discord_username: "discordUsername",
-  display_name: "displayName"
+  discord_username: "discordUsername"
 };
 
 const inputTypeLabel = computed(() => {
@@ -31,13 +30,13 @@ const inputTypeLabel = computed(() => {
 
 <template>
   <div class="flow-node flow-node--input">
-    <Handle type="target" :position="Position.Top" />
+    <Handle v-if="!parentNode" type="target" :position="Position.Top" />
     <div class="flow-node__header">
       <span class="flow-node__type-badge">{{ inputTypeLabel }}</span>
       <span v-if="data.required" class="flow-node__required">*</span>
     </div>
     <div class="flow-node__label">{{ data.label || t("applications.flowBuilder.inputTypes.untitledField") }}</div>
-    <Handle type="source" :position="Position.Bottom" />
+    <Handle v-if="!parentNode" type="source" :position="Position.Bottom" />
   </div>
 </template>
 

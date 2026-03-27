@@ -20,6 +20,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: "update-node-data", nodeId: string, data: Record<string, unknown>): void;
   (e: "delete-node", nodeId: string): void;
+  (e: "ungroup-node", nodeId: string): void;
   (e: "close"): void;
 }>();
 
@@ -35,7 +36,6 @@ const inputTypeOptions = computed<{ value: FlowInputType; label: string }[]>(() 
   { value: "date", label: t("applications.flowBuilder.inputTypes.date") },
   { value: "file_upload", label: t("applications.flowBuilder.inputTypes.fileUpload") },
   { value: "discord_username", label: t("applications.flowBuilder.inputTypes.discordUsername") },
-  { value: "display_name", label: t("applications.flowBuilder.inputTypes.displayName") },
 ]);
 
 // Reactive local copy of data for editing
@@ -146,12 +146,20 @@ function onSourceNodeChange(newSourceNodeId: string) {
 </script>
 
 <template>
-  <div v-if="node" class="flow-sidebar">
+  <div v-if="node" class="flow-sidebar" @keydown.stop>
     <div class="flow-sidebar__header">
       <h3 class="text-sm font-semibold">{{ nodeType }}</h3>
-      <button class="btn btn-ghost btn-sm" @click="emit('close')">
-        <Icon name="proicons:cancel" />
-      </button>
+      <div class="flex items-center gap-1">
+        <button v-if="node.parentNode" class="btn btn-ghost btn-sm" :title="t('applications.flowBuilder.sidebar.removeFromGroup')" @click="emit('ungroup-node', node.id)">
+          <Icon name="proicons:arrow-export" />
+        </button>
+        <button v-if="isEditable" class="btn btn-ghost btn-sm" style="color: var(--color-error)" :title="t('applications.flowBuilder.sidebar.deleteNode')" @click="emit('delete-node', node.id)">
+          <Icon name="proicons:delete" />
+        </button>
+        <button class="btn btn-ghost btn-sm" @click="emit('close')">
+          <Icon name="proicons:cancel" />
+        </button>
+      </div>
     </div>
 
     <div class="flow-sidebar__body">
@@ -228,6 +236,7 @@ function onSourceNodeChange(newSourceNodeId: string) {
             <button class="btn btn-ghost btn-sm mt-1" @click="addOption">{{ t("applications.flowBuilder.sidebar.addOption") }}</button>
           </div>
         </template>
+
       </template>
 
       <template v-if="nodeType === 'info'">
@@ -361,12 +370,6 @@ function onSourceNodeChange(newSourceNodeId: string) {
       </template>
     </div>
 
-    <!-- Delete -->
-    <div v-if="isEditable" class="flow-sidebar__footer">
-      <button class="btn btn-error btn-outline btn-sm w-full" @click="emit('delete-node', node.id)">
-        {{ t("applications.flowBuilder.sidebar.deleteNode") }}
-      </button>
-    </div>
   </div>
 </template>
 
@@ -393,11 +396,6 @@ function onSourceNodeChange(newSourceNodeId: string) {
   padding: 1rem;
   flex: 1;
   overflow-y: auto;
-}
-
-.flow-sidebar__footer {
-  padding: 1rem;
-  border-top: 1px solid var(--color-line);
 }
 
 .sidebar-field {

@@ -3,6 +3,7 @@ import { users } from "@guildora/shared";
 import type { AppSession, AppSessionUser } from "./auth";
 import { getCommunityRoleName, getUserRoles } from "./community";
 import { getDb } from "./db";
+import { loadModerationRights, defaultModerationRights } from "./moderation-rights";
 
 const sessionMaxAgeSeconds = 60 * 60 * 24 * 7;
 
@@ -14,9 +15,10 @@ export async function getSessionUserById(userId: string): Promise<AppSessionUser
     return null;
   }
 
-  const [permissionRoles, communityRole] = await Promise.all([
+  const [permissionRoles, communityRole, moderationRights] = await Promise.all([
     getUserRoles(userId),
-    getCommunityRoleName(userId)
+    getCommunityRoleName(userId),
+    loadModerationRights(db).catch(() => defaultModerationRights)
   ]);
 
   return {
@@ -25,7 +27,8 @@ export async function getSessionUserById(userId: string): Promise<AppSessionUser
     profileName: user.displayName,
     avatarUrl: user.avatarUrl,
     permissionRoles,
-    communityRole
+    communityRole,
+    moderationRights
   };
 }
 

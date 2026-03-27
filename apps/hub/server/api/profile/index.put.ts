@@ -1,12 +1,12 @@
 import { eq } from "drizzle-orm";
-import { parseProfileName, profiles, users } from "@guildora/shared";
+import { parseProfileName, parseWithTemplate, profiles, users } from "@guildora/shared";
 import { requireSession } from "../../utils/auth";
 import { getDb } from "../../utils/db";
 import { syncDiscordUserFromWebsite } from "../../utils/botSync";
 import { buildEditableDiscordRolesForUser } from "../../utils/discord-roles";
 import { readBodyWithSchema } from "../../utils/http";
 import { jsonResponse, sanitizeForJson } from "../../utils/jsonResponse";
-import { updateProfileSchema, updateUserDisplayName, upsertProfileDetails } from "../../utils/profile-write";
+import { updateProfileSchema, updateUserDisplayName, updateUserDisplayNameFromTemplate, upsertProfileDetails } from "../../utils/profile-write";
 import {
   normalizeAppearancePreference,
   readAppearancePreferenceFromCustomFields,
@@ -17,17 +17,26 @@ import {
   readLegacyLocalePreferenceFromCustomFields,
   resolveEffectiveLocale
 } from "../../../utils/locale-preference";
-import { loadCommunitySettingsLocale } from "../../utils/community-settings";
+import { loadCommunitySettingsLocale, loadDisplayNameTemplate } from "../../utils/community-settings";
 
 export default defineEventHandler(async (event) => {
   const db = getDb();
   const session = await requireSession(event);
   const parsed = await readBodyWithSchema(event, updateProfileSchema, "Invalid profile payload.");
 
-  const profileName = await updateUserDisplayName(db, session.user.id, {
-    ingameName: parsed.ingameName,
-    rufname: parsed.rufname
-  });
+  const displayNameTemplate = await loadDisplayNameTemplate(db);
+  let profileName: string;
+  if (parsed.displayNameParts && displayNameTemplate.length > 0) {
+    profileName = await updateUserDisplayNameFromTemplate(db, session.user.id, displayNameTemplate, parsed.displayNameParts);
+  } else {
+    if (!parsed.ingameName) {
+      throw createError({ statusCode: 400, statusMessage: "ingameName is required." });
+    }
+    profileName = await updateUserDisplayName(db, session.user.id, {
+      ingameName: parsed.ingameName,
+      rufname: parsed.rufname
+    });
+  }
   const existingProfileRows = await db.select().from(profiles).where(eq(profiles.userId, session.user.id)).limit(1);
   const existingCustomFields = (existingProfileRows[0]?.customFields || {}) as Record<string, unknown>;
   const baseCustomFields = parsed.customFields ?? existingCustomFields;
@@ -76,8 +85,12 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  const parsedName = parseProfileName(userRow?.displayName ?? profileName);
+  const finalDisplayName = userRow?.displayName ?? profileName;
+  const parsedName = parseProfileName(finalDisplayName);
   const communityDefaultLocale = await loadCommunitySettingsLocale(db);
+  const displayNameParts = displayNameTemplate.length > 0
+    ? parseWithTemplate(finalDisplayName, displayNameTemplate)
+    : undefined;
 
   const responseCustomFields = profileRow?.customFields ?? updatedProfile.customFields;
   const responseLocalePreference = normalizeUserLocalePreference(
@@ -89,9 +102,11 @@ export default defineEventHandler(async (event) => {
     communityDefaultLocale
   });
   const responseBody = {
-    profileName: userRow?.displayName ?? profileName,
+    profileName: finalDisplayName,
     ingameName: parsedName.ingameName,
     rufname: parsedName.rufname,
+    displayNameTemplate,
+    displayNameParts,
     appearancePreference: readAppearancePreferenceFromCustomFields(responseCustomFields),
     localePreference: responseLocalePreference,
     effectiveLocale: effectiveLocale.locale,

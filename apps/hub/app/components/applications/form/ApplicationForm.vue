@@ -26,8 +26,9 @@ const linearized = computed(() => {
 });
 
 const steps = computed(() => linearized.value.steps);
+const totalSteps = computed(() => steps.value.length);
 const currentStep = computed(() => steps.value[currentStepIndex.value] || null);
-const isLastStep = computed(() => currentStepIndex.value >= steps.value.length - 1);
+const isLastStep = computed(() => currentStepIndex.value >= totalSteps.value - 1);
 const isFirstStep = computed(() => currentStepIndex.value === 0);
 const currentIsAbort = computed(() => currentStep.value?.type === "abort");
 
@@ -98,7 +99,7 @@ const progressPercent = computed(() => {
 
     <div v-if="currentStep" class="application-form__step">
       <template v-if="(currentStep.type === 'input' || currentStep.type === 'input_group') && currentStep.fields?.length">
-        <ApplicationsFormFormField
+        <ApplicationsFormField
           v-for="field in currentStep.fields"
           :key="field.nodeId"
           :field="field"

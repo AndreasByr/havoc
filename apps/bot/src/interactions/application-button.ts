@@ -97,11 +97,11 @@ export async function handleApplicationButtonInteraction(
 
   // Generate token
   const tokenSecret = process.env.APPLICATION_TOKEN_SECRET;
-  const hubUrl = process.env.HUB_URL || process.env.NUXT_PUBLIC_HUB_URL;
+  const hubUrl = process.env.NUXT_PUBLIC_HUB_URL;
 
   if (!tokenSecret || !hubUrl) {
-    logger.error("APPLICATION_TOKEN_SECRET or HUB_URL not configured.");
-    await interaction.reply({ ephemeral: true, content: "Application system is not configured properly." });
+    logger.error("APPLICATION_TOKEN_SECRET or NUXT_PUBLIC_HUB_URL not configured.");
+    await interaction.reply({ ephemeral: true, content: "The application system is currently being set up. Please try again later or contact a server moderator." });
     return;
   }
 

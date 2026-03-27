@@ -1,16 +1,17 @@
 import { z } from "zod";
 import { eq } from "drizzle-orm";
-import { communitySettings } from "@guildora/shared";
+import { communitySettings, displayNameTemplateSchema } from "@guildora/shared";
 import { requireAdminSession } from "../../utils/auth";
 import { getDb } from "../../utils/db";
 import { readBodyWithSchema } from "../../utils/http";
 import { localePreferences, normalizeCommunityDefaultLocale } from "../../../utils/locale-preference";
-import { COMMUNITY_SETTINGS_SINGLETON_ID } from "../../utils/community-settings";
+import { COMMUNITY_SETTINGS_SINGLETON_ID, invalidateCommunitySettingsCache } from "../../utils/community-settings";
 
 const schema = z.object({
   communityName: z.string().trim().max(200).nullable(),
   discordInviteCode: z.string().trim().max(20).nullable().optional(),
-  defaultLocale: z.enum(localePreferences).optional()
+  defaultLocale: z.enum(localePreferences).optional(),
+  displayNameTemplate: displayNameTemplateSchema.optional()
 });
 
 export default defineEventHandler(async (event) => {
@@ -27,6 +28,7 @@ export default defineEventHandler(async (event) => {
   const value = parsed.communityName === "" ? null : parsed.communityName;
   const discordInviteCode = parsed.discordInviteCode === "" ? null : (parsed.discordInviteCode ?? existing?.discordInviteCode ?? null);
   const defaultLocale = normalizeCommunityDefaultLocale(parsed.defaultLocale ?? existing?.defaultLocale, "en");
+  const displayNameTemplate = parsed.displayNameTemplate ?? (existing?.displayNameTemplate as typeof parsed.displayNameTemplate) ?? [];
 
   if (existing) {
     await db
@@ -35,6 +37,7 @@ export default defineEventHandler(async (event) => {
         communityName: value,
         discordInviteCode,
         defaultLocale,
+        displayNameTemplate,
         updatedAt: new Date(),
         updatedBy: session.user.id
       })
@@ -45,9 +48,12 @@ export default defineEventHandler(async (event) => {
       communityName: value,
       discordInviteCode,
       defaultLocale,
+      displayNameTemplate,
       updatedBy: session.user.id
     });
   }
 
-  return { communityName: value, discordInviteCode, defaultLocale };
+  invalidateCommunitySettingsCache();
+
+  return { communityName: value, discordInviteCode, defaultLocale, displayNameTemplate };
 });

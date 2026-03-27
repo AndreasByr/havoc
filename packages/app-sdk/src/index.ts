@@ -36,6 +36,19 @@ export interface InteractionPayload {
   occurredAt: string;
 }
 
+export interface MessagePayload {
+  guildId: string;
+  channelId: string;
+  messageId: string;
+  memberId: string;
+  content: string;
+  occurredAt: string;
+  /** If this message is a reply, the ID of the replied-to message. */
+  replyToMessageId?: string;
+  /** If this message is a reply, the user ID of the replied-to message's author. */
+  replyToUserId?: string;
+}
+
 // ─── App KV store ────────────────────────────────────────────────────────────
 
 export interface AppDb {
@@ -68,6 +81,8 @@ export interface BotClient {
   getMemberVoiceChannelId(memberId: string): Promise<string | null>;
   /** List voice channels in a category. Guild is derived from the category. */
   listVoiceChannelsByCategory(categoryId: string): Promise<Array<{ id: string; name: string; parentId: string | null; memberCount: number | null }>>;
+  /** List all text channels in the guild. */
+  listTextChannels(): Promise<Array<{ id: string; name: string }>>;
 }
 
 // ─── Bot context ─────────────────────────────────────────────────────────────
@@ -79,6 +94,8 @@ export interface BotContext {
   db: AppDb;
   /** Discord bot client. */
   bot: BotClient;
+  /** The bot's own Discord user ID. */
+  botUserId: string;
 }
 
 // ─── Hub context (injected into event.context.guildora) ──────────────────

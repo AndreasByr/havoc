@@ -1,0 +1,21 @@
+CREATE TABLE IF NOT EXISTS "community_custom_fields" (
+  "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+  "key" text NOT NULL UNIQUE,
+  "label" text NOT NULL,
+  "description" text,
+  "input_type" text NOT NULL,
+  "options" jsonb,
+  "slider_min" integer,
+  "slider_max" integer,
+  "slider_step" integer,
+  "required" boolean NOT NULL DEFAULT false,
+  "active" boolean NOT NULL DEFAULT true,
+  "is_default" boolean NOT NULL DEFAULT false,
+  "user_can_view" boolean NOT NULL DEFAULT false,
+  "user_can_edit" boolean NOT NULL DEFAULT false,
+  "mod_can_view" boolean NOT NULL DEFAULT false,
+  "mod_can_edit" boolean NOT NULL DEFAULT false,
+  "sort_order" integer NOT NULL DEFAULT 0,
+  "created_at" timestamp with time zone DEFAULT now() NOT NULL,
+  "updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);

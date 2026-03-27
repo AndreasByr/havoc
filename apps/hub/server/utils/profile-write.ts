@@ -1,5 +1,6 @@
 import { eq, sql } from "drizzle-orm";
-import { profiles, serializeProfileName, users } from "@guildora/shared";
+import { profiles, serializeProfileName, serializeFromTemplate, validateWithTemplate, users } from "@guildora/shared";
+import type { DisplayNameField } from "@guildora/shared";
 import { z } from "zod";
 import { appearancePreferences } from "../../utils/appearance";
 import { localePreferences } from "../../utils/locale-preference";
@@ -10,10 +11,13 @@ const profileNameSchema = z.object({
   rufname: z.string().trim().max(60).refine((value) => !value.includes("|")).nullable()
 });
 
-export const updateProfileSchema = profileNameSchema.extend({
+export const updateProfileSchema = z.object({
+  ingameName: z.string().trim().max(60).refine((value) => !value.includes("|")).default(""),
+  rufname: z.string().trim().max(60).refine((value) => !value.includes("|")).nullable().default(null),
   appearancePreference: z.enum(appearancePreferences).optional(),
   localePreference: z.enum(localePreferences).nullable().optional(),
-  customFields: z.record(z.unknown()).optional()
+  customFields: z.record(z.unknown()).optional(),
+  displayNameParts: z.record(z.string(), z.string()).optional()
 });
 
 export const updateModProfileSchema = profileNameSchema;
@@ -40,6 +44,24 @@ export async function updateUserDisplayName(
     })
     .where(eq(users.id, userId));
   return profileName;
+}
+
+export async function updateUserDisplayNameFromTemplate(
+  db: DbClient,
+  userId: string,
+  template: DisplayNameField[],
+  values: Record<string, string>
+): Promise<string> {
+  const validated = validateWithTemplate(template, values);
+  const profileName = serializeFromTemplate(template, validated);
+  await db
+    .update(users)
+    .set({
+      displayName: profileName || "Member",
+      updatedAt: sql`now()`
+    })
+    .where(eq(users.id, userId));
+  return profileName || "Member";
 }
 
 export async function upsertProfileDetails(

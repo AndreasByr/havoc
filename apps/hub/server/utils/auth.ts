@@ -1,3 +1,12 @@
+export interface ModerationRightsSession {
+  modDeleteUsers: boolean;
+  modManageApplications: boolean;
+  modAccessCommunitySettings: boolean;
+  modAccessDesign: boolean;
+  modAccessApps: boolean;
+  modAccessDiscordRoles: boolean;
+}
+
 /** Canonical field for technical roles is permissionRoles. roles is kept as optional alias for legacy sessions. */
 export interface AppSessionUser {
   id: string;
@@ -8,6 +17,7 @@ export interface AppSessionUser {
   roles?: string[];
   permissionRoles?: string[];
   communityRole?: string | null;
+  moderationRights?: ModerationRightsSession;
 }
 
 export interface AppSession {
@@ -59,5 +69,11 @@ export async function requireAdminSession(event: Parameters<typeof requireUserSe
 export async function requireModeratorSession(event: Parameters<typeof requireUserSession>[0]): Promise<AppSession> {
   const session = await requireSession(event);
   requireRole(session.user, moderatorPermissionRoles);
+  return session;
+}
+
+export async function requireSuperadminSession(event: Parameters<typeof requireUserSession>[0]): Promise<AppSession> {
+  const session = await requireSession(event);
+  requireRole(session.user, ["superadmin"]);
   return session;
 }

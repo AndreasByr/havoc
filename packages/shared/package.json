@@ -13,6 +13,16 @@
       "types": "./src/types/roles.ts",
       "import": "./src/types/roles.ts",
       "default": "./src/types/roles.ts"
+    },
+    "./db/client": {
+      "types": "./src/db/client.ts",
+      "import": "./src/db/client.ts",
+      "default": "./src/db/client.ts"
+    },
+    "./utils/application-tokens": {
+      "types": "./src/utils/application-tokens.ts",
+      "import": "./src/utils/application-tokens.ts",
+      "default": "./src/utils/application-tokens.ts"
     }
   },
   "main": "./dist/index.js",

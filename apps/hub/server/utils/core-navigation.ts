@@ -3,6 +3,7 @@ export type CoreNavigationOptions = {
   allowModeratorCmsAccess?: boolean;
   allowModeratorAppsAccess?: boolean;
   allowModeratorApplicationsAccess?: boolean;
+  isDev?: boolean;
 };
 
 export type CoreRailItem = {
@@ -35,11 +36,11 @@ const iconNames = {
   dashboard: "proicons:home",
   members: "proicons:person-multiple",
   profile: "proicons:person",
-  moderation: "proicons:shield",
+  settings: "proicons:settings",
   applications: "proicons:checkmark-circle",
-  admin: "proicons:lock",
   cms: "proicons:document",
-  apps: "proicons:grid"
+  apps: "proicons:grid",
+  dev: "proicons:code"
 } as const;
 
 function isSupportedLocale(value: string): value is NavigationLocale {
@@ -55,6 +56,7 @@ export function getLocalizedCoreNavigation(locale: NavigationLocale, options: Co
   const allowModeratorCmsAccess = options.allowModeratorCmsAccess ?? true;
   const allowModeratorAppsAccess = options.allowModeratorAppsAccess ?? true;
   const allowModeratorApplicationsAccess = options.allowModeratorApplicationsAccess ?? true;
+  const isDev = options.isDev ?? false;
   const cmsRequiredRoles = allowModeratorCmsAccess ? ["moderator", "admin", "superadmin"] : ["admin", "superadmin"];
   const appsRequiredRoles = allowModeratorAppsAccess ? ["moderator", "admin", "superadmin"] : ["admin", "superadmin"];
   const applicationsRequiredRoles = allowModeratorApplicationsAccess ? ["moderator", "admin", "superadmin"] : ["admin", "superadmin"];
@@ -64,44 +66,36 @@ export function getLocalizedCoreNavigation(locale: NavigationLocale, options: Co
     dashboard: { label: "Dashboard", key: "nav.dashboard" },
     members: { label: "Members", key: "nav.members" },
     profile: { label: "Profile", key: "nav.profile" },
-    moderation: { label: "Moderation", key: "nav.moderation" },
-    admin: { label: "Admin", key: "nav.admin" },
+    settings: { label: "Settings", key: "nav.settings" },
     cms: { label: "Landing page", key: "nav.cms" },
     overview: { label: "Overview", key: "dashboard.title" },
     memberList: { label: "Member list", key: "members.title" },
-    profileDesign: { label: "Settings", key: "profile.designTitle" },
-    profileName: { label: "Name", key: "profile.nameTitle" },
-    profileRoles: { label: "Discord Roles", key: "profile.rolesTitle" },
-    administration: { label: "Administration", key: "admin.title" },
-    permissions: { label: "Permissions", key: "admin.roles" },
+    community: { label: "Community", key: "settings.communityTitle" },
+    customFields: { label: "Custom Fields", key: "settings.customFieldsTitle" },
+    permissions: { label: "Permissions", key: "settings.permissionsTitle" },
+    moderationRights: { label: "Moderation Rights", key: "settings.moderationRightsTitle" },
     design: { label: "Design", key: "adminTheme.title" },
+    files: { label: "Files", key: "settingsFiles.navLabel" },
     appsSection: { label: "Apps", key: "nav.apps" },
     appsOverview: { label: "Overview", key: "adminApps.overviewNavLabel" },
     appsSideload: { label: "Sideloading", key: "adminApps.sideloadTitle" },
     appsExplore: { label: "Explore Apps", key: "adminApps.exploreNavLabel" },
-    communitySettings: { label: "Community Settings", key: "adminDiscordRoles.title" },
-    devRoleSwitcher: { label: "DEV", key: "devRoleSwitcher.title" },
-    modUsers: { label: "User Management", key: "moderation.userManagement" },
+    settingsApps: { label: "Apps", key: "nav.apps" },
     applicationsSection: { label: "Applications", key: "nav.applications" },
     applicationsFlows: { label: "Flows", key: "applications.flows" },
     applicationsOpen: { label: "Open Applications", key: "applications.open" },
     applicationsArchive: { label: "Archive", key: "applications.archive" },
-    applicationsConfig: { label: "Settings", key: "applications.config" }
+    applicationsConfig: { label: "Settings", key: "applications.config" },
+    devSection: { label: "DEV", key: "nav.dev" },
+    devRoleSwitcher: { label: "Role Switcher", key: "devRoleSwitcher.title" },
+    devSideload: { label: "Sideload", key: "adminApps.sideloadTitle" },
+    devReset: { label: "Reset", key: "dev.resetTitle" }
   } as const;
 
   const coreRailItems: CoreRailItem[] = [
     { id: "dashboard", to: "/dashboard", label: labels.dashboard.label, labelKey: labels.dashboard.key, iconPath: iconNames.dashboard, order: 10, requiredRoles: [] },
+    { id: "profile", to: "/profile/customize", label: labels.profile.label, labelKey: labels.profile.key, iconPath: iconNames.profile, order: 15, requiredRoles: [] },
     { id: "members", to: "/members", label: labels.members.label, labelKey: labels.members.key, iconPath: iconNames.members, order: 20, requiredRoles: [] },
-    { id: "profile", to: "/profile", label: labels.profile.label, labelKey: labels.profile.key, iconPath: iconNames.profile, order: 30, requiredRoles: [] },
-    {
-      id: "moderation",
-      to: "/mod",
-      label: labels.moderation.label,
-      labelKey: labels.moderation.key,
-      iconPath: iconNames.moderation,
-      order: 50,
-      requiredRoles: ["moderator", "admin", "superadmin"]
-    },
     {
       id: "applications",
       to: "/applications",
@@ -111,9 +105,10 @@ export function getLocalizedCoreNavigation(locale: NavigationLocale, options: Co
       order: 55,
       requiredRoles: applicationsRequiredRoles
     },
-    { id: "admin", to: "/admin", label: labels.admin.label, labelKey: labels.admin.key, iconPath: iconNames.admin, order: 60, requiredRoles: ["admin", "superadmin"] },
+    { id: "settings", to: "/settings", label: labels.settings.label, labelKey: labels.settings.key, iconPath: iconNames.settings, order: 60, requiredRoles: ["moderator", "admin", "superadmin"] },
     { id: "apps", to: "/apps", label: labels.appsSection.label, labelKey: labels.appsSection.key, iconPath: iconNames.apps, order: 75, requiredRoles: appsRequiredRoles },
-    { id: "cms", to: "/cms", label: labels.cms.label, labelKey: labels.cms.key, iconPath: iconNames.cms, order: 80, requiredRoles: cmsRequiredRoles }
+    { id: "cms", to: "/cms", label: labels.cms.label, labelKey: labels.cms.key, iconPath: iconNames.cms, order: 80, requiredRoles: cmsRequiredRoles },
+    ...(isDev ? [{ id: "dev", to: "/dev", label: labels.devSection.label, labelKey: labels.devSection.key, iconPath: iconNames.dev, order: 999, requiredRoles: [] as string[] }] : [])
   ];
 
   const corePanelGroups: CorePanelGroup[] = [
@@ -134,38 +129,18 @@ export function getLocalizedCoreNavigation(locale: NavigationLocale, options: Co
       items: [{ id: "members-list", label: labels.memberList.label, labelKey: labels.memberList.key, to: "/members", requiredRoles: [] }]
     },
     {
-      id: "profile-main",
-      railItemId: "profile",
-      title: labels.profile.label,
-      titleKey: labels.profile.key,
+      id: "settings-main",
+      railItemId: "settings",
+      title: labels.settings.label,
+      titleKey: labels.settings.key,
       order: 10,
       items: [
-        { id: "profile-name", label: labels.profileName.label, labelKey: labels.profileName.key, to: "/profile/name", requiredRoles: [] },
-        { id: "profile-roles", label: labels.profileRoles.label, labelKey: labels.profileRoles.key, to: "/profile/roles", requiredRoles: [] },
-        { id: "profile-design", label: labels.profileDesign.label, labelKey: labels.profileDesign.key, to: "/profile/design", requiredRoles: [] }
-      ]
-    },
-    {
-      id: "moderation-main",
-      railItemId: "moderation",
-      title: labels.moderation.label,
-      titleKey: labels.moderation.key,
-      order: 10,
-      items: [
-        { id: "mod-users", label: labels.modUsers.label, labelKey: labels.modUsers.key, to: "/mod/users", requiredRoles: ["moderator", "admin", "superadmin"] }
-      ]
-    },
-    {
-      id: "admin-main",
-      railItemId: "admin",
-      title: labels.administration.label,
-      titleKey: labels.administration.key,
-      order: 10,
-      items: [
-        { id: "admin-design", label: labels.design.label, labelKey: labels.design.key, to: "/admin/design", requiredRoles: ["admin", "superadmin"] },
-        { id: "admin-permissions", label: labels.permissions.label, labelKey: labels.permissions.key, to: "/admin/permissions", requiredRoles: ["admin", "superadmin"] },
-        { id: "admin-discord-roles", label: labels.communitySettings.label, labelKey: labels.communitySettings.key, to: "/admin/discord-roles", requiredRoles: ["admin", "superadmin"] },
-        { id: "admin-dev-role-switcher", label: labels.devRoleSwitcher.label, labelKey: labels.devRoleSwitcher.key, to: "/admin/dev-role-switcher", requiredRoles: ["admin", "superadmin"] }
+        { id: "settings-community", label: labels.community.label, labelKey: labels.community.key, to: "/settings/community", requiredRoles: ["admin", "superadmin"] },
+        { id: "settings-custom-fields", label: labels.customFields.label, labelKey: labels.customFields.key, to: "/settings/custom-fields", requiredRoles: ["admin", "superadmin"] },
+        { id: "settings-permissions", label: labels.permissions.label, labelKey: labels.permissions.key, to: "/settings/permissions", requiredRoles: ["admin", "superadmin"] },
+        { id: "settings-moderation-rights", label: labels.moderationRights.label, labelKey: labels.moderationRights.key, to: "/settings/moderation-rights", requiredRoles: ["admin", "superadmin"] },
+        { id: "settings-design", label: labels.design.label, labelKey: labels.design.key, to: "/settings/design", requiredRoles: ["admin", "superadmin"] },
+        { id: "settings-files", label: labels.files.label, labelKey: labels.files.key, to: "/settings/files", requiredRoles: ["superadmin"] }
       ]
     },
     {
@@ -189,7 +164,6 @@ export function getLocalizedCoreNavigation(locale: NavigationLocale, options: Co
       order: 10,
       items: [
         { id: "apps-overview", label: labels.appsOverview.label, labelKey: labels.appsOverview.key, to: "/apps/overview", requiredRoles: appsRequiredRoles },
-        { id: "apps-sideload", label: labels.appsSideload.label, labelKey: labels.appsSideload.key, to: "/apps/sideload", requiredRoles: ["admin", "superadmin"] },
         { id: "apps-explore", label: labels.appsExplore.label, labelKey: labels.appsExplore.key, to: "/apps/explore", requiredRoles: appsRequiredRoles }
       ]
     },
@@ -200,7 +174,19 @@ export function getLocalizedCoreNavigation(locale: NavigationLocale, options: Co
       titleKey: labels.cms.key,
       order: 10,
       items: [{ id: "cms-admin", label: labels.cms.label, labelKey: labels.cms.key, to: "/cms", requiredRoles: cmsRequiredRoles }]
-    }
+    },
+    ...(isDev ? [{
+      id: "dev-main",
+      railItemId: "dev",
+      title: labels.devSection.label,
+      titleKey: labels.devSection.key,
+      order: 10,
+      items: [
+        { id: "dev-role-switcher", label: labels.devRoleSwitcher.label, labelKey: labels.devRoleSwitcher.key, to: "/dev/role-switcher", requiredRoles: [] as string[] },
+        { id: "dev-sideload", label: labels.devSideload.label, labelKey: labels.devSideload.key, to: "/dev/sideload", requiredRoles: [] as string[] },
+        { id: "dev-reset", label: labels.devReset.label, labelKey: labels.devReset.key, to: "/dev/reset", requiredRoles: [] as string[] }
+      ]
+    }] : [])
   ];
 
   return { coreRailItems, corePanelGroups };

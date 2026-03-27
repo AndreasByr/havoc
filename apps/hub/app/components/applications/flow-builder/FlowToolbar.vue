@@ -3,6 +3,8 @@ const { t } = useI18n();
 
 const props = defineProps<{
   saveStatus: "idle" | "saving" | "saved" | "error";
+  publishStatus: "idle" | "publishing" | "published" | "error";
+  hasUnpublishedChanges: boolean;
   canUndo: boolean;
   canRedo: boolean;
 }>();
@@ -10,6 +12,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: "undo"): void;
   (e: "redo"): void;
+  (e: "publish"): void;
+  (e: "discard"): void;
 }>();
 
 type NodePaletteItem = {
@@ -51,6 +55,17 @@ const saveStatusColor = computed(() => {
     default: return "transparent";
   }
 });
+
+const showConfirmDiscard = ref(false);
+
+function onDiscard() {
+  showConfirmDiscard.value = true;
+}
+
+function confirmDiscard() {
+  showConfirmDiscard.value = false;
+  emit("discard");
+}
 </script>
 
 <template>
@@ -69,6 +84,48 @@ const saveStatusColor = computed(() => {
           <span>{{ t(item.labelKey) }}</span>
         </div>
       </div>
+    </div>
+
+    <!-- Publish / Discard section -->
+    <div v-if="hasUnpublishedChanges" class="flow-toolbar__publish">
+      <span class="flow-toolbar__unpublished-badge">
+        {{ t("applications.flowBuilder.toolbar.unpublishedChanges") }}
+      </span>
+      <button
+        class="btn btn-primary btn-sm w-full"
+        :disabled="publishStatus === 'publishing'"
+        @click="emit('publish')"
+      >
+        {{ publishStatus === "publishing"
+          ? t("applications.flowBuilder.toolbar.publishing")
+          : t("applications.flowBuilder.toolbar.publish") }}
+      </button>
+      <button
+        class="btn btn-outline btn-sm w-full"
+        style="border-color: var(--color-error); color: var(--color-error)"
+        @click="onDiscard"
+      >
+        {{ t("applications.flowBuilder.toolbar.discard") }}
+      </button>
+
+      <!-- Confirm discard inline -->
+      <div v-if="showConfirmDiscard" class="flow-toolbar__confirm">
+        <p class="text-xs" style="color: var(--color-error)">
+          {{ t("applications.flowBuilder.toolbar.confirmDiscard") }}
+        </p>
+        <div class="flex gap-2">
+          <button class="btn btn-sm btn-error flex-1" @click="confirmDiscard">
+            {{ t("common.confirm") }}
+          </button>
+          <button class="btn btn-sm btn-ghost flex-1" @click="showConfirmDiscard = false">
+            {{ t("common.cancel") }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="publishStatus === 'published'" class="flow-toolbar__published-msg">
+      {{ t("applications.flowBuilder.toolbar.published") }}
     </div>
 
     <div class="flow-toolbar__actions">
@@ -148,6 +205,39 @@ const saveStatusColor = computed(() => {
 
 .flow-toolbar__node-item:active {
   cursor: grabbing;
+}
+
+.flow-toolbar__publish {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  background: var(--color-surface-3);
+  border: 1px solid var(--color-line);
+}
+
+.flow-toolbar__unpublished-badge {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-warning, #f59e0b);
+}
+
+.flow-toolbar__confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--color-line);
+}
+
+.flow-toolbar__published-msg {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-success);
+  text-align: center;
 }
 
 .flow-toolbar__actions {

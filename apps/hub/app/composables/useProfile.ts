@@ -1,3 +1,4 @@
+import type { DisplayNameField } from "@guildora/shared";
 import type { AppearancePreference } from "../../utils/appearance";
 import type { LocalePreference } from "../../utils/locale-preference";
 import type { LocaleResolutionSource } from "../../utils/locale-preference";
@@ -6,6 +7,10 @@ export interface EditableProfile {
   profileName: string;
   ingameName: string;
   rufname: string | null;
+  avatarUrl?: string | null;
+  avatarSource?: string | null;
+  displayNameTemplate?: DisplayNameField[];
+  displayNameParts?: Record<string, string>;
   appearancePreference?: AppearancePreference;
   localePreference?: LocalePreference | null;
   effectiveLocale?: LocalePreference;
@@ -51,13 +56,16 @@ export function useProfile() {
   };
 
   const updateProfile = async (payload: EditableProfile) => {
-    const body = {
+    const body: Record<string, unknown> = {
       ingameName: payload.ingameName,
       rufname: payload.rufname ?? null,
       appearancePreference: payload.appearancePreference,
       localePreference: payload.localePreference,
       customFields: payload.customFields ?? {}
     };
+    if (payload.displayNameParts) {
+      body.displayNameParts = payload.displayNameParts;
+    }
     const data = await requestFetch<EditableProfile>("/api/profile", {
       method: "PUT",
       body,
@@ -86,11 +94,36 @@ export function useProfile() {
     return data;
   };
 
+  const uploadAvatar = async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const data = await $fetch<{ avatarUrl: string; avatarSource: string }>("/api/profile/avatar", {
+      method: "PUT",
+      body: formData
+    });
+    if (profile.value) {
+      profile.value = { ...profile.value, avatarUrl: data.avatarUrl, avatarSource: data.avatarSource };
+    }
+    return data;
+  };
+
+  const removeAvatar = async () => {
+    const data = await $fetch<{ avatarUrl: string | null; avatarSource: string }>("/api/profile/avatar", {
+      method: "DELETE"
+    });
+    if (profile.value) {
+      profile.value = { ...profile.value, avatarUrl: data.avatarUrl, avatarSource: data.avatarSource };
+    }
+    return data;
+  };
+
   return {
     profile,
     pending,
     fetchProfile,
     updateProfile,
+    uploadAvatar,
+    removeAvatar,
     updateLocalePreference: async (localePreference: LocalePreference | null) => {
       const data = await requestFetch<Pick<EditableProfile, "localePreference" | "effectiveLocale" | "localeSource" | "appearancePreference">>(
         "/api/profile/locale",

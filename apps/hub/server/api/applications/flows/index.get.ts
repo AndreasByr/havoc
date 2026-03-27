@@ -1,6 +1,7 @@
+import type { ApplicationFlowGraph, ApplicationFlowSettings } from "@guildora/shared";
 import { requireModeratorSession } from "../../../utils/auth";
 import { getDb } from "../../../utils/db";
-import { listFlows } from "../../../utils/application-flows";
+import { listFlows, validateFlowActivation } from "../../../utils/application-flows";
 
 export default defineEventHandler(async (event) => {
   await requireModeratorSession(event);
@@ -14,7 +15,11 @@ export default defineEventHandler(async (event) => {
       status: flow.status,
       createdBy: flow.createdBy,
       createdAt: flow.createdAt,
-      updatedAt: flow.updatedAt
+      updatedAt: flow.updatedAt,
+      warnings: validateFlowActivation(
+        flow.flowJson as ApplicationFlowGraph,
+        flow.settingsJson as ApplicationFlowSettings
+      )
     }))
   };
 });

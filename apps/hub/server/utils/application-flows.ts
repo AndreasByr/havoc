@@ -42,6 +42,39 @@ export async function countPendingApplicationsForFlow(db: GuildoraDatabase, flow
   return rows.length;
 }
 
+// ─── Activation Validation ──────────────────────────────────────────────────
+
+export interface FlowValidationWarning {
+  key: string;
+  category: "graph" | "settings" | "environment";
+}
+
+export function validateFlowActivation(
+  graph: ApplicationFlowGraph,
+  settings: ApplicationFlowSettings
+): FlowValidationWarning[] {
+  const warnings: FlowValidationWarning[] = [];
+
+  const graphErrors = validateFlowGraph(graph);
+  if (graphErrors.length > 0) {
+    warnings.push({ key: "invalidGraph", category: "graph" });
+  }
+
+  if (!settings.embed.channelId) {
+    warnings.push({ key: "missingChannelId", category: "settings" });
+  }
+
+  if (!process.env.APPLICATION_TOKEN_SECRET) {
+    warnings.push({ key: "missingTokenSecret", category: "environment" });
+  }
+
+  if (!process.env.NUXT_PUBLIC_HUB_URL) {
+    warnings.push({ key: "missingHubUrl", category: "environment" });
+  }
+
+  return warnings;
+}
+
 /**
  * Validates the basic structure of a flow graph.
  * Returns an array of error messages (empty = valid).

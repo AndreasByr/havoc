@@ -5,9 +5,10 @@ import {
   users,
   voiceSessions
 } from "@guildora/shared";
-import { eq } from "drizzle-orm";
+import { and, eq, gte, ilike, or, sql } from "drizzle-orm";
 import { requireSession } from "../../utils/auth";
 import { getDb } from "../../utils/db";
+import { parsePaginationQuery, paginateArray } from "../../utils/http";
 import { loadUserCommunityRolesMap } from "../../utils/user-directory";
 import { calculateVoiceMinutesFromSessions, classifyVoiceActivity, formatMinutesToHours } from "../../utils/voice";
 
@@ -16,14 +17,43 @@ export default defineEventHandler(async (event) => {
   const db = getDb();
 
   const query = getQuery(event);
-  const search = typeof query.search === "string" ? query.search.toLowerCase() : "";
+  const search = typeof query.search === "string" ? query.search.trim() : "";
   const roleFilter = typeof query.communityRole === "string" ? query.communityRole : "";
   const sort = typeof query.sort === "string" ? query.sort : "name";
   const voiceActivityDays = Number.parseInt(typeof query.voiceActivityDays === "string" ? query.voiceActivityDays : "7", 10);
   const days = [7, 14, 28].includes(voiceActivityDays) ? voiceActivityDays : 7;
+  const { page, limit } = parsePaginationQuery(query);
+
+  const userColumns = {
+    id: users.id,
+    discordId: users.discordId,
+    displayName: users.displayName,
+    avatarUrl: users.avatarUrl,
+    avatarSource: users.avatarSource,
+    primaryDiscordRoleName: users.primaryDiscordRoleName,
+    createdAt: users.createdAt
+  };
+
+  const conditions = [];
+  if (search) {
+    const pattern = `%${search}%`;
+    conditions.push(
+      or(
+        ilike(users.displayName, pattern),
+        ilike(users.discordId, pattern)
+      )
+    );
+  }
+
+  const userQuery = conditions.length > 0
+    ? db.select(userColumns).from(users).where(and(...conditions))
+    : db.select(userColumns).from(users);
+
+  // Load voice sessions only for the relevant time window
+  const voiceSince = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
   const [userRows, communityMap, permissionRows, sessions] = await Promise.all([
-    db.select().from(users),
+    userQuery,
     loadUserCommunityRolesMap(db),
     db
       .select({
@@ -41,6 +71,7 @@ export default defineEventHandler(async (event) => {
         durationMinutes: voiceSessions.durationMinutes
       })
       .from(voiceSessions)
+      .where(gte(voiceSessions.startedAt, voiceSince))
   ]);
 
   const voiceMap = new Map<string, Array<{ startedAt: Date; endedAt: Date | null; durationMinutes: number | null }>>();
@@ -93,13 +124,7 @@ export default defineEventHandler(async (event) => {
     };
   });
 
-  if (search) {
-    items = items.filter((item) => {
-      const value = `${item.profileName} ${item.ingameName} ${item.rufname || ""} ${item.discordId}`.toLowerCase();
-      return value.includes(search);
-    });
-  }
-
+  // Community role filter (applied in-memory since it's a joined table)
   if (roleFilter) {
     items = items.filter((item) => item.communityRole === roleFilter);
   }
@@ -114,8 +139,6 @@ export default defineEventHandler(async (event) => {
     items.sort((a, b) => a.profileName.localeCompare(b.profileName));
   }
 
-  return {
-    days,
-    items
-  };
+  const paginated = paginateArray(items, page, limit);
+  return { days, ...paginated };
 });

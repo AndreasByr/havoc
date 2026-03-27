@@ -35,7 +35,7 @@ const props = withDefaults(defineProps<{
   sections: InternalNavSection[];
   expandedIds: string[];
   showKindHeaders?: boolean;
-  currentUser: { profileName?: string } | null;
+  currentUser: { profileName?: string; avatarUrl?: string | null } | null;
   permissionRoles: string[];
   communityName: string;
   activeSectionLabel: string;
@@ -173,9 +173,15 @@ onBeforeUnmount(() => {
           </div>
 
           <div class="px-4 py-4">
-            <div class="mb-3">
-              <p class="text-sm font-medium">{{ currentUser?.profileName ?? t("internalNav.defaultMember") }}</p>
-              <p class="text-xs opacity-65">{{ permissionRoles.join(", ") || t("internalNav.defaultPermissionRole") }}</p>
+            <div class="mb-3 flex items-center gap-3">
+              <div class="size-9 shrink-0 overflow-hidden rounded-full bg-base-300">
+                <img v-if="currentUser?.avatarUrl" :src="currentUser.avatarUrl" alt="" class="size-full object-cover" />
+                <span v-else class="flex size-full items-center justify-center text-xs font-semibold uppercase text-base-content/50">{{ (currentUser?.profileName || "?").slice(0, 2) }}</span>
+              </div>
+              <div class="min-w-0">
+                <p class="truncate text-sm font-medium">{{ currentUser?.profileName ?? t("internalNav.defaultMember") }}</p>
+                <p class="truncate text-xs opacity-65">{{ permissionRoles.join(", ") || t("internalNav.defaultPermissionRole") }}</p>
+              </div>
             </div>
             <NuxtLink :to="localePath('/marketplace')" class="btn btn-ghost w-full" @click="$emit('close')">{{ $t("nav.marketplace") }}</NuxtLink>
           </div>

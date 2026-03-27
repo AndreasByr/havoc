@@ -14,7 +14,6 @@ import { requireRouterParam, readBodyWithSchema } from "../../../utils/http";
 import { getDb } from "../../../utils/db";
 import {
   addDiscordRolesToMember,
-  setDiscordNickname,
   sendDiscordDm
 } from "../../../utils/botSync";
 
@@ -90,14 +89,6 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // Compose display name (truncated to Discord's 32-char nickname limit)
-  let displayNameComposed: string | null = null;
-  if (settings.displayNameTemplate) {
-    displayNameComposed = settings.displayNameTemplate
-      .replace(/\{([^}]+)\}/g, (_, fieldId) => String(body.answers[fieldId] || ""))
-      .slice(0, 32);
-  }
-
   // Collect all roles: on-submission + role assignment nodes in traversed path
   const allRoleIds = [
     ...new Set([
@@ -115,8 +106,7 @@ export default defineEventHandler(async (event) => {
     answersJson: body.answers,
     status: "pending",
     rolesAssigned: [],
-    pendingRoleAssignments: [],
-    displayNameComposed
+    pendingRoleAssignments: []
   }).returning();
 
   // Link file uploads + mark token used in parallel
@@ -147,30 +137,10 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // Update application with role results + set nickname in parallel
-  await Promise.all([
-    db.update(applications)
-      .set({ rolesAssigned: assignedRoleIds, pendingRoleAssignments })
-      .where(eq(applications.id, application.id)),
-    displayNameComposed
-      ? setDiscordNickname(verified.discordId, displayNameComposed).catch(() => {})
-      : Promise.resolve()
-  ]);
-
-  // Upsert user display name if applicable
-  if (displayNameComposed) {
-    const [existingUser] = await db
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.discordId, verified.discordId))
-      .limit(1);
-
-    if (existingUser) {
-      await db.update(users)
-        .set({ displayName: displayNameComposed })
-        .where(eq(users.id, existingUser.id));
-    }
-  }
+  // Update application with role results
+  await db.update(applications)
+    .set({ rolesAssigned: assignedRoleIds, pendingRoleAssignments })
+    .where(eq(applications.id, application.id));
 
   // Send moderator DM notifications (fire-and-forget, don't block response)
   const modNotifications = await db

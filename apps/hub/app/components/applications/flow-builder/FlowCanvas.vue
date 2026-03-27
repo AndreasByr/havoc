@@ -24,6 +24,7 @@ const emit = defineEmits<{
   (e: "nodes-change", nodes: Node[]): void;
   (e: "edges-change", edges: Edge[]): void;
   (e: "node-click", node: Node): void;
+  (e: "edge-click", edge: Edge): void;
   (e: "graph-change"): void;
 }>();
 
@@ -53,8 +54,38 @@ const {
   onNodesChange,
   onEdgesChange,
   onNodeClick,
-  screenToFlowCoordinate
+  onEdgeClick,
+  onNodeDragStop,
+  screenToFlowCoordinate,
+  findNode,
 } = useVueFlow();
+
+// Types that can be children of a step_group
+const groupableTypes = new Set(["input"]);
+
+/**
+ * Find the step_group node that contains the given absolute flow position.
+ * Returns the group node or undefined.
+ */
+function findContainingGroup(absolutePos: { x: number; y: number }, excludeNodeId?: string) {
+  for (const n of localNodes.value) {
+    if (n.type !== "step_group") continue;
+    if (n.id === excludeNodeId) continue;
+    const vfNode = findNode(n.id);
+    if (!vfNode) continue;
+    const w = vfNode.dimensions?.width ?? 220;
+    const h = vfNode.dimensions?.height ?? 120;
+    if (
+      absolutePos.x >= n.position.x &&
+      absolutePos.x <= n.position.x + w &&
+      absolutePos.y >= n.position.y &&
+      absolutePos.y <= n.position.y + h
+    ) {
+      return n;
+    }
+  }
+  return undefined;
+}
 
 // Connect handler
 onConnect((params: Connection) => {
@@ -86,6 +117,10 @@ onEdgesChange(() => {
 
 onNodeClick(({ node }: { node: Node }) => {
   emit("node-click", node);
+});
+
+onEdgeClick(({ edge }: { edge: Edge }) => {
+  emit("edge-click", edge);
 });
 
 // Drag and drop from toolbar
@@ -135,9 +170,63 @@ function onDrop(event: DragEvent) {
     data: getDefaultDataForType(nodeType),
   };
 
+  // If dropping a groupable node inside a step_group, make it a child
+  if (groupableTypes.has(nodeType)) {
+    const group = findContainingGroup(position);
+    if (group) {
+      newNode.parentNode = group.id;
+      newNode.extent = "parent";
+      // Convert to position relative to the group
+      newNode.position = {
+        x: position.x - group.position.x,
+        y: position.y - group.position.y,
+      };
+    }
+  }
+
   addNodes([newNode]);
+  emit("node-click", newNode as Node);
   emit("graph-change");
 }
+
+// Handle dragging existing nodes into / out of step groups
+onNodeDragStop(({ node }: { node: Node }) => {
+  if (!groupableTypes.has(node.type!)) return;
+
+  const vfNode = findNode(node.id);
+  if (!vfNode) return;
+
+  // Calculate absolute position (if inside a group, position is relative)
+  let absolutePos = { ...node.position };
+  if (node.parentNode) {
+    const parentNode = findNode(node.parentNode);
+    if (parentNode) {
+      absolutePos = {
+        x: node.position.x + parentNode.position.x,
+        y: node.position.y + parentNode.position.y,
+      };
+    }
+  }
+
+  const group = findContainingGroup(absolutePos, node.id);
+
+  if (group && node.parentNode !== group.id) {
+    // Moved into a (different) group
+    vfNode.parentNode = group.id;
+    vfNode.extent = "parent";
+    vfNode.position = {
+      x: absolutePos.x - group.position.x,
+      y: absolutePos.y - group.position.y,
+    };
+    emit("graph-change");
+  } else if (!group && node.parentNode) {
+    // Moved out of a group
+    vfNode.parentNode = undefined;
+    vfNode.extent = undefined;
+    vfNode.position = absolutePos;
+    emit("graph-change");
+  }
+});
 </script>
 
 <template>
@@ -149,6 +238,8 @@ function onDrop(event: DragEvent) {
       :default-viewport="{ zoom: 0.8, x: 50, y: 50 }"
       :min-zoom="0.2"
       :max-zoom="2"
+      :delete-key-code="null"
+      :edges-updatable="true"
       fit-view-on-init
       class="flow-canvas__vueflow"
     >
@@ -169,5 +260,10 @@ function onDrop(event: DragEvent) {
 .flow-canvas__vueflow {
   width: 100%;
   height: 100%;
+}
+
+.flow-canvas__vueflow :deep(.vue-flow__edge.selected .vue-flow__edge-path) {
+  stroke: var(--color-error);
+  stroke-width: 3;
 }
 </style>

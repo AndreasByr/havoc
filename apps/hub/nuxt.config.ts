@@ -40,6 +40,7 @@ export default defineNuxtConfig({
     payloadInternalUrl: process.env.PAYLOAD_INTERNAL_URL || "http://cms:3002",
     linearApiKey: process.env.NUXT_LINEAR_API_KEY || "",
     public: {
+      isDev: process.env.NODE_ENV === "development",
       appName: "Guildora",
       hubUrl: process.env.NUXT_PUBLIC_HUB_URL || "http://localhost:3003",
       landingUrl: process.env.NUXT_PUBLIC_APP_URL || "http://localhost:3000",
@@ -51,9 +52,9 @@ export default defineNuxtConfig({
   },
   routeRules: {
     "/dashboard/**": { ssr: true },
-    "/admin/**": { ssr: true },
-    "/mod/**": { ssr: true },
-    "/apps/**": { ssr: false }
+    "/settings/**": { ssr: true },
+    "/apps/**": { ssr: false },
+    "/dev/**": { ssr: false }
   },
   i18n: {
     strategy: "prefix_except_default",

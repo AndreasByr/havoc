@@ -11,8 +11,14 @@ export default defineEventHandler(async (event) => {
   const search = typeof query.search === "string" ? query.search.toLowerCase() : "";
   const roleFilter = typeof query.communityRole === "string" ? query.communityRole : "";
 
+  const userColumns = {
+    id: users.id,
+    discordId: users.discordId,
+    displayName: users.displayName
+  };
+
   const [userRows, communityMap, permissionMap] = await Promise.all([
-    db.select().from(users),
+    db.select(userColumns).from(users),
     loadUserCommunityRolesMap(db),
     loadUserPermissionRolesMap(db)
   ]);

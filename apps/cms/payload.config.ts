@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { postgresAdapter } from "@payloadcms/db-postgres";
 import { lexicalEditor } from "@payloadcms/richtext-lexical";
+import { s3Storage } from "@payloadcms/storage-s3";
 import { buildConfig } from "payload";
 import { Media } from "./src/collections/Media";
 import { Pages } from "./src/collections/Pages";
@@ -29,6 +30,18 @@ const corsOrigins = Array.from(new Set([
   process.env.NUXT_PUBLIC_APP_URL ?? "http://localhost:3000",
   process.env.NUXT_PUBLIC_HUB_URL ?? "http://localhost:3003"
 ].filter(Boolean)));
+
+const bucketEnabled = !!(
+  process.env.BUCKET_PROVIDER &&
+  process.env.BUCKET_ENDPOINT &&
+  process.env.BUCKET_NAME &&
+  process.env.BUCKET_ACCESS_KEY_ID &&
+  process.env.BUCKET_SECRET_ACCESS_KEY
+);
+
+const bucketPrefix = process.env.BUCKET_PATH_PREFIX
+  ? `${process.env.BUCKET_PATH_PREFIX.replace(/\/+$/, "")}/cms/`
+  : "cms/";
 
 export default buildConfig({
   editor: lexicalEditor({}),
@@ -62,5 +75,33 @@ export default buildConfig({
   typescript: {
     outputFile: path.resolve(dirname, "src/payload-types.ts")
   },
+  plugins: [
+    ...(bucketEnabled
+      ? [
+          (() => {
+            const prov = process.env.BUCKET_PROVIDER?.toLowerCase();
+            const usePathStyle = prov === "minio" || prov === "r2";
+            return s3Storage({
+              collections: { media: true },
+              bucket: process.env.BUCKET_NAME!,
+              config: {
+                endpoint: process.env.BUCKET_ENDPOINT,
+                region: process.env.BUCKET_REGION || "auto",
+                credentials: {
+                  accessKeyId: process.env.BUCKET_ACCESS_KEY_ID!,
+                  secretAccessKey: process.env.BUCKET_SECRET_ACCESS_KEY!
+                },
+                forcePathStyle: usePathStyle,
+                ...(usePathStyle ? {
+                  requestChecksumCalculation: "WHEN_REQUIRED" as const,
+                  responseChecksumValidation: "WHEN_REQUIRED" as const
+                } : {})
+              },
+              prefix: bucketPrefix
+            });
+          })()
+        ]
+      : [])
+  ],
   cors: corsOrigins
 });

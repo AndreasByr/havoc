@@ -3,12 +3,15 @@ import type { ApplicationFlowGraph, FlowNode, FlowEdge } from "@guildora/shared"
 import type { Node, Edge } from "@vue-flow/core";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
+type PublishStatus = "idle" | "publishing" | "published" | "error";
 
 export function useFlowBuilder(flowId: string) {
   const nodes = ref<Node[]>([]);
   const edges = ref<Edge[]>([]);
   const saveStatus = ref<SaveStatus>("idle");
   const saveError = ref("");
+  const publishStatus = ref<PublishStatus>("idle");
+  const hasUnpublishedChanges = ref(false);
   const undoStack = ref<string[]>([]);
   const redoStack = ref<string[]>([]);
   let saveTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -117,6 +120,7 @@ export function useFlowBuilder(flowId: string) {
   function scheduleSave() {
     if (saveTimeout) clearTimeout(saveTimeout);
     saveStatus.value = "idle";
+    hasUnpublishedChanges.value = true;
     saveTimeout = setTimeout(async () => {
       saveStatus.value = "saving";
       saveError.value = "";
@@ -143,6 +147,44 @@ export function useFlowBuilder(flowId: string) {
     scheduleSave();
   }
 
+  async function publishChanges() {
+    publishStatus.value = "publishing";
+    try {
+      const result = await $fetch<{ flow: Record<string, unknown> }>(`/api/applications/flows/${flowId}`, {
+        method: "PUT",
+        body: { action: "publish" }
+      });
+      publishStatus.value = "published";
+      hasUnpublishedChanges.value = false;
+      setTimeout(() => {
+        if (publishStatus.value === "published") publishStatus.value = "idle";
+      }, 2000);
+      return result;
+    } catch (err) {
+      publishStatus.value = "error";
+      console.error("[flow-builder] Publish failed:", err);
+      throw err;
+    }
+  }
+
+  async function discardChanges() {
+    try {
+      const result = await $fetch<{ flow: { flowJson: ApplicationFlowGraph; draftFlowJson: ApplicationFlowGraph | null } }>(`/api/applications/flows/${flowId}`, {
+        method: "PUT",
+        body: { action: "discard" }
+      });
+      // Reload the published flowJson into the builder
+      if (result.flow?.flowJson) {
+        loadGraph(result.flow.flowJson);
+      }
+      hasUnpublishedChanges.value = false;
+      return result;
+    } catch (err) {
+      console.error("[flow-builder] Discard failed:", err);
+      throw err;
+    }
+  }
+
   function generateNodeId(): string {
     return `node_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   }
@@ -156,6 +198,8 @@ export function useFlowBuilder(flowId: string) {
     edges,
     saveStatus,
     saveError,
+    publishStatus,
+    hasUnpublishedChanges,
     canUndo,
     canRedo,
     loadGraph,
@@ -164,6 +208,8 @@ export function useFlowBuilder(flowId: string) {
     redo,
     onGraphChange,
     scheduleSave,
+    publishChanges,
+    discardChanges,
     generateNodeId,
     generateEdgeId
   };

@@ -1,4 +1,4 @@
-import { createDb } from "@guildora/shared";
+import { createDb } from "@guildora/shared/db/client";
 
 let dbInstance: ReturnType<typeof createDb> | null = null;
 

@@ -1,7 +1,7 @@
 import type { Client } from "discord.js";
 import { eq } from "drizzle-orm";
 import { installedApps, safeParseAppManifest, type GuildoraAppBotHook } from "@guildora/shared";
-import type { BotContext, VoiceActivityPayload, RoleChangePayload, MemberJoinPayload, InteractionPayload } from "@guildora/app-sdk";
+import type { BotContext, VoiceActivityPayload, RoleChangePayload, MemberJoinPayload, InteractionPayload, MessagePayload } from "@guildora/app-sdk";
 import { getDb } from "./db";
 import { createAppDb } from "./app-db";
 import { createBotClient } from "./bot-client";
@@ -14,6 +14,7 @@ export type BotHookEventMap = {
   onRoleChange: RoleChangePayload;
   onVoiceActivity: VoiceActivityPayload;
   onInteraction: InteractionPayload;
+  onMessage: MessagePayload;
 };
 
 type BotHookEventName = keyof BotHookEventMap;
@@ -118,7 +119,8 @@ export async function loadInstalledAppHooks(discordClient: Client) {
     const ctx: BotContext = {
       config,
       db: createAppDb(row.appId),
-      bot: createBotClient(discordClient)
+      bot: createBotClient(discordClient),
+      botUserId: discordClient.user?.id || ""
     };
 
     for (const hookName of parsed.data.botHooks as GuildoraAppBotHook[]) {

@@ -11,8 +11,7 @@ export type FlowInputType =
   | "yes_no"
   | "date"
   | "file_upload"
-  | "discord_username"
-  | "display_name";
+  | "discord_username";
 
 export type FlowNodeType =
   | "start"

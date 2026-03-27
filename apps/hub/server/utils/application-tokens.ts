@@ -1,5 +1,6 @@
 import { eq, and, isNull } from "drizzle-orm";
-import { applicationTokens, verifyTokenSignature } from "@guildora/shared";
+import { applicationTokens } from "@guildora/shared";
+import { verifyTokenSignature } from "@guildora/shared/utils/application-tokens";
 import { getDb } from "./db";
 
 export type VerifiedToken = {

@@ -28,6 +28,12 @@ interface MemberItem {
 interface MembersResponse {
   days: number;
   items: MemberItem[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 }
 
 interface MemberProfileResponse {
@@ -49,13 +55,20 @@ interface MemberProfileResponse {
 const search = ref("");
 const communityRole = ref("");
 const sort = ref("name");
+const page = ref(1);
+
+watch([search, communityRole, sort], () => {
+  page.value = 1;
+});
 
 const { data, pending, error } = await useFetch<MembersResponse>("/api/members", {
   query: computed(() => ({
     search: search.value || undefined,
     communityRole: communityRole.value || undefined,
     voiceActivityDays: 7,
-    sort: sort.value
+    sort: sort.value,
+    page: page.value,
+    limit: 50
   }))
 });
 
@@ -164,21 +177,46 @@ watch(
 
     <div v-if="pending" class="loading loading-spinner loading-md" />
     <div v-else-if="error" class="alert alert-error">{{ $t("common.error") }}</div>
-    <div v-else class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-      <MemberExpandableCard
-        v-for="item in data?.items || []"
-        :key="item.id"
-        :member="item"
-        @open-details="openMemberDetails"
-      />
-    </div>
+    <template v-else>
+      <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+        <MemberExpandableCard
+          v-for="item in data?.items || []"
+          :key="item.id"
+          :member="item"
+          @open-details="openMemberDetails"
+        />
+      </div>
+
+      <div v-if="data?.pagination && data.pagination.totalPages > 1" class="flex items-center justify-center gap-3 pt-4">
+        <button
+          class="btn btn-ghost btn-sm"
+          :disabled="page <= 1"
+          @click="page--"
+        >
+          &larr; {{ $t("common.previous") }}
+        </button>
+        <span class="text-sm text-base-content/70">
+          {{ page }} / {{ data.pagination.totalPages }}
+          <span class="ml-2 text-xs">({{ data.pagination.total }})</span>
+        </span>
+        <button
+          class="btn btn-ghost btn-sm"
+          :disabled="page >= data.pagination.totalPages"
+          @click="page++"
+        >
+          {{ $t("common.next") }} &rarr;
+        </button>
+      </div>
+    </template>
 
     <MemberDetailsModal
       :open="Boolean(selectedMemberId)"
       :pending="selectedProfilePending"
       :error="selectedProfileError"
+      :member-id="selectedMemberId"
       :profile="selectedProfile"
       @close="closeMemberDetails"
+      @saved="() => { loadSelectedProfile(selectedMemberId!); }"
     />
   </section>
 </template>
