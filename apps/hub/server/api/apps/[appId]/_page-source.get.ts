@@ -51,6 +51,6 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  setResponseHeader(event, "Content-Type", "text/plain; charset=utf-8");
-  return source;
+  setResponseHeader(event, "Content-Type", "application/json; charset=utf-8");
+  return { source, component: pageDecl.component };
 });

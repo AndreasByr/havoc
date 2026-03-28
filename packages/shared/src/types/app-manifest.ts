@@ -117,6 +117,7 @@ export const appManifestSchema = z.object({
   botHooks: z.array(appManifestBotHookSchema).default([]),
   botCommands: z.array(appManifestBotCommandSchema).default([]),
   configFields: z.array(appManifestConfigFieldSchema).default([]),
+  includes: z.array(z.string().min(1).max(255)).max(50).default([]),
   requiredEnv: z.array(z.string().min(1).max(120)).default([]),
   installNotes: z.string().max(5000).optional(),
   migrations: z.array(z.string()).default([]),

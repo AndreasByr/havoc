@@ -78,6 +78,26 @@ async function fetchAppMessages(locale: "de" | "en") {
   }
 }
 
+/** Normalize a path by collapsing `.` and `..` segments. */
+function normalizePath(path: string): string {
+  const parts = path.split("/");
+  const result: string[] = [];
+  for (const part of parts) {
+    if (part === "." || part === "") continue;
+    if (part === "..") {
+      result.pop();
+    } else {
+      result.push(part);
+    }
+  }
+  return "/" + result.join("/");
+}
+
+/** Process a Vue SFC source: replace Nuxt components and inject auto-imports. */
+function processVueSfc(raw: string): string {
+  return injectGuildoraHubAutoImports(replaceNuxtComponents(raw));
+}
+
 async function loadPage(currentPagePath: string) {
   loading.value = true;
   errorMsg.value = null;
@@ -90,21 +110,24 @@ async function loadPage(currentPagePath: string) {
     return;
   }
 
-  // Fetch SFC source from page-source endpoint
+  // Fetch SFC source and component path from page-source endpoint
   let source: string | null = null;
+  let componentPath: string | null = null;
   try {
     const res = await fetch(`/api/apps/${appId}/_page-source?path=${encodeURIComponent(currentPagePath)}`);
     if (!res.ok) {
       throw new Error(`HTTP ${res.status}: ${res.statusText}`);
     }
-    source = await res.text();
+    const json = await res.json() as { source: string; component: string };
+    source = json.source;
+    componentPath = json.component;
   } catch (e: unknown) {
     errorMsg.value = `Failed to load page source: ${(e as Error).message}`;
     loading.value = false;
     return;
   }
 
-  if (!source) {
+  if (!source || !componentPath) {
     errorMsg.value = "Page source is empty.";
     loading.value = false;
     return;
@@ -178,7 +201,11 @@ async function loadPage(currentPagePath: string) {
     }
   };
 
-  const sfcSource = injectGuildoraHubAutoImports(replaceNuxtComponents(source));
+  // Use repo-relative path as the SFC URL so relative imports resolve correctly
+  const prefix = `/app-sfc/${appId}/`;
+  const sfcUrl = `${prefix}${componentPath}`;
+  const sfcSource = processVueSfc(source);
+
   const options = {
     moduleCache: {
       vue,
@@ -187,9 +214,53 @@ async function loadPage(currentPagePath: string) {
       "@guildora/app-sdk": sdkMock,
       "@guildora/hub": hubModule
     },
-    async getFile() {
-      return sfcSource;
+    pathResolve({ refPath, relPath }: { refPath: string; relPath: string }) {
+      // Bare module specifiers (e.g. "vue", "@guildora/hub") — return as-is for moduleCache lookup
+      if (!relPath.startsWith(".") && !relPath.startsWith("/")) {
+        return relPath;
+      }
+      // Resolve relative to the importing file
+      if (refPath) {
+        const refDir = refPath.substring(0, refPath.lastIndexOf("/"));
+        return normalizePath(refDir + "/" + relPath);
+      }
+      return relPath;
     },
+    async getFile(url: string) {
+      const urlStr = typeof url === "string" ? url : String(url);
+
+      // Extract repo-relative path from the synthetic URL
+      const repoPath = urlStr.startsWith(prefix)
+        ? urlStr.slice(prefix.length)
+        : urlStr;
+
+      // Main page component — return pre-processed source
+      if (repoPath === componentPath) {
+        const ext = repoPath.substring(repoPath.lastIndexOf("."));
+        return { getContentData: () => sfcSource, type: ext || ".vue" };
+      }
+
+      // Fetch sub-component / dependency from the _source endpoint
+      const res = await fetch(`/api/apps/${appId}/_source?file=${encodeURIComponent(repoPath)}`);
+      if (!res.ok) {
+        throw new Error(`Failed to load '${repoPath}': ${res.status} ${res.statusText}`);
+      }
+      const content = await res.text();
+
+      const ext = repoPath.substring(repoPath.lastIndexOf("."));
+      // Apply auto-imports and NuxtLink replacement to sub-component .vue files too
+      const processed = ext === ".vue" ? processVueSfc(content) : content;
+
+      return { getContentData: () => processed, type: ext || ".js" };
+    },
+    async handleModule(type: string, getContentData: (asBinary: boolean) => string | Promise<string>) {
+      if (type === ".json") {
+        const content = await getContentData(false);
+        return JSON.parse(content as string);
+      }
+      return undefined;
+    },
+    additionalBabelParserPlugins: ["typescript"],
     addStyle(textContent: string) {
       const style = document.createElement("style");
       style.textContent = textContent;
@@ -198,7 +269,7 @@ async function loadPage(currentPagePath: string) {
   };
 
   try {
-    const Component = await sfcLoader.loadModule(`/app-sfc/${appId}${currentPagePath}.vue`, options);
+    const Component = await sfcLoader.loadModule(sfcUrl, options);
     appComponent.value = defineAsyncComponent(() => Promise.resolve(Component as Parameters<typeof defineAsyncComponent>[0] extends () => Promise<infer T> ? T : never));
   } catch (e: unknown) {
     errorMsg.value = `Failed to render component: ${(e as Error).message}`;

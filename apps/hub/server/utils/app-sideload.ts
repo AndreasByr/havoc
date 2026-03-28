@@ -1,8 +1,9 @@
 import * as esbuild from "esbuild";
 import { posix } from "node:path";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { eq } from "drizzle-orm";
+import type { AppManifest } from "@guildora/shared";
 import { installedApps, safeParseAppManifest } from "@guildora/shared";
 import { refreshAppRegistry } from "./apps";
 import { getDb } from "./db";
@@ -10,6 +11,8 @@ import { getDb } from "./db";
 const manifestRequestTimeoutMs = 5000;
 const maxManifestBytes = 128 * 1024;
 const maxSourceBytes = 256 * 1024;
+const maxIncludableFiles = 50;
+const maxTotalRawBytes = 2 * 1024 * 1024;
 const maxLocales = ["en", "de"] as const;
 const moduleLoaders: Record<string, esbuild.Loader> = {
   ".ts": "ts",
@@ -173,6 +176,115 @@ async function resolveRepoModulePath(sourceLoader: SourceLoader, unresolvedPath:
   }
 
   return null;
+}
+
+/** Directories under src/ that are auto-collected for client-side imports. */
+const includableDirs = ["src/components", "src/composables", "src/utils"];
+const includableExtensions = new Set([".vue", ".ts", ".js", ".json"]);
+
+function isIncludablePath(filePath: string): boolean {
+  const normalized = normalizeRepoPath(filePath);
+  const ext = posix.extname(normalized);
+  if (!includableExtensions.has(ext)) return false;
+  return includableDirs.some((dir) => normalized.startsWith(dir + "/"));
+}
+
+/**
+ * Discover includable files from the local filesystem.
+ * Walks src/ recursively and filters for components, composables, and utils.
+ */
+export async function discoverLocalIncludableFiles(
+  localPath: string,
+  manifest: AppManifest,
+  alreadyCollected: Set<string>
+): Promise<string[]> {
+  const found: string[] = [];
+
+  // Auto-discover from filesystem
+  try {
+    const entries = await readdir(join(localPath, "src"), { recursive: true });
+    for (const entry of entries) {
+      const filePath = normalizeRepoPath(`src/${entry}`);
+      if (isIncludablePath(filePath) && !alreadyCollected.has(filePath)) {
+        found.push(filePath);
+      }
+    }
+  } catch {
+    // src/ may not exist — that's fine
+  }
+
+  // Merge manifest.includes
+  for (const includePath of manifest.includes || []) {
+    const normalized = normalizeRepoPath(includePath);
+    if (!alreadyCollected.has(normalized) && !found.includes(normalized)) {
+      found.push(normalized);
+    }
+  }
+
+  return found.slice(0, maxIncludableFiles);
+}
+
+/**
+ * Discover includable files from a GitHub repository via the Tree API.
+ * Falls back to manifest.includes only if the tree API call fails.
+ */
+export async function discoverRemoteIncludableFiles(
+  base: { owner: string; repo: string; branch: string },
+  manifest: AppManifest,
+  alreadyCollected: Set<string>
+): Promise<string[]> {
+  const found: string[] = [];
+
+  // Try GitHub Tree API
+  try {
+    const treeUrl = `https://api.github.com/repos/${base.owner}/${base.repo}/git/trees/${base.branch}?recursive=1`;
+    const response = await $fetch<{ tree?: Array<{ path?: string; type?: string }> }>(treeUrl, {
+      headers: { Accept: "application/vnd.github+json" },
+      timeout: manifestRequestTimeoutMs,
+      retry: 0
+    });
+
+    for (const item of response.tree || []) {
+      if (item.type !== "blob" || !item.path) continue;
+      const filePath = normalizeRepoPath(item.path);
+      if (isIncludablePath(filePath) && !alreadyCollected.has(filePath)) {
+        found.push(filePath);
+      }
+    }
+  } catch {
+    // Tree API failed (rate limit, etc.) — fall through to manifest.includes only
+  }
+
+  // Merge manifest.includes
+  for (const includePath of manifest.includes || []) {
+    const normalized = normalizeRepoPath(includePath);
+    if (!alreadyCollected.has(normalized) && !found.includes(normalized)) {
+      found.push(normalized);
+    }
+  }
+
+  return found.slice(0, maxIncludableFiles);
+}
+
+/**
+ * Collect discovered files into the code bundle as raw source.
+ * Enforces total size cap across all raw (non-bundled) files.
+ */
+async function collectIncludableFiles(
+  files: string[],
+  sourceLoader: SourceLoader,
+  codeBundle: Record<string, string>
+): Promise<void> {
+  let totalRawBytes = 0;
+  for (const filePath of files) {
+    const source = await sourceLoader(filePath);
+    if (source === null) continue;
+    totalRawBytes += Buffer.byteLength(source, "utf8");
+    if (totalRawBytes > maxTotalRawBytes) {
+      throw createError({ statusCode: 413, statusMessage: "Total includable source exceeds 2 MB limit." });
+    }
+    codeBundle[filePath] = source;
+  }
 }
 
 function extractBundleError(error: unknown): string {
@@ -379,6 +491,11 @@ export async function installAppFromUrl(
       }
       codeBundle[localePath] = source;
     }
+
+    // Collect additional includable files (components, composables, utils)
+    const alreadyCollected = new Set(Object.keys(codeBundle));
+    const additionalFiles = await discoverRemoteIncludableFiles(base, manifest, alreadyCollected);
+    await collectIncludableFiles(additionalFiles, loadRemoteSource, codeBundle);
   }
 
   const db = getDb();
@@ -513,6 +630,11 @@ export async function installAppFromLocalPath(
     }
     codeBundle[localePath] = source;
   }
+
+  // Collect additional includable files (components, composables, utils)
+  const alreadyCollected = new Set(Object.keys(codeBundle));
+  const additionalFiles = await discoverLocalIncludableFiles(localPath, manifest, alreadyCollected);
+  await collectIncludableFiles(additionalFiles, loadLocalSource, codeBundle);
 
   const db = getDb();
   const existing = await db.select().from(installedApps).where(eq(installedApps.appId, manifest.id)).limit(1);

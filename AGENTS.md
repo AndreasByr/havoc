@@ -26,6 +26,7 @@ Guildora is a community platform with a public landing page, internal hub, Paylo
 - **Application Flows** = visual node-based application system (`applicationFlows`, `applications` tables). Flow builder at `/applications/flows`, public form at `/apply/:flowId/:token`, review at `/applications/open`, archive at `/applications/archive`. Uses Vue Flow for the visual editor, DB-backed tokens for security, and `linearizeFlowGraph()` from `packages/shared` for isomorphic flow traversal.
 - **Legacy Applications** = old mod-area `profiles.custom_fields.applicationStatus` system (deprecated, will be removed once all communities migrate).
 - **Submissions** = marketplace app submissions (`app_marketplace_submissions`); local full-review flow is not active yet.
+- **App Component Imports** = sideloaded app pages (Vue SFCs) support relative imports for `.vue`, `.ts`, `.js`, and `.json` files. Files under `src/components/`, `src/composables/`, and `src/utils/` are auto-collected during sideloading. Apps can declare additional files via the `includes` manifest field. Client-side TypeScript is transpiled via Babel (no const enums or namespace merging).
 - **Documentation:** Canonical docs live at https://github.com/guildora/docs — see references below.
 
 ## Documentation
