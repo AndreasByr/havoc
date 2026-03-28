@@ -1,8 +1,7 @@
 import { z } from "zod";
-import { requireAdminSession } from "../../../utils/auth";
+import { requireSuperadminSession } from "../../../utils/auth";
 import { readBodyWithSchema } from "../../../utils/http";
 import { installAppFromUrl } from "../../../utils/app-sideload";
-import { isDevRoleSwitcherEnabled } from "../../../utils/dev-role-switcher";
 
 const sideloadSchema = z.object({
   githubUrl: z.string().url(),
@@ -11,10 +10,11 @@ const sideloadSchema = z.object({
 });
 
 export default defineEventHandler(async (event) => {
-  if (!isDevRoleSwitcherEnabled(event)) {
-    throw createError({ statusCode: 403, statusMessage: "Sideloading is only available in development mode." });
+  const config = useRuntimeConfig(event);
+  if (!import.meta.dev && !config.enableSideloading) {
+    throw createError({ statusCode: 403, statusMessage: "Sideloading is not enabled." });
   }
-  const session = await requireAdminSession(event);
+  const session = await requireSuperadminSession(event);
   const parsedBody = await readBodyWithSchema(event, sideloadSchema, "Invalid sideload payload.");
 
   const { appId } = await installAppFromUrl(parsedBody.githubUrl, {

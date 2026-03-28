@@ -36,12 +36,14 @@ export default defineEventHandler(async (event) => {
     userLocalePreference,
     communityDefaultLocale
   }).locale);
-  const isDev = useRuntimeConfig().public.isDev;
+  const runtimeConfig = useRuntimeConfig();
+  const isDev = runtimeConfig.public.isDev;
   const { coreRailItems, corePanelGroups } = getLocalizedCoreNavigation(locale, {
     allowModeratorCmsAccess: cmsAccess.allowModeratorAccess,
     allowModeratorAppsAccess: cmsAccess.allowModeratorAppsAccess,
     allowModeratorApplicationsAccess: applicationAccess.allowModeratorAccess,
-    isDev: isDev === true
+    isDev: isDev === true,
+    enableSideloading: Boolean(runtimeConfig.enableSideloading)
   });
 
   const visibleCoreRail = coreRailItems.filter((item) => hasRequiredRoles(item.requiredRoles, roles));

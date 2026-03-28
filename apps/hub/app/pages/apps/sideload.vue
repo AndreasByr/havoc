@@ -1,10 +1,10 @@
 <script setup lang="ts">
 definePageMeta({
-  middleware: ["dev"],
+  middleware: ["superadmin"],
 });
 
-const lastPath = useCookie<string | null>("guildora_dev_last_path", { sameSite: "lax" });
-lastPath.value = "/dev/sideload";
+const lastPath = useCookie<string | null>("guildora_apps_last_path", { sameSite: "lax" });
+lastPath.value = "/apps/sideload";
 
 const { t } = useI18n();
 

@@ -24,7 +24,8 @@ export function useFlowBuilder(flowId: string) {
       position: n.position,
       data: n.data,
       parentNode: n.parentNode,
-      extent: n.extent
+      extent: n.extent,
+      ...(n.width != null ? { style: { width: `${n.width}px`, height: `${n.height}px` } } : {})
     }));
   }
 
@@ -46,7 +47,8 @@ export function useFlowBuilder(flowId: string) {
       position: n.position,
       data: n.data || {},
       ...(n.parentNode ? { parentNode: n.parentNode } : {}),
-      ...(n.extent ? { extent: n.extent as "parent" } : {})
+      ...(n.extent ? { extent: n.extent as "parent" } : {}),
+      ...(n.dimensions?.width ? { width: n.dimensions.width, height: n.dimensions.height } : {})
     }));
   }
 

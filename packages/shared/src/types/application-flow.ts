@@ -106,6 +106,9 @@ export interface FlowNode {
   /** For nodes inside a StepGroup — references the group node's id */
   parentNode?: string;
   extent?: "parent";
+  /** Persisted dimensions for resizable nodes (e.g. step_group) */
+  width?: number;
+  height?: number;
 }
 
 export interface FlowEdge {

@@ -37,5 +37,9 @@ apps/cms/.next/
 apps/bot/dist/
 packages/shared/dist/
 
+# Runtime media and uploads
+apps/cms/media/
+apps/hub/public/uploads/
+
 # Secrets and local scripts
 .script/

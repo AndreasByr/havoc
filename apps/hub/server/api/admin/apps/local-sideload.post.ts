@@ -1,8 +1,7 @@
 import { z } from "zod";
-import { requireAdminSession } from "../../../utils/auth";
+import { requireSuperadminSession } from "../../../utils/auth";
 import { readBodyWithSchema } from "../../../utils/http";
 import { installAppFromLocalPath } from "../../../utils/app-sideload";
-import { isDevRoleSwitcherEnabled } from "../../../utils/dev-role-switcher";
 
 const bodySchema = z.object({
   localPath: z.string().min(1, "localPath is required"),
@@ -10,10 +9,11 @@ const bodySchema = z.object({
 });
 
 export default defineEventHandler(async (event) => {
-  if (!isDevRoleSwitcherEnabled(event)) {
-    throw createError({ statusCode: 403, statusMessage: "Sideloading is only available in development mode." });
+  const config = useRuntimeConfig(event);
+  if (!import.meta.dev && !config.enableSideloading) {
+    throw createError({ statusCode: 403, statusMessage: "Sideloading is not enabled." });
   }
-  await requireAdminSession(event);
+  await requireSuperadminSession(event);
   const { localPath, activate } = await readBodyWithSchema(event, bodySchema, "Invalid request body.");
 
   const result = await installAppFromLocalPath(localPath, {
