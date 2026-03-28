@@ -67,7 +67,8 @@ export default buildConfig({
     pool: {
       connectionString
     },
-    schemaName: "payload"
+    schemaName: "payload",
+    push: true
   }),
   typescript: {
     outputFile: path.resolve(dirname, "src/payload-types.ts")
