@@ -39,9 +39,6 @@ const bucketEnabled = !!(
   process.env.BUCKET_SECRET_ACCESS_KEY
 );
 
-const bucketPrefix = process.env.BUCKET_PATH_PREFIX
-  ? `${process.env.BUCKET_PATH_PREFIX.replace(/\/+$/, "")}/cms/`
-  : "cms/";
 
 export default buildConfig({
   editor: lexicalEditor({}),
@@ -97,7 +94,6 @@ export default buildConfig({
                   responseChecksumValidation: "WHEN_REQUIRED" as const
                 } : {})
               },
-              prefix: bucketPrefix
             });
           })()
         ]
