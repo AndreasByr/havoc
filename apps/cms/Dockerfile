@@ -3,12 +3,12 @@ WORKDIR /repo
 RUN corepack enable
 
 FROM base AS deps
-COPY package.json pnpm-workspace.yaml turbo.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 COPY apps/cms/package.json apps/cms/package.json
-RUN pnpm install --no-frozen-lockfile
+RUN pnpm install --frozen-lockfile
 
 FROM base AS build
-COPY --from=deps /repo/node_modules ./node_modules
+COPY --from=deps /repo ./
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm --filter @guildora/cms build

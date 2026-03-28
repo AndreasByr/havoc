@@ -3,14 +3,14 @@ WORKDIR /repo
 RUN corepack enable
 
 FROM base AS deps
-COPY package.json pnpm-workspace.yaml turbo.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 COPY apps/hub/package.json apps/hub/package.json
 COPY packages/shared/package.json packages/shared/package.json
 COPY packages/app-sdk/package.json packages/app-sdk/package.json
-RUN pnpm install --no-frozen-lockfile
+RUN pnpm install --frozen-lockfile
 
 FROM base AS build
-COPY --from=deps /repo/node_modules ./node_modules
+COPY --from=deps /repo ./
 COPY . .
 RUN pnpm --filter @guildora/hub build
 
