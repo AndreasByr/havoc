@@ -11,13 +11,13 @@ FROM base AS build
 COPY --from=deps /repo ./
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN pnpm --filter @guildora/cms build
+RUN mkdir -p apps/cms/public apps/cms/media && pnpm --filter @guildora/cms build
 
 FROM node:22-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN addgroup -S app && adduser -S app -G app
+RUN addgroup -S app && adduser -S app -G app && mkdir -p public media
 COPY --from=build /repo/apps/cms/.next/standalone ./
 COPY --from=build /repo/apps/cms/.next/static ./.next/static
 COPY --from=build /repo/apps/cms/public ./public
