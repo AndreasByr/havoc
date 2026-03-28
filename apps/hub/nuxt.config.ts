@@ -45,7 +45,6 @@ export default defineNuxtConfig({
       hubUrl: process.env.NUXT_PUBLIC_HUB_URL || "http://localhost:3003",
       landingUrl: process.env.NUXT_PUBLIC_APP_URL || "http://localhost:3000",
       cmsUrl: process.env.NUXT_PUBLIC_CMS_URL || "http://localhost:3002",
-      defaultTheme: process.env.NUXT_PUBLIC_DEFAULT_THEME || "guildora-dark",
       enablePerformanceDebug: process.env.NUXT_PUBLIC_ENABLE_PERFORMANCE_DEBUG === "true"
     }
   },
