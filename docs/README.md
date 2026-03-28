@@ -1,5 +1,8 @@
 # Guildora – Documentation
 
+> **Status: Experimental / Active Development**
+> Guildora is under active development. APIs, database schema, and features may change without notice.
+
 All documentation has been moved to the central docs repository.
 
 **https://github.com/guildora/docs/tree/main/architecture-systems/guildora/**

@@ -1,14 +1,20 @@
 # Guildora
 
+> **Status: Experimental / Active Development**
+> Guildora is under active development. APIs, database schema, and features may change without notice. Not recommended for production use yet.
+
 Guildora is a monorepo for a Discord-centered community platform. It combines:
 
-- a Nuxt 4 landing application (`apps/web`)
-- a Nuxt 4 internal hub application for members, moderation, admin, auth, and APIs (`apps/hub`)
-- a Payload CMS 3 / Next.js application for content authoring (`apps/cms`)
-- a Discord bot for voice tracking, guild synchronization, and setup helpers (`apps/bot`)
-- a shared TypeScript package with Drizzle schema, database client, and cross-service types (`packages/shared`)
+- **`apps/web`** — Nuxt 4 public landing page
+- **`apps/hub`** — Nuxt 4 internal hub for members, moderation, admin, auth, and APIs
+- **`apps/cms`** — Payload CMS 3 / Next.js for content authoring
+- **`apps/bot`** — Discord bot for voice tracking, guild sync, and setup helpers
+- **`packages/shared`** — Shared TypeScript package with Drizzle schema, DB client, and cross-service types
+- **`packages/app-sdk`** — TypeScript SDK types for sideloaded community apps
 
-The repository documentation now lives primarily in [`docs/README.md`](./docs/README.md).
+### App Extension System
+
+Guildora supports community-built apps that extend the hub with custom pages, API routes, bot hooks, and slash commands. Apps are installed via sideloading (GitHub URL or local path) and run sandboxed within the platform. Vue SFC pages support relative imports for components, composables, and utilities. See the [developer docs](https://github.com/guildora/docs/tree/main/for-developers) for details.
 
 ## Quick Start
 
@@ -30,17 +36,17 @@ Useful workspace scripts:
 - `pnpm db:migrate`
 - `pnpm db:seed`
 - `pnpm bot:deploy-commands`
-- `pnpm --filter @guildora/cms seed` — CMS mit Community-Inhalten befüllen
+- `pnpm --filter @guildora/cms seed` — seed CMS with community content
 
-## Documentation Map
+## Documentation
 
-- Project overview: [`docs/project-overview.md`](./docs/project-overview.md)
-- Architecture: [`docs/architecture.md`](./docs/architecture.md)
-- Setup and deployment: [`docs/setup-build-deploy.md`](./docs/setup-build-deploy.md)
-- Routing and navigation: [`docs/routing-and-navigation.md`](./docs/routing-and-navigation.md)
-- Domain model: [`docs/domain-model.md`](./docs/domain-model.md)
-- API contracts: [`docs/api-contracts.md`](./docs/api-contracts.md)
-- AI working context: [`ai/README.md`](./ai/README.md)
+All documentation lives in the central docs repository: **[guildora/docs](https://github.com/guildora/docs)**
+
+- [Architecture](https://github.com/guildora/docs/blob/main/architecture-systems/guildora/index.md)
+- [Developer Guide (Apps)](https://github.com/guildora/docs/tree/main/for-developers)
+- [Design System](https://github.com/guildora/docs/blob/main/DESIGN_SYSTEM.md)
+- [Workflows](https://github.com/guildora/docs/blob/main/architecture-systems/guildora/workflows/)
+- [AI Working Context](./ai/README.md)
 
 ## License
 
