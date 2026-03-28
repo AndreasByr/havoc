@@ -19,9 +19,9 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup -S app && adduser -S app -G app && mkdir -p public media
 COPY --from=build /repo/apps/cms/.next/standalone ./
-COPY --from=build /repo/apps/cms/.next/static ./.next/static
-COPY --from=build /repo/apps/cms/public ./public
-COPY --from=build /repo/apps/cms/media ./media
+COPY --from=build /repo/apps/cms/.next/static ./apps/cms/.next/static
+COPY --from=build /repo/apps/cms/public ./apps/cms/public
+COPY --from=build /repo/apps/cms/media ./apps/cms/media
 USER app
 EXPOSE 3001
-CMD ["node", "server.js"]
+CMD ["node", "apps/cms/server.js"]
