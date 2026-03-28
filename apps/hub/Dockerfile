@@ -6,6 +6,7 @@ FROM base AS deps
 COPY package.json pnpm-workspace.yaml turbo.json ./
 COPY apps/hub/package.json apps/hub/package.json
 COPY packages/shared/package.json packages/shared/package.json
+COPY packages/app-sdk/package.json packages/app-sdk/package.json
 RUN pnpm install --no-frozen-lockfile
 
 FROM base AS build
