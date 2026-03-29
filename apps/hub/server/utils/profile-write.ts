@@ -20,7 +20,9 @@ export const updateProfileSchema = z.object({
   displayNameParts: z.record(z.string(), z.string()).optional()
 });
 
-export const updateModProfileSchema = profileNameSchema;
+export const updateModProfileSchema = profileNameSchema.extend({
+  displayNameParts: z.record(z.string(), z.string()).optional()
+});
 
 type DbClient = ReturnType<typeof getDb>;
 type ProfileUpdateMode = "self" | "moderation";

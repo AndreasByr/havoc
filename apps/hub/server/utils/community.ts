@@ -19,14 +19,16 @@ const defaultPermissionRoles = [
 ] as const;
 
 const defaultCommunityRoles = [
-  { name: "Bewerber", description: "Neue Bewerber in der Community.", permissionRole: "temporaer", sortOrder: 10 },
-  { name: "Anwaerter", description: "Anwärter während Probephase.", permissionRole: "user", sortOrder: 20 },
-  { name: "Mitglied", description: "Aktive Community-Mitglieder.", permissionRole: "user", sortOrder: 30 }
+  { name: "Temporaer", description: "Temporary applicant permissions.", permissionRole: "temporaer", sortOrder: 10 },
+  { name: "User", description: "Default community user role.", permissionRole: "user", sortOrder: 20 },
+  { name: "Moderator", description: "Can moderate community content.", permissionRole: "moderator", sortOrder: 30 },
+  { name: "Admin", description: "Full administrative permissions.", permissionRole: "admin", sortOrder: 40 }
 ] as const;
 
 export async function ensureDefaultRoles() {
   const db = getDb();
 
+  // Permission roles are system-level and always kept in sync
   for (const role of defaultPermissionRoles) {
     const existing = await db.select().from(permissionRoles).where(eq(permissionRoles.name, role.name)).limit(1);
     if (existing.length === 0) {
@@ -42,6 +44,12 @@ export async function ensureDefaultRoles() {
     }
   }
 
+  // Community roles: only seed defaults if none exist yet (first setup)
+  const existingCommunityRoles = await db.select({ id: communityRoles.id }).from(communityRoles).limit(1);
+  if (existingCommunityRoles.length > 0) {
+    return;
+  }
+
   for (const role of defaultCommunityRoles) {
     const permission = await db
       .select()
@@ -53,25 +61,12 @@ export async function ensureDefaultRoles() {
       continue;
     }
 
-    const existing = await db.select().from(communityRoles).where(eq(communityRoles.name, role.name)).limit(1);
-    if (existing.length === 0) {
-      await db.insert(communityRoles).values({
-        name: role.name,
-        description: role.description,
-        permissionRoleId: permissionRole.id,
-        sortOrder: role.sortOrder
-      });
-    } else {
-      await db
-        .update(communityRoles)
-        .set({
-          description: role.description,
-          permissionRoleId: permissionRole.id,
-          sortOrder: role.sortOrder,
-          updatedAt: new Date()
-        })
-        .where(eq(communityRoles.name, role.name));
-    }
+    await db.insert(communityRoles).values({
+      name: role.name,
+      description: role.description,
+      permissionRoleId: permissionRole.id,
+      sortOrder: role.sortOrder
+    });
   }
 }
 

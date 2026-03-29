@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { CustomFieldEntry, CommunityTag } from "~/types/custom-fields";
+import { type DisplayNameField, parseWithTemplate } from "@guildora/shared";
 
 const props = defineProps<{
   open: boolean;
@@ -49,8 +50,16 @@ const deletePending = ref(false);
 
 const editName = ref("");
 const editRufname = ref("");
+const displayNameTemplate = ref<DisplayNameField[]>([]);
+const displayNameParts = ref<Record<string, string>>({});
 const customFields = ref<CustomFieldEntry[]>([]);
 const customFieldValues = ref<Record<string, unknown>>({});
+const availableCommunityRoles = ref<{ id: number; name: string; permissionRoleName: string }[]>([]);
+const selectedCommunityRoleId = ref<number | null>(null);
+const initialCommunityRoleId = ref<number | null>(null);
+
+const isSuperadminTarget = computed(() => props.profile?.permissionRoles?.includes("superadmin") ?? false);
+const canChangeRole = computed(() => isAdmin.value && !isSuperadminTarget.value);
 const communityTags = ref<CommunityTag[]>([]);
 const tagSearch = ref("");
 const tagSearchResults = computed(() => {
@@ -75,12 +84,32 @@ const enterEditMode = async () => {
   editRufname.value = props.profile?.rufname ?? "";
 
   try {
-    const [cfData, tagsData] = await Promise.all([
+    const fetches: [
+      Promise<{ fields: CustomFieldEntry[] }>,
+      Promise<{ tags: CommunityTag[] }>,
+      Promise<{ communityRoles: { id: number; name: string; permissionRoleName: string }[] }> | null,
+      Promise<{ displayNameTemplate: DisplayNameField[] }>
+    ] = [
       $fetch<{ fields: CustomFieldEntry[] }>(`/api/mod/users/${props.memberId}/custom-fields`),
-      $fetch<{ tags: CommunityTag[] }>("/api/mod/tags")
-    ]);
+      $fetch<{ tags: CommunityTag[] }>("/api/mod/tags"),
+      isAdmin.value
+        ? $fetch<{ communityRoles: { id: number; name: string; permissionRoleName: string }[] }>("/api/mod/community-roles")
+        : null,
+      $fetch<{ displayNameTemplate: DisplayNameField[] }>("/api/community-settings/display-name-template")
+    ];
+    const [cfData, tagsData, rolesData, templateData] = await Promise.all(fetches);
+    displayNameTemplate.value = templateData.displayNameTemplate ?? [];
+    if (displayNameTemplate.value.length > 0) {
+      displayNameParts.value = parseWithTemplate(props.profile?.profileName ?? "", displayNameTemplate.value);
+    }
     customFields.value = cfData.fields;
     communityTags.value = tagsData.tags;
+    if (rolesData) {
+      availableCommunityRoles.value = rolesData.communityRoles;
+      const match = rolesData.communityRoles.find((r) => r.name === props.profile?.communityRole);
+      selectedCommunityRoleId.value = match?.id ?? null;
+      initialCommunityRoleId.value = match?.id ?? null;
+    }
     const vals: Record<string, unknown> = {};
     for (const f of cfData.fields) {
       vals[f.key] = f.value ?? (f.inputType === "boolean" ? false : "");
@@ -104,10 +133,17 @@ const saveEdit = async () => {
   editSaving.value = true;
   editError.value = null;
   try {
-    await $fetch(`/api/mod/users/${props.memberId}/profile`, {
-      method: "PUT",
-      body: { ingameName: editName.value, rufname: editRufname.value || null }
-    });
+    if (displayNameTemplate.value.length > 0) {
+      await $fetch(`/api/mod/users/${props.memberId}/profile`, {
+        method: "PUT",
+        body: { ingameName: editName.value, rufname: editRufname.value || null, displayNameParts: displayNameParts.value }
+      });
+    } else {
+      await $fetch(`/api/mod/users/${props.memberId}/profile`, {
+        method: "PUT",
+        body: { ingameName: editName.value, rufname: editRufname.value || null }
+      });
+    }
 
     const editableValues: Record<string, unknown> = {};
     for (const f of customFields.value) {
@@ -119,6 +155,13 @@ const saveEdit = async () => {
       method: "PUT",
       body: { values: editableValues }
     });
+
+    if (canChangeRole.value && selectedCommunityRoleId.value && selectedCommunityRoleId.value !== initialCommunityRoleId.value) {
+      await $fetch(`/api/mod/users/${props.memberId}/community-role`, {
+        method: "PUT",
+        body: { communityRoleId: selectedCommunityRoleId.value }
+      });
+    }
 
     isEditMode.value = false;
     emit("saved");
@@ -248,8 +291,33 @@ onBeforeUnmount(() => {
 
             <div v-if="editError" class="alert alert-error">{{ editError }}</div>
 
-            <UiInput v-model="editName" :label="$t('profile.ingameName')" />
-            <UiInput v-model="editRufname" :label="$t('profile.rufname')" />
+            <!-- Template-based name fields -->
+            <template v-if="displayNameTemplate.length > 0">
+              <UiInput
+                v-for="field in displayNameTemplate"
+                :key="field.key"
+                :model-value="displayNameParts[field.key] ?? ''"
+                :label="field.label"
+                :required="field.required"
+                @update:model-value="(val: string) => displayNameParts = { ...displayNameParts, [field.key]: val }"
+              />
+            </template>
+            <!-- Legacy name fields -->
+            <template v-else>
+              <UiInput v-model="editName" :label="$t('profile.ingameName')" />
+              <UiInput v-model="editRufname" :label="$t('profile.rufname')" />
+            </template>
+
+            <!-- Community Role -->
+            <UiSelect
+              v-if="canChangeRole && availableCommunityRoles.length"
+              v-model.number="selectedCommunityRoleId"
+              :label="$t('profile.communityRole')"
+            >
+              <option v-for="role in availableCommunityRoles" :key="role.id" :value="role.id">
+                {{ role.name }}
+              </option>
+            </UiSelect>
 
             <!-- Custom Fields -->
             <template v-for="field in customFields" :key="field.id">
@@ -387,6 +455,7 @@ onBeforeUnmount(() => {
 .member-modal {
   max-width: 36rem;
   background-color: var(--color-surface-3);
+  --color-field-bg: var(--color-surface-5);
   box-shadow: var(--shadow-lg);
   border-radius: 1rem;
   padding: 2rem;

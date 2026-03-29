@@ -133,6 +133,20 @@ watch(
   { immediate: true }
 );
 
+const usedDiscordRoleIds = computed(() => {
+  return new Set(roleEditRows.value.map((r) => r.discordRoleId).filter(Boolean));
+});
+
+const availableDiscordRolesForCreate = computed(() => {
+  return (discordRolesData.value?.roles || []).filter((r) => !usedDiscordRoleIds.value.has(r.id));
+});
+
+const availableDiscordRolesForEdit = (currentDiscordRoleId: string) => {
+  return (discordRolesData.value?.roles || []).filter(
+    (r) => r.id === currentDiscordRoleId || !usedDiscordRoleIds.value.has(r.id)
+  );
+};
+
 const resetMessage = () => {
   actionError.value = "";
   actionSuccess.value = "";
@@ -420,7 +434,7 @@ const toggleOrphanSelection = (userId: string, checked: boolean) => {
                   :aria-describedby="'new-role-discord-help'"
                 >
                   <option value="">{{ t("adminPermissions.roles.noneDiscordRole") }}</option>
-                  <option v-for="role in discordRolesData?.roles || []" :key="role.id" :value="role.id">
+                  <option v-for="role in availableDiscordRolesForCreate" :key="role.id" :value="role.id">
                     {{ role.name }} ({{ role.id }})
                   </option>
                 </UiSelect>
@@ -546,7 +560,7 @@ const toggleOrphanSelection = (userId: string, checked: boolean) => {
                       :aria-describedby="`edit-role-${row.id}-discord-help`"
                     >
                       <option value="">{{ t("adminPermissions.roles.noneDiscordRole") }}</option>
-                      <option v-for="role in discordRolesData?.roles || []" :key="role.id" :value="role.id">
+                      <option v-for="role in availableDiscordRolesForEdit(row.discordRoleId)" :key="role.id" :value="role.id">
                         {{ role.name }}
                       </option>
                     </UiSelect>
@@ -727,11 +741,11 @@ const toggleOrphanSelection = (userId: string, checked: boolean) => {
       </div>
     </div>
 
-    <dialog class="modal" :class="{ 'modal-open': deleteRoleConfirm.open }">
-      <div class="modal-box bg-surface-2 shadow-lg">
-        <h3 class="text-lg font-semibold">{{ t("adminPermissions.roles.deleteConfirmTitle") }}</h3>
-        <p class="py-3">{{ t("adminPermissions.roles.deleteConfirmMessage") }}</p>
-        <div class="modal-action">
+    <dialog class="modal" :class="{ 'modal-open': deleteRoleConfirm.open }" :open="deleteRoleConfirm.open">
+      <div class="modal-box max-w-sm">
+        <h3 class="text-lg font-bold">{{ t("adminPermissions.roles.deleteConfirmTitle") }}</h3>
+        <p class="mt-2 opacity-80">{{ t("adminPermissions.roles.deleteConfirmMessage") }}</p>
+        <div class="mt-4 flex justify-end gap-2">
           <UiButton variant="ghost" :disabled="busy.deletingRole" @click="closeDeleteRoleConfirm">
             {{ t("common.cancel") }}
           </UiButton>

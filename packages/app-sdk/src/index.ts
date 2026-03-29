@@ -36,6 +36,12 @@ export interface InteractionPayload {
   occurredAt: string;
 }
 
+export interface MessageAttachment {
+  url: string;
+  contentType: string;
+  filename: string;
+}
+
 export interface MessagePayload {
   guildId: string;
   channelId: string;
@@ -47,6 +53,8 @@ export interface MessagePayload {
   replyToMessageId?: string;
   /** If this message is a reply, the user ID of the replied-to message's author. */
   replyToUserId?: string;
+  /** Image attachments from the Discord message. */
+  attachments?: MessageAttachment[];
 }
 
 // ─── App KV store ────────────────────────────────────────────────────────────

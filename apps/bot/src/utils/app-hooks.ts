@@ -7,6 +7,16 @@ import { createAppDb } from "./app-db";
 import { createBotClient } from "./bot-client";
 import { logger } from "./logger";
 
+async function loadAppConfig(appId: string): Promise<Record<string, unknown>> {
+  try {
+    const db = getDb();
+    const rows = await db.select({ config: installedApps.config }).from(installedApps).where(eq(installedApps.appId, appId)).limit(1);
+    return (rows[0]?.config as Record<string, unknown>) || {};
+  } catch {
+    return {};
+  }
+}
+
 // ─── Hook payload types (aligned with @guildora/app-sdk) ─────────────────
 
 export type BotHookEventMap = {
@@ -67,6 +77,12 @@ class BotAppHookRegistry {
 
     for (const [appId, { handler, ctx }] of scopedHandlers.entries()) {
       try {
+        // Refresh config from DB before each hook invocation so config
+        // changes (e.g. toggling read-only mode) take effect immediately
+        const freshConfig = await loadAppConfig(appId);
+        if (Object.keys(freshConfig).length > 0) {
+          ctx.config = freshConfig;
+        }
         await (handler as BotHookHandler<K>)(payload, ctx);
       } catch (error) {
         // Error-boundary: plugin hooks must never crash the core bot runtime.

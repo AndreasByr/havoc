@@ -820,10 +820,14 @@ a:focus-visible {
   background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(4px);
 }
-/* .modal-box already defined above */
+/* .modal-box already defined above — structural additions */
 .modal-box {
   position: relative;
   z-index: 1;
+  padding: 1.5rem;
+  max-width: 28rem;
+  width: 100%;
+  color: var(--color-text-primary);
 }
 .modal-action {
   display: flex;

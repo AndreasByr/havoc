@@ -2,10 +2,11 @@ import { eq } from "drizzle-orm";
 import { parseProfileName, users } from "@guildora/shared";
 import { requireModeratorSession } from "../../../../utils/auth";
 import { syncDiscordUserFromWebsite } from "../../../../utils/botSync";
+import { loadDisplayNameTemplate } from "../../../../utils/community-settings";
 import { getDb } from "../../../../utils/db";
 import { readBodyWithSchema, requireRouterParam } from "../../../../utils/http";
 import { jsonResponse } from "../../../../utils/jsonResponse";
-import { updateModProfileSchema, updateUserDisplayName, upsertProfileDetails } from "../../../../utils/profile-write";
+import { updateModProfileSchema, updateUserDisplayName, updateUserDisplayNameFromTemplate, upsertProfileDetails } from "../../../../utils/profile-write";
 
 export default defineEventHandler(async (event) => {
   await requireModeratorSession(event);
@@ -19,10 +20,16 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: "User not found." });
   }
 
-  const profileName = await updateUserDisplayName(db, targetUserId, {
-    ingameName: parsed.ingameName,
-    rufname: parsed.rufname
-  });
+  const displayNameTemplate = await loadDisplayNameTemplate(db);
+  let profileName: string;
+  if (parsed.displayNameParts && displayNameTemplate.length > 0) {
+    profileName = await updateUserDisplayNameFromTemplate(db, targetUserId, displayNameTemplate, parsed.displayNameParts);
+  } else {
+    profileName = await updateUserDisplayName(db, targetUserId, {
+      ingameName: parsed.ingameName,
+      rufname: parsed.rufname
+    });
+  }
   const updatedProfile = await upsertProfileDetails(
     db,
     targetUserId,

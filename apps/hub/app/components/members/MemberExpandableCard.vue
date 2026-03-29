@@ -16,11 +16,22 @@ interface MemberCardItem {
 
 const props = defineProps<{
   member: MemberCardItem;
+  selectable?: boolean;
+  selected?: boolean;
 }>();
 
 const emit = defineEmits<{
   (event: "open-details", memberId: string): void;
+  (event: "toggle-select"): void;
 }>();
+
+function handleCardClick() {
+  if (props.selectable) {
+    emit("toggle-select");
+  } else {
+    emit("open-details", props.member.id);
+  }
+}
 
 const { t } = useI18n();
 const avatarAlt = computed(() => t("members.avatarAlt", { name: props.member.profileName }));
@@ -29,8 +40,16 @@ const avatarInitials = computed(() => props.member.profileName?.slice(0, 2).toUp
 </script>
 
 <template>
-  <article class="member-card" @click="emit('open-details', member.id)">
+  <article class="member-card" :class="{ 'member-card--selected': selected }" @click="handleCardClick">
     <div class="member-card__body">
+      <div v-if="selectable" class="member-card__checkbox">
+        <input
+          type="checkbox"
+          :checked="selected"
+          class="member-card__checkbox-input"
+          @click.stop="emit('toggle-select')"
+        >
+      </div>
       <div class="member-card__avatar-wrap">
         <img
           v-if="member.avatarUrl"
@@ -75,11 +94,29 @@ const avatarInitials = computed(() => props.member.profileName?.slice(0, 2).toUp
   box-shadow: var(--shadow-md), 0 0 12px var(--color-accent-glow);
 }
 
+.member-card--selected {
+  border-color: var(--color-accent-border-active);
+  box-shadow: var(--shadow-md), 0 0 12px var(--color-accent-glow);
+}
+
 .member-card__body {
   padding: 1rem 1.25rem;
   display: flex;
   align-items: center;
   gap: 0.75rem;
+}
+
+.member-card__checkbox {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.member-card__checkbox-input {
+  width: 1.125rem;
+  height: 1.125rem;
+  accent-color: var(--color-accent);
+  cursor: pointer;
 }
 
 .member-card__avatar-wrap {

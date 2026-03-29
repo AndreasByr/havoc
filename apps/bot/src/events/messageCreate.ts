@@ -20,6 +20,15 @@ export function registerMessageCreateEvent(client: Client) {
         occurredAt: new Date().toISOString()
       };
 
+      // Extract image attachments
+      const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
+      const imageAttachments = [...message.attachments.values()]
+        .filter(att => att.contentType && IMAGE_TYPES.includes(att.contentType))
+        .map(att => ({ url: att.url, contentType: att.contentType!, filename: att.name ?? 'unknown' }));
+      if (imageAttachments.length > 0) {
+        payload.attachments = imageAttachments;
+      }
+
       // Include reply context if this message is a reply
       if (message.reference?.messageId) {
         payload.replyToMessageId = message.reference.messageId;

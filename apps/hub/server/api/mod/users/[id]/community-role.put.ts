@@ -1,10 +1,10 @@
 import { eq } from "drizzle-orm";
-import { communityRoles } from "@guildora/shared";
+import { communityRoles, userCommunityRoles } from "@guildora/shared";
 import { z } from "zod";
 import { requireModeratorSession } from "../../../../utils/auth";
 import { assignCommunityRole, getUserById, getUserRoles } from "../../../../utils/community";
 import { buildOpenedApplicationCustomFields, getProfileByUserId, upsertProfileCustomFields } from "../../../../utils/community-applications";
-import { syncDiscordUserFromWebsite } from "../../../../utils/botSync";
+import { addDiscordRolesToMember, removeDiscordRolesFromBot, syncDiscordUserFromWebsite } from "../../../../utils/botSync";
 import { getDb } from "../../../../utils/db";
 import { readBodyWithSchema, requireRouterParam } from "../../../../utils/http";
 
@@ -18,6 +18,15 @@ export default defineEventHandler(async (event) => {
   const userId = requireRouterParam(event, "id", "Missing user id.");
   const parsed = await readBodyWithSchema(event, schema, "Invalid payload.");
 
+  // Load old community role's discordRoleId before reassignment
+  const oldAssignment = await db
+    .select({ discordRoleId: communityRoles.discordRoleId })
+    .from(userCommunityRoles)
+    .innerJoin(communityRoles, eq(userCommunityRoles.communityRoleId, communityRoles.id))
+    .where(eq(userCommunityRoles.userId, userId))
+    .limit(1);
+  const oldDiscordRoleId = oldAssignment[0]?.discordRoleId ?? null;
+
   await assignCommunityRole(userId, parsed.communityRoleId, session.user.id);
 
   const roleRow = await db.select().from(communityRoles).where(eq(communityRoles.id, parsed.communityRoleId)).limit(1);
@@ -27,6 +36,8 @@ export default defineEventHandler(async (event) => {
     await upsertProfileCustomFields(db, userId, nextFields);
   }
 
+  const newDiscordRoleId = roleRow[0]?.discordRoleId ?? null;
+
   const [user, permissionRoles] = await Promise.all([getUserById(userId), getUserRoles(userId)]);
   if (user) {
     await syncDiscordUserFromWebsite({
@@ -34,6 +45,14 @@ export default defineEventHandler(async (event) => {
       profileName: user.displayName,
       permissionRoles
     });
+
+    // Sync community role Discord roles
+    if (oldDiscordRoleId && oldDiscordRoleId !== newDiscordRoleId) {
+      await removeDiscordRolesFromBot(user.discordId, { roleIds: [oldDiscordRoleId] });
+    }
+    if (newDiscordRoleId && newDiscordRoleId !== oldDiscordRoleId) {
+      await addDiscordRolesToMember(user.discordId, [newDiscordRoleId]);
+    }
   }
 
   return { ok: true };

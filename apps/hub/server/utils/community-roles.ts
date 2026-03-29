@@ -19,8 +19,13 @@ type ModCommunityRoleInput = z.infer<typeof modCommunityRoleSchema>;
 type AdminCommunityRoleInput = z.infer<typeof adminCommunityRoleSchema>;
 
 function isDiscordRoleUniqueConstraintError(error: unknown) {
-  const message = error instanceof Error ? error.message : String(error);
-  return message.toLowerCase().includes("community_roles_discord_role_id_unique");
+  const check = (err: unknown): boolean => {
+    const message = err instanceof Error ? err.message : String(err);
+    return message.toLowerCase().includes("community_roles_discord_role_id_unique");
+  };
+  if (check(error)) return true;
+  if (error instanceof Error && "cause" in error) return check(error.cause);
+  return false;
 }
 
 export function parseCommunityRoleId(raw: string | null | undefined) {
@@ -103,9 +108,14 @@ export async function updateCommunityRole(
   try {
     await db.update(communityRoles).set(values).where(eq(communityRoles.id, roleId));
   } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
     if (includeDiscordRoleId && isDiscordRoleUniqueConstraintError(error)) {
       throw createError({ statusCode: 409, statusMessage: "Discord role is already mapped." });
     }
+    if (message.toLowerCase().includes("community_roles_name_unique")) {
+      throw createError({ statusCode: 409, statusMessage: "A community role with this name already exists." });
+    }
+    console.error("updateCommunityRole failed:", message);
     throw error;
   }
 }

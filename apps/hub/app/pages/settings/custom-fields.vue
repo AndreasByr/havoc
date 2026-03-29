@@ -255,7 +255,7 @@ const deleteTag = async (tag: CommunityTag) => {
       </div>
     </div>
 
-    <dialog class="modal" :class="{ 'modal-open': showForm }">
+    <dialog class="modal" :class="{ 'modal-open': showForm }" :open="showForm">
       <div class="modal-box max-w-xl bg-surface-2 shadow-lg" @keydown.esc="closeForm">
         <button
           type="button"
