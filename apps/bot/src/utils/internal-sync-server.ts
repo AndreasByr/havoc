@@ -837,24 +837,29 @@ export function startInternalSyncServer(client: Client, commands: Collection<str
         return;
       }
 
-      // GET /internal/guild/channels/list — list all text channels
+      // GET /internal/guild/channels/list — list text, voice, and category channels
       if (method === "GET" && pathname === "/internal/guild/channels/list") {
         const guild = await getGuild(client, guildId);
         const channels = await guild.channels.fetch();
-        const textChannels: Array<{ id: string; name: string }> = [];
+        const typeMap: Record<number, string> = {
+          [ChannelType.GuildText]: "text",
+          [ChannelType.GuildVoice]: "voice",
+          [ChannelType.GuildCategory]: "category",
+        };
+        const result: Array<{ id: string; name: string; type: string; parentId: string | null }> = [];
         for (const [, channel] of channels) {
           if (!channel) continue;
-          if (channel.type !== ChannelType.GuildText) continue;
-          textChannels.push({ id: channel.id, name: channel.name });
+          if (!(channel.type in typeMap)) continue;
+          result.push({ id: channel.id, name: channel.name, type: typeMap[channel.type]!, parentId: channel.parentId || null });
         }
-        json(res, 200, { channels: textChannels });
+        json(res, 200, { channels: result });
         return;
       }
 
       // POST /internal/guild/channels/create
       if (method === "POST" && pathname === "/internal/guild/channels/create") {
         const bodyRaw = await readBody(req);
-        let body: { name?: string; type?: string; parentId?: string } = {};
+        let body: { name?: string; type?: string; parentId?: string; topic?: string; permissionOverwrites?: Array<{ id: string; type: number; allow: string; deny: string }> } = {};
         try { body = JSON.parse(bodyRaw); } catch { jsonError(res, 400, "INVALID_JSON_BODY", "Invalid JSON body"); return; }
 
         if (!body.name || typeof body.name !== "string") {
@@ -876,12 +881,46 @@ export function startInternalSyncServer(client: Client, commands: Collection<str
           const channel = await guild.channels.create({
             name: body.name,
             type: channelType,
-            parent: body.parentId || undefined
+            parent: body.parentId || undefined,
+            topic: body.topic || undefined,
+            permissionOverwrites: body.permissionOverwrites || undefined
           });
           json(res, 200, { ok: true, channelId: channel.id, channelName: channel.name });
         } catch (error) {
           if (isMissingPermissionsError(error)) {
             jsonError(res, 403, "SYNC_FAILED", "Missing permissions to create channel");
+          } else {
+            throw error;
+          }
+        }
+        return;
+      }
+
+      // GET /internal/guild/channels/:channelId/permissions — get channel permission overwrites
+      const permissionsMatch = pathname.match(/^\/internal\/guild\/channels\/([^/]+)\/permissions$/);
+      if (method === "GET" && permissionsMatch) {
+        const channelId = decodeURIComponent(permissionsMatch[1] || "");
+        if (!channelId) { jsonError(res, 400, "MISSING_CHANNEL_ID", "Missing channel id"); return; }
+
+        const guild = await getGuild(client, guildId);
+        try {
+          const channel = await guild.channels.fetch(channelId);
+          if (!channel) {
+            jsonError(res, 404, "CHANNEL_NOT_FOUND", "Channel not found");
+            return;
+          }
+          const overwrites = "permissionOverwrites" in channel && channel.permissionOverwrites
+            ? channel.permissionOverwrites.cache.map((o) => ({
+                id: o.id,
+                type: o.type,
+                allow: o.allow.bitfield.toString(),
+                deny: o.deny.bitfield.toString()
+              }))
+            : [];
+          json(res, 200, { channelId, channelName: channel.name, permissionOverwrites: overwrites });
+        } catch (error) {
+          if (isMissingPermissionsError(error)) {
+            jsonError(res, 403, "SYNC_FAILED", "Missing permissions to read channel");
           } else {
             throw error;
           }
