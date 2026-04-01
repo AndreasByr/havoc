@@ -10,7 +10,109 @@ import type {
   FlowInputType
 } from "@guildora/shared";
 
+type GuildRole = {
+  id: string;
+  name: string;
+  position: number;
+  managed: boolean;
+  editable: boolean;
+  color: number;
+  unicodeEmoji: string | null;
+};
+
 const { t } = useI18n();
+
+// Fetch Discord guild roles for role_assignment multiselect
+const guildRoles = ref<GuildRole[]>([]);
+const rolesLoading = ref(true);
+
+// Role multiselect dropdown state
+const roleDropdownOpen = ref(false);
+
+function toggleRoleDropdown() {
+  roleDropdownOpen.value = !roleDropdownOpen.value;
+}
+
+function toggleRole(roleId: string) {
+  const d = localData.value as FlowRoleAssignmentNodeData;
+  if (!d.roleIds) d.roleIds = [];
+  if (!d.roleNameSnapshots) d.roleNameSnapshots = [];
+
+  const idx = d.roleIds.indexOf(roleId);
+  if (idx >= 0) {
+    d.roleIds.splice(idx, 1);
+    d.roleNameSnapshots.splice(idx, 1);
+  } else {
+    const role = guildRoles.value.find((r) => r.id === roleId);
+    d.roleIds.push(roleId);
+    d.roleNameSnapshots.push(role?.name ?? roleId);
+  }
+  commitChanges();
+}
+
+function roleName(roleId: string): string {
+  return guildRoles.value.find((r) => r.id === roleId)?.name ?? roleId;
+}
+
+// Discord role input field dropdown state (separate from role_assignment dropdown)
+const discordRoleInputDropdownOpen = ref(false);
+
+function toggleDiscordRoleInputDropdown() {
+  discordRoleInputDropdownOpen.value = !discordRoleInputDropdownOpen.value;
+}
+
+function toggleDiscordRoleOption(roleId: string) {
+  const d = localData.value as FlowInputNodeData;
+  if (!d.discordRoleOptions) d.discordRoleOptions = [];
+
+  const idx = d.discordRoleOptions.findIndex((r) => r.roleId === roleId);
+  if (idx >= 0) {
+    d.discordRoleOptions.splice(idx, 1);
+  } else {
+    const role = guildRoles.value.find((r) => r.id === roleId);
+    if (role) {
+      d.discordRoleOptions.push({
+        roleId: role.id,
+        name: role.name,
+        color: role.color,
+        unicodeEmoji: role.unicodeEmoji
+      });
+    }
+  }
+  commitChanges();
+}
+
+function discordRoleOptionName(roleId: string): string {
+  return guildRoles.value.find((r) => r.id === roleId)?.name ?? roleId;
+}
+
+function roleColorHex(color: number): string {
+  return color === 0 ? "#99aab5" : `#${color.toString(16).padStart(6, "0")}`;
+}
+
+function onClickOutsideRoles(e: MouseEvent) {
+  const target = e.target as HTMLElement;
+  if (!target.closest(".role-multiselect")) {
+    roleDropdownOpen.value = false;
+    discordRoleInputDropdownOpen.value = false;
+  }
+}
+
+onMounted(async () => {
+  document.addEventListener("click", onClickOutsideRoles);
+  try {
+    const result = await $fetch<{ guildRoles: GuildRole[] }>("/api/admin/discord-roles");
+    guildRoles.value = result.guildRoles.filter((r) => !r.managed).sort((a, b) => b.position - a.position);
+  } catch {
+    // silently fail – roles dropdown will be empty
+  } finally {
+    rolesLoading.value = false;
+  }
+});
+
+onUnmounted(() => {
+  document.removeEventListener("click", onClickOutsideRoles);
+});
 
 const props = defineProps<{
   node: Node | null;
@@ -36,6 +138,8 @@ const inputTypeOptions = computed<{ value: FlowInputType; label: string }[]>(() 
   { value: "date", label: t("applications.flowBuilder.inputTypes.date") },
   { value: "file_upload", label: t("applications.flowBuilder.inputTypes.fileUpload") },
   { value: "discord_username", label: t("applications.flowBuilder.inputTypes.discordUsername") },
+  { value: "discord_role_single", label: t("applications.flowBuilder.inputTypes.discordRoleSingle") },
+  { value: "discord_role_multi", label: t("applications.flowBuilder.inputTypes.discordRoleMulti") },
 ]);
 
 // Reactive local copy of data for editing
@@ -85,7 +189,9 @@ const BRANCHABLE_INPUT_TYPES: FlowInputType[] = [
   "single_select_radio",
   "single_select_dropdown",
   "multi_select",
-  "yes_no"
+  "yes_no",
+  "discord_role_single",
+  "discord_role_multi"
 ];
 
 const branchableNodes = computed(() => {
@@ -117,6 +223,10 @@ function getOptionsForNode(nodeId: string): Array<{ id: string; label: string }>
       { id: "yes", label: t("applications.form.yes") },
       { id: "no", label: t("applications.form.no") }
     ];
+  }
+
+  if (data.inputType === "discord_role_single" || data.inputType === "discord_role_multi") {
+    return (data.discordRoleOptions ?? []).map((r) => ({ id: r.roleId, label: r.name }));
   }
 
   return data.options ?? [];
@@ -237,6 +347,43 @@ function onSourceNodeChange(newSourceNodeId: string) {
           </div>
         </template>
 
+        <!-- Discord role selection options -->
+        <template
+          v-if="['discord_role_single', 'discord_role_multi'].includes((localData as FlowInputNodeData).inputType)"
+        >
+          <div class="sidebar-field">
+            <label class="sidebar-label">{{ t("applications.flowBuilder.sidebar.selectableRoles") }}</label>
+            <div v-if="rolesLoading" class="text-xs" style="color: var(--color-base-content-secondary)">
+              {{ t("common.loading") }}...
+            </div>
+            <div v-else class="role-multiselect" @click.stop>
+              <button type="button" class="role-multiselect__trigger" @click="toggleDiscordRoleInputDropdown">
+                <span v-if="((localData as FlowInputNodeData).discordRoleOptions || []).length" class="role-multiselect__tags">
+                  <span v-for="opt in (localData as FlowInputNodeData).discordRoleOptions" :key="opt.roleId" class="role-multiselect__tag">
+                    <span class="role-color-dot" :style="{ backgroundColor: roleColorHex(opt.color) }" />
+                    <span v-if="opt.unicodeEmoji">{{ opt.unicodeEmoji }}</span>
+                    {{ opt.name }}
+                    <button type="button" class="role-multiselect__tag-remove" @click.stop="toggleDiscordRoleOption(opt.roleId)">&times;</button>
+                  </span>
+                </span>
+                <span v-else class="role-multiselect__placeholder">{{ t("applications.flowBuilder.sidebar.selectRoles") }}</span>
+                <svg class="role-multiselect__chevron" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+              </button>
+              <div v-if="discordRoleInputDropdownOpen" class="role-multiselect__dropdown">
+                <label v-for="role in guildRoles" :key="role.id" class="role-multiselect__option">
+                  <input type="checkbox" :checked="((localData as FlowInputNodeData).discordRoleOptions || []).some((r) => r.roleId === role.id)" @change="toggleDiscordRoleOption(role.id)" />
+                  <span class="role-color-dot" :style="{ backgroundColor: roleColorHex(role.color) }" />
+                  <span v-if="role.unicodeEmoji">{{ role.unicodeEmoji }}</span>
+                  {{ role.name }}
+                </label>
+                <div v-if="guildRoles.length === 0" class="text-xs p-2" style="color: var(--color-base-content-secondary)">
+                  {{ t("applications.flowBuilder.sidebar.noRolesAvailable") }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+
       </template>
 
       <template v-if="nodeType === 'info'">
@@ -282,21 +429,30 @@ function onSourceNodeChange(newSourceNodeId: string) {
       <template v-if="nodeType === 'role_assignment'">
         <div class="sidebar-field">
           <label class="sidebar-label">{{ t("applications.flowBuilder.sidebar.roleIds") }}</label>
-          <input
-            :value="((localData as FlowRoleAssignmentNodeData).roleIds || []).join(', ')"
-            class="input input-sm w-full"
-            placeholder="123456, 789012"
-            @blur="(e) => { (localData as FlowRoleAssignmentNodeData).roleIds = (e.target as HTMLInputElement).value.split(',').map(s => s.trim()).filter(Boolean); commitChanges(); }"
-          />
-        </div>
-        <div class="sidebar-field">
-          <label class="sidebar-label">{{ t("applications.flowBuilder.sidebar.roleNames") }}</label>
-          <input
-            :value="((localData as FlowRoleAssignmentNodeData).roleNameSnapshots || []).join(', ')"
-            class="input input-sm w-full"
-            placeholder="Bewerber, Member"
-            @blur="(e) => { (localData as FlowRoleAssignmentNodeData).roleNameSnapshots = (e.target as HTMLInputElement).value.split(',').map(s => s.trim()).filter(Boolean); commitChanges(); }"
-          />
+          <div v-if="rolesLoading" class="text-xs" style="color: var(--color-base-content-secondary)">
+            {{ t("common.loading") }}...
+          </div>
+          <div v-else class="role-multiselect" @click.stop>
+            <button type="button" class="role-multiselect__trigger" @click="toggleRoleDropdown">
+              <span v-if="((localData as FlowRoleAssignmentNodeData).roleIds || []).length" class="role-multiselect__tags">
+                <span v-for="id in (localData as FlowRoleAssignmentNodeData).roleIds" :key="id" class="role-multiselect__tag">
+                  {{ roleName(id) }}
+                  <button type="button" class="role-multiselect__tag-remove" @click.stop="toggleRole(id)">&times;</button>
+                </span>
+              </span>
+              <span v-else class="role-multiselect__placeholder">{{ t("applications.flowBuilder.sidebar.selectRoles") }}</span>
+              <svg class="role-multiselect__chevron" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+            </button>
+            <div v-if="roleDropdownOpen" class="role-multiselect__dropdown">
+              <label v-for="role in guildRoles" :key="role.id" class="role-multiselect__option">
+                <input type="checkbox" :checked="((localData as FlowRoleAssignmentNodeData).roleIds || []).includes(role.id)" @change="toggleRole(role.id)" />
+                {{ role.name }}
+              </label>
+              <div v-if="guildRoles.length === 0" class="text-xs p-2" style="color: var(--color-base-content-secondary)">
+                {{ t("applications.flowBuilder.sidebar.noRolesAvailable") }}
+              </div>
+            </div>
+          </div>
         </div>
       </template>
 
@@ -408,5 +564,106 @@ function onSourceNodeChange(newSourceNodeId: string) {
   font-weight: 500;
   color: var(--color-base-content-secondary);
   margin-bottom: 0.25rem;
+}
+
+.role-multiselect {
+  position: relative;
+}
+
+.role-multiselect__trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 2.25rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-line);
+  background: var(--color-surface-3);
+  font-size: 0.875rem;
+  cursor: pointer;
+  text-align: left;
+}
+
+.role-multiselect__trigger:hover {
+  border-color: var(--color-accent);
+}
+
+.role-multiselect__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.role-multiselect__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.375rem;
+  background: var(--color-accent);
+  color: var(--color-accent-content, #fff);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.role-multiselect__tag-remove {
+  font-size: 0.875rem;
+  line-height: 1;
+  opacity: 0.7;
+  cursor: pointer;
+}
+
+.role-multiselect__tag-remove:hover {
+  opacity: 1;
+}
+
+.role-multiselect__placeholder {
+  flex: 1;
+  color: var(--color-base-content-secondary);
+}
+
+.role-multiselect__chevron {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  color: var(--color-base-content-secondary);
+}
+
+.role-multiselect__dropdown {
+  position: absolute;
+  z-index: 50;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 0.25rem;
+  max-height: 16rem;
+  overflow-y: auto;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-line);
+  background: var(--color-surface-3);
+  box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0,0,0,.1));
+}
+
+.role-multiselect__option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.role-multiselect__option:hover {
+  background: var(--color-surface-4, var(--color-surface-2));
+}
+
+.role-color-dot {
+  display: inline-block;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 </style>

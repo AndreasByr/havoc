@@ -250,6 +250,7 @@ function nodeToInputField(node: FlowNode): LinearizedInputField | null {
     placeholder: data.placeholder,
     required: data.required,
     options: data.options,
+    discordRoleOptions: data.discordRoleOptions,
     validation: data.validation
   };
 }

@@ -357,7 +357,9 @@ export function startInternalSyncServer(client: Client, commands: Collection<str
             name: role.name,
             position: role.position,
             managed: role.managed,
-            editable: role.editable
+            editable: role.editable,
+            color: role.color,
+            unicodeEmoji: role.unicodeEmoji ?? null
           }));
 
         json(res, 200, { roles });

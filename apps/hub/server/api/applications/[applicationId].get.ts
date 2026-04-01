@@ -1,5 +1,5 @@
 import { eq, and, ne } from "drizzle-orm";
-import { applications, applicationFlows } from "@guildora/shared";
+import { applications, applicationFlows, applicationFileUploads } from "@guildora/shared";
 import type { ApplicationFlowGraph, ApplicationFlowSettings } from "@guildora/shared";
 import { requireModeratorSession } from "../../utils/auth";
 import { requireRouterParam } from "../../utils/http";
@@ -26,6 +26,23 @@ export default defineEventHandler(async (event) => {
     .from(applicationFlows)
     .where(eq(applicationFlows.id, app.flowId))
     .limit(1);
+
+  // Load file uploads for this application
+  const fileUploads = await db
+    .select({
+      id: applicationFileUploads.id,
+      originalFilename: applicationFileUploads.originalFilename,
+      mimeType: applicationFileUploads.mimeType,
+      fileSize: applicationFileUploads.fileSize
+    })
+    .from(applicationFileUploads)
+    .where(eq(applicationFileUploads.applicationId, applicationId));
+
+  // Build a map of uploadId -> file metadata for the frontend
+  const fileUploadsMap: Record<string, { id: string; originalFilename: string; mimeType: string; fileSize: number }> = {};
+  for (const fu of fileUploads) {
+    fileUploadsMap[fu.id] = fu;
+  }
 
   // Check for previous applications by same user
   const previousApps = await db
@@ -70,6 +87,7 @@ export default defineEventHandler(async (event) => {
       flowId: pa.flowId,
       status: pa.status,
       createdAt: pa.createdAt
-    }))
+    })),
+    fileUploads: fileUploadsMap
   };
 });

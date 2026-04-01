@@ -34,6 +34,10 @@ const effectiveOptions = computed(() => {
   return props.field.options || [];
 });
 
+function roleColorHex(color: number): string {
+  return color === 0 ? "#99aab5" : `#${color.toString(16).padStart(6, "0")}`;
+}
+
 // Multi-select helpers
 function isChecked(optionId: string): boolean {
   return Array.isArray(value.value) && (value.value as string[]).includes(optionId);
@@ -192,6 +196,52 @@ onMounted(() => {
       </label>
     </div>
 
+    <!-- Discord Role Single Select (Radio) -->
+    <div
+      v-else-if="field.inputType === 'discord_role_single'"
+      class="form-field__options"
+    >
+      <label
+        v-for="opt in (field.discordRoleOptions || [])"
+        :key="opt.roleId"
+        class="form-field__radio-item"
+      >
+        <input
+          type="radio"
+          :name="`field_${field.nodeId}`"
+          :value="opt.roleId"
+          :checked="value === opt.roleId"
+          class="radio"
+          @change="value = opt.roleId"
+        />
+        <span class="role-color-dot" :style="{ backgroundColor: roleColorHex(opt.color) }" />
+        <span v-if="opt.unicodeEmoji">{{ opt.unicodeEmoji }}</span>
+        <span>{{ opt.name }}</span>
+      </label>
+    </div>
+
+    <!-- Discord Role Multi Select (Checkboxes) -->
+    <div
+      v-else-if="field.inputType === 'discord_role_multi'"
+      class="form-field__options"
+    >
+      <label
+        v-for="opt in (field.discordRoleOptions || [])"
+        :key="opt.roleId"
+        class="form-field__checkbox-item"
+      >
+        <input
+          type="checkbox"
+          :checked="isChecked(opt.roleId)"
+          class="checkbox"
+          @change="toggleOption(opt.roleId)"
+        />
+        <span class="role-color-dot" :style="{ backgroundColor: roleColorHex(opt.color) }" />
+        <span v-if="opt.unicodeEmoji">{{ opt.unicodeEmoji }}</span>
+        <span>{{ opt.name }}</span>
+      </label>
+    </div>
+
     <!-- File Upload -->
     <div v-else-if="field.inputType === 'file_upload'">
       <input
@@ -249,5 +299,13 @@ onMounted(() => {
   gap: 0.5rem;
   cursor: pointer;
   font-size: 0.875rem;
+}
+
+.role-color-dot {
+  display: inline-block;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 </style>

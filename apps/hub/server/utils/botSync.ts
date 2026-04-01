@@ -39,6 +39,8 @@ export type DiscordGuildRole = {
   position: number;
   managed: boolean;
   editable: boolean;
+  color: number;
+  unicodeEmoji: string | null;
 };
 
 export type DiscordGuildMember = {

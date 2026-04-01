@@ -93,11 +93,31 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // Collect all roles: on-submission + role assignment nodes in traversed path
+  // Collect applicant-selected role IDs from discord_role_single/multi fields
+  const applicantSelectedRoleIds: string[] = [];
+  for (const step of linearized.steps) {
+    if (!step.fields) continue;
+    for (const field of step.fields) {
+      if (field.inputType !== "discord_role_single" && field.inputType !== "discord_role_multi") continue;
+      const answer = body.answers[field.nodeId];
+      if (!answer) continue;
+      const allowedIds = new Set((field.discordRoleOptions ?? []).map((r) => r.roleId));
+      const selected = Array.isArray(answer) ? answer as string[] : [answer as string];
+      for (const id of selected) {
+        if (!allowedIds.has(id)) {
+          throw createError({ statusCode: 400, statusMessage: `Invalid role selection for "${field.label}".` });
+        }
+        applicantSelectedRoleIds.push(id);
+      }
+    }
+  }
+
+  // Collect all roles: on-submission + role assignment nodes + applicant selections
   const allRoleIds = [
     ...new Set([
       ...(settings.roles.onSubmission || []),
-      ...(linearized.collectedRoleIds || [])
+      ...(linearized.collectedRoleIds || []),
+      ...applicantSelectedRoleIds
     ])
   ];
 

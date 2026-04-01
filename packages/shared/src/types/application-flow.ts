@@ -11,7 +11,9 @@ export type FlowInputType =
   | "yes_no"
   | "date"
   | "file_upload"
-  | "discord_username";
+  | "discord_username"
+  | "discord_role_single"
+  | "discord_role_multi";
 
 export type FlowNodeType =
   | "start"
@@ -38,6 +40,13 @@ export interface FlowInputNodeData {
   required: boolean;
   /** For select/radio/checkbox types: the available options */
   options?: Array<{ id: string; label: string }>;
+  /** For discord_role_single / discord_role_multi: the selectable roles */
+  discordRoleOptions?: Array<{
+    roleId: string;
+    name: string;
+    color: number;
+    unicodeEmoji?: string | null;
+  }>;
   validation?: {
     minLength?: number;
     maxLength?: number;
@@ -212,6 +221,12 @@ export interface LinearizedInputField {
   placeholder?: string;
   required: boolean;
   options?: Array<{ id: string; label: string }>;
+  discordRoleOptions?: Array<{
+    roleId: string;
+    name: string;
+    color: number;
+    unicodeEmoji?: string | null;
+  }>;
   validation?: FlowInputNodeData["validation"];
 }
 

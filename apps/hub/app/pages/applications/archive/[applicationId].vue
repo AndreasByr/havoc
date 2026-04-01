@@ -30,6 +30,7 @@ type ApplicationDetail = {
     flowJson: ApplicationFlowGraph;
   } | null;
   previousApplications: unknown[];
+  fileUploads: Record<string, { id: string; originalFilename: string; mimeType: string; fileSize: number }>;
 };
 
 const { data, pending, error } = await useFetch<ApplicationDetail>(
@@ -123,7 +124,24 @@ function formatAnswerValue(field: { inputType: string; options?: Array<{ id: str
               <template v-if="step.type === 'input' || step.type === 'input_group'">
                 <div v-for="field in step.fields" :key="field.nodeId" class="answer-row">
                   <p class="answer-row__label">{{ field.label }}</p>
-                  <p class="answer-row__value">{{ formatAnswerValue(field, data.application.answersJson[field.nodeId]) }}</p>
+                  <template v-if="field.inputType === 'file_upload' && data.fileUploads[String(data.application.answersJson[field.nodeId])]">
+                    <div class="answer-row__file">
+                      <img
+                        v-if="data.fileUploads[String(data.application.answersJson[field.nodeId])].mimeType.startsWith('image/')"
+                        :src="`/api/applications/${data.application.id}/files/${data.application.answersJson[field.nodeId]}`"
+                        :alt="data.fileUploads[String(data.application.answersJson[field.nodeId])].originalFilename"
+                        class="answer-row__image"
+                      />
+                      <a
+                        :href="`/api/applications/${data.application.id}/files/${data.application.answersJson[field.nodeId]}`"
+                        target="_blank"
+                        class="answer-row__file-link"
+                      >
+                        {{ data.fileUploads[String(data.application.answersJson[field.nodeId])].originalFilename }}
+                      </a>
+                    </div>
+                  </template>
+                  <p v-else class="answer-row__value">{{ formatAnswerValue(field, data.application.answersJson[field.nodeId]) }}</p>
                 </div>
               </template>
             </div>
@@ -167,5 +185,26 @@ function formatAnswerValue(field: { inputType: string; options?: Array<{ id: str
 .answer-row__value {
   font-size: 0.9375rem;
   color: var(--color-base-content);
+}
+
+.answer-row__file {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.answer-row__image {
+  max-width: 400px;
+  max-height: 300px;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-line);
+  object-fit: contain;
+}
+
+.answer-row__file-link {
+  font-size: 0.875rem;
+  color: var(--color-accent);
+  text-decoration: underline;
 }
 </style>
