@@ -21,6 +21,7 @@ export default defineEventHandler(async (event) => {
     blockType: body.blockType,
     sortOrder: body.sortOrder,
     visible: body.visible,
+    status: "draft",
     config: body.config,
     content: body.content,
     updatedBy: session.user.id

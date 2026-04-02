@@ -25,6 +25,7 @@ export const appSubmissionStatusEnum = pgEnum("app_submission_status", ["pending
 export const applicationFlowStatusEnum = pgEnum("application_flow_status", ["draft", "active", "inactive"]);
 export const applicationStatusEnum = pgEnum("application_status", ["pending", "approved", "rejected"]);
 export const editorModeEnum = pgEnum("editor_mode", ["simple", "advanced"]);
+export const landingSectionStatusEnum = pgEnum("landing_section_status", ["draft", "published"]);
 export type ThemeContentTone = "light" | "dark";
 
 export const users = pgTable("users", {
@@ -319,6 +320,7 @@ export const landingPages = pgTable("landing_pages", {
   locale: text("locale").notNull().default("en"),
   metaTitle: text("meta_title"),
   metaDescription: text("meta_description"),
+  publishedAt: timestamp("published_at", { withTimezone: true }),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .defaultNow()
     .notNull()
@@ -331,6 +333,7 @@ export const landingSections = pgTable("landing_sections", {
   blockType: text("block_type").notNull(),
   sortOrder: integer("sort_order").notNull(),
   visible: boolean("visible").notNull().default(true),
+  status: landingSectionStatusEnum("status").notNull().default("published"),
   config: jsonb("config").notNull().default({}),
   content: jsonb("content").notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
@@ -338,6 +341,14 @@ export const landingSections = pgTable("landing_sections", {
     .notNull()
     .$onUpdateFn(() => new Date()),
   updatedBy: uuid("updated_by").references(() => users.id, { onDelete: "set null" })
+});
+
+export const landingPageVersions = pgTable("landing_page_versions", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  snapshot: jsonb("snapshot").notNull(),
+  label: text("label"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" })
 });
 
 // ─── Community Settings ───────────────────────────────────────────────────
@@ -597,6 +608,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   updatedModerationSettings: many(moderationSettings),
   updatedLandingPages: many(landingPages),
   updatedLandingSections: many(landingSections),
+  createdLandingVersions: many(landingPageVersions),
   createdApplicationFlows: many(applicationFlows),
   reviewedApplications: many(applications, { relationName: "application_reviewer" }),
   applicationModeratorNotifications: many(applicationModeratorNotifications),
@@ -742,6 +754,13 @@ export const landingPagesRelations = relations(landingPages, ({ one }) => ({
 export const landingSectionsRelations = relations(landingSections, ({ one }) => ({
   updatedByUser: one(users, {
     fields: [landingSections.updatedBy],
+    references: [users.id]
+  })
+}));
+
+export const landingPageVersionsRelations = relations(landingPageVersions, ({ one }) => ({
+  createdByUser: one(users, {
+    fields: [landingPageVersions.createdBy],
     references: [users.id]
   })
 }));

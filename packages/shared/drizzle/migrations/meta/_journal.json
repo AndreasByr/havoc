@@ -183,6 +183,13 @@
       "when": 1775100000000,
       "tag": "0037_drop_payload_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1775200000000,
+      "tag": "0038_landing_draft_publish",
+      "breakpoints": true
     }
   ]
 }

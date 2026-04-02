@@ -1,5 +1,5 @@
-import { eq } from "drizzle-orm";
-import { landingPages, landingSections } from "@guildora/shared";
+import { asc, eq } from "drizzle-orm";
+import { landingPages, landingSections, landingPageVersions } from "@guildora/shared";
 import { z } from "zod";
 import { requireAdminSession } from "../../../utils/auth";
 import { getDb } from "../../../utils/db";
@@ -17,6 +17,17 @@ export default defineEventHandler(async (event) => {
   const sections = templateSections[templateId] ?? defaultSections;
 
   const db = getDb();
+
+  // Snapshot current state before reset
+  const currentSections = await db.select().from(landingSections).orderBy(asc(landingSections.sortOrder));
+  const [currentPage] = await db.select().from(landingPages).limit(1);
+  if (currentSections.length > 0) {
+    await db.insert(landingPageVersions).values({
+      snapshot: { sections: currentSections, pageConfig: currentPage ?? null },
+      label: "Before reset",
+      createdBy: session.user.id
+    });
+  }
 
   await db.delete(landingSections);
 

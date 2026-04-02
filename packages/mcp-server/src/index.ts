@@ -211,9 +211,21 @@ server.registerTool(
 );
 
 server.registerTool(
+  "landing_publish",
+  {
+    description: "Publish all draft landing page sections, making them visible to visitors. Creates a version snapshot before publishing.",
+    inputSchema: z.object({})
+  },
+  async () => {
+    const data = await hubFetch("/api/internal/landing/publish", { method: "POST" });
+    return textResult(data);
+  }
+);
+
+server.registerTool(
   "landing_reset_to_template",
   {
-    description: "Reset the landing page to the default template state. WARNING: This removes all custom content and cannot be undone.",
+    description: "Reset the landing page to the default template state. WARNING: This removes all custom content and cannot be undone. A snapshot is created before reset.",
     inputSchema: z.object({})
   },
   async () => {

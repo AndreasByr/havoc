@@ -1,4 +1,4 @@
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { landingPages, landingSections, landingTemplates } from "@guildora/shared";
 import { getDb } from "../../utils/db";
 
@@ -28,7 +28,7 @@ export default defineEventHandler(async (event) => {
   const sections = await db
     .select()
     .from(landingSections)
-    .where(eq(landingSections.visible, true))
+    .where(and(eq(landingSections.visible, true), eq(landingSections.status, "published")))
     .orderBy(asc(landingSections.sortOrder));
 
   const localizedSections = sections.map((section) => {

@@ -19,8 +19,16 @@ interface LandingSection {
   blockType: string;
   sortOrder: number;
   visible: boolean;
+  status: "draft" | "published";
   config: Record<string, unknown>;
   content: Record<string, unknown>;
+}
+
+interface LandingVersion {
+  id: string;
+  label: string | null;
+  createdAt: string;
+  createdBy: string | null;
 }
 
 interface BlockType {
@@ -58,6 +66,8 @@ const showBlockCatalog = ref(false);
 const showCssEditor = ref(false);
 const showSeoSettings = ref(false);
 const showTemplatePicker = ref(false);
+const showHistory = ref(false);
+const versions = ref<LandingVersion[]>([]);
 const editingSection = ref<LandingSection | null>(null);
 const editLocale = ref<"en" | "de">("en");
 
@@ -255,6 +265,52 @@ async function resetToTemplate() {
   }
 }
 
+const hasDrafts = computed(() => sections.value.some((s) => s.status === "draft"));
+
+async function publishAll() {
+  if (!confirm(t("landingEditor.publishConfirm"))) return;
+  saving.value = true;
+  try {
+    await $fetch("/api/admin/landing/publish", { method: "POST" });
+    sections.value.forEach((s) => { s.status = "published"; });
+    flashSuccess();
+  } catch {
+    saveError.value = "Failed to publish.";
+  } finally {
+    saving.value = false;
+  }
+}
+
+async function loadVersions() {
+  try {
+    const data = await $fetch<{ versions: LandingVersion[] }>("/api/admin/landing/versions");
+    versions.value = data.versions;
+  } catch {
+    saveError.value = "Failed to load version history.";
+  }
+}
+
+async function restoreVersion(versionId: string) {
+  if (!confirm(t("landingEditor.restoreConfirm"))) return;
+  saving.value = true;
+  try {
+    await $fetch(`/api/admin/landing/versions/${versionId}/restore`, { method: "POST" });
+    await loadData();
+    showHistory.value = false;
+    editingSection.value = null;
+    flashSuccess();
+  } catch {
+    saveError.value = "Failed to restore version.";
+  } finally {
+    saving.value = false;
+  }
+}
+
+function toggleHistory() {
+  showHistory.value = !showHistory.value;
+  if (showHistory.value) loadVersions();
+}
+
 function flashSuccess() {
   saveSuccess.value = t("landingEditor.saved");
   saveError.value = "";
@@ -347,9 +403,11 @@ onMounted(() => {
       <!-- Action bar -->
       <div class="flex flex-wrap gap-2">
         <button class="landing-add-block rounded-lg bg-[var(--color-accent)] px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity" @click="showBlockCatalog = true">{{ t("landingEditor.addBlock") }}</button>
+        <button v-if="hasDrafts" class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 transition-colors" :disabled="saving" @click="publishAll">{{ t("landingEditor.publishAll") }}</button>
         <button class="landing-template-switch rounded-lg border border-white/10 px-4 py-2 text-sm font-medium hover:bg-white/5 transition-colors" @click="showTemplatePicker = !showTemplatePicker">{{ t("landingEditor.templateSwitch") }}</button>
         <button class="landing-seo-settings rounded-lg border border-white/10 px-4 py-2 text-sm font-medium hover:bg-white/5 transition-colors" @click="showSeoSettings = !showSeoSettings">{{ t("landingEditor.seoSettings") }}</button>
         <button class="landing-custom-css rounded-lg border border-white/10 px-4 py-2 text-sm font-medium hover:bg-white/5 transition-colors" @click="showCssEditor = !showCssEditor">{{ t("landingEditor.customCss") }}</button>
+        <button class="rounded-lg border border-white/10 px-4 py-2 text-sm font-medium hover:bg-white/5 transition-colors" @click="toggleHistory">{{ t("landingEditor.history") }}</button>
         <button class="rounded-lg border border-white/10 px-4 py-2 text-sm font-medium hover:bg-white/5 transition-colors hidden lg:inline-flex" @click="showPreview = !showPreview">
           {{ showPreview ? 'Hide Preview' : 'Preview' }}
         </button>
@@ -425,6 +483,25 @@ onMounted(() => {
         </div>
       </div>
 
+      <!-- Version history -->
+      <div v-if="showHistory" class="rounded-xl bg-white/5 p-5 space-y-3">
+        <h3 class="text-lg font-semibold">{{ t("landingEditor.versionHistory") }}</h3>
+        <div v-if="versions.length === 0" class="text-sm opacity-60">{{ t("landingEditor.noVersions") }}</div>
+        <div v-for="version in versions" :key="version.id" class="flex items-center justify-between rounded-lg bg-white/5 px-4 py-3">
+          <div>
+            <span class="text-sm font-medium">{{ version.label || t("landingEditor.versionLabel", { date: new Date(version.createdAt).toLocaleString() }) }}</span>
+            <span class="ml-2 text-xs opacity-50">{{ new Date(version.createdAt).toLocaleString() }}</span>
+          </div>
+          <button
+            class="rounded-lg border border-white/10 px-3 py-1.5 text-xs font-medium hover:bg-white/5 transition-colors"
+            :disabled="saving"
+            @click="restoreVersion(version.id)"
+          >
+            {{ t("landingEditor.restore") }}
+          </button>
+        </div>
+      </div>
+
       <!-- Section list -->
       <div v-if="sections.length === 0" class="rounded-lg bg-white/5 border border-white/10 px-4 py-8 text-center text-sm opacity-60">
         {{ t("landingEditor.noSections") }}
@@ -434,7 +511,7 @@ onMounted(() => {
         <div
           v-for="(section, index) in sections"
           :key="section.id"
-          :class="['landing-block-item rounded-xl bg-white/5 transition-all', !section.visible && 'opacity-50', draggedIndex === index && 'ring-2 ring-[var(--color-accent)]']"
+          :class="['landing-block-item rounded-xl bg-white/5 transition-all', !section.visible && 'opacity-50', draggedIndex === index && 'ring-2 ring-[var(--color-accent)]', section.status === 'draft' && 'border border-dashed border-amber-500/30']"
           draggable="true"
           @dragstart="onDragStart(index)"
           @dragover="(e) => onDragOver(e, index)"
@@ -449,6 +526,7 @@ onMounted(() => {
               <div class="flex-1 min-w-0">
                 <span class="font-bold text-sm">{{ blockName(section.blockType) }}</span>
                 <span class="ml-2 inline-block rounded bg-white/10 px-2 py-0.5 text-xs">{{ section.blockType }}</span>
+                <span v-if="section.status === 'draft'" class="ml-1.5 inline-block rounded bg-amber-500/20 text-amber-400 px-2 py-0.5 text-xs font-medium">{{ t("landingEditor.draft") }}</span>
               </div>
 
               <!-- Actions -->

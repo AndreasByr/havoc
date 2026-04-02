@@ -9,6 +9,7 @@ const updateSectionSchema = z.object({
   blockType: z.string().min(1).optional(),
   sortOrder: z.number().int().min(0).optional(),
   visible: z.boolean().optional(),
+  status: z.enum(["draft", "published"]).optional(),
   config: z.record(z.unknown()).optional(),
   content: z.record(z.unknown()).optional()
 });
@@ -25,6 +26,7 @@ export default defineEventHandler(async (event) => {
   if (body.blockType !== undefined) updateData.blockType = body.blockType;
   if (body.sortOrder !== undefined) updateData.sortOrder = body.sortOrder;
   if (body.visible !== undefined) updateData.visible = body.visible;
+  if (body.status !== undefined) updateData.status = body.status;
   if (body.config !== undefined) updateData.config = body.config;
   if (body.content !== undefined) updateData.content = body.content;
 
