@@ -1,14 +1,14 @@
 # Guildora – Context for AI and Agents
 
-Guildora is a community platform with a public landing page, internal hub, Payload CMS, Discord bot, and a shared Postgres database with a Drizzle schema.
+Guildora is a community platform with a public landing page, internal hub, Discord bot, MCP server, and a shared Postgres database with a Drizzle schema.
 
 ## Structure
 
-- **apps/web** – Nuxt 4, public landing page, CMS rendering, login CTA, and OAuth redirect shim at `server/api/auth/discord.get.ts`.
-- **apps/hub** – Nuxt 4, internal user UI with unified `/settings` section (replaces former `/admin` and `/mod` pages); Nitro API at `server/api/`; real Discord OAuth session logic; embedded CMS SSO.
-- **apps/cms** – Payload CMS 3 + Next.js; editorial content, pages, media, site settings, and CMS users.
+- **apps/web** – Nuxt 4, public landing page with block-component rendering from Hub API, login CTA, and OAuth redirect shim at `server/api/auth/discord.get.ts`.
+- **apps/hub** – Nuxt 4, internal user UI with unified `/settings` section; Nitro API at `server/api/`; real Discord OAuth session logic; landing page admin editor at `/settings/landing`.
 - **apps/bot** – Discord bot; voice tracking, guild sync, slash command setup, and internal sync server.
 - **packages/shared** – Drizzle schema, types, Zod app manifest, DB client, migrations, seeds, and shared utilities.
+- **packages/mcp-server** – MCP server for AI-driven landing page editing; communicates with Hub API via internal token auth.
 
 ## Roles (Permissions)
 
@@ -58,7 +58,7 @@ Deployed docs (accessible from any system): https://guildora.github.io/docs — 
 - **Landing accent:** `#7C3AED` (Violet, matching hub default).
 - **Component path:** `apps/hub/app/components/ui/` — `Ui*` prefixed components (UiButton, UiInput, etc.).
 - **Buttons (required, internal):** All buttons in the internal hub must use the UI components from `apps/hub/app/components/ui/`.
-- **Buttons (exception, external):** Public landing and CMS layouts are exempt from this button requirement.
+- **Buttons (exception, external):** Public landing page layouts are exempt from this button requirement.
 - **Shadows:** Subtle only (`--shadow-sm/md/lg`). No neuomorphism.
 - **Surfaces must NOT have visible borders.** Cards, panels, and container surfaces rely solely on background color differences (`--color-surface-0` through `--color-surface-5`) and `box-shadow` for depth and separation. Do not add `border: 1px solid var(--color-line)` or similar to any surface/card/panel. The only allowed uses of `border` with `var(--color-line)` are **internal section dividers** inside a surface (e.g., `border-bottom` between list items or header/body/footer sections within a panel). Outer container borders are never used.
 - **Border radius:** 8px buttons, 12px cards, 16px modals. No sharp corners (0px) or pill buttons (9999px).
