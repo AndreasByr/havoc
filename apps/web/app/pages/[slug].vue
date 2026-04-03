@@ -22,7 +22,7 @@ useSeoMeta({
     <h1 class="text-3xl font-bold">{{ page!.title }}</h1>
     <div
       class="prose prose-invert mt-8 max-w-none text-[var(--color-text-secondary)]"
-      v-html="page!.content"
+      v-html="sanitizeHtml(page!.content)"
     />
   </div>
 </template>

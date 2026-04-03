@@ -24,6 +24,7 @@ async function recursiveFiles(dir: string): Promise<string[]> {
   const entries = await safeReaddir(dir);
   const files: string[] = [];
   for (const entry of entries) {
+    if (entry.isSymbolicLink()) continue;
     const fullPath = join(dir, entry.name);
     if (entry.isDirectory()) {
       files.push(...(await recursiveFiles(fullPath)));

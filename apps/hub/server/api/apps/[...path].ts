@@ -76,6 +76,12 @@ export default defineEventHandler(async (event) => {
   const h3Values = Object.values(h3Globals);
 
   try {
+    // SECURITY: Executes app handler code from the database (codeBundle).
+    // Mitigations: require() is blocked, only whitelisted h3 helpers are exposed,
+    // app must be installed & active, role-based access is enforced before execution.
+    // The executed code receives a scoped app DB (createAppDb) and its own config.
+    // Risk: No true sandboxing — code shares the Node.js process. Accepted trade-off
+    // for the plugin system. Consider isolated-vm for stricter isolation in the future.
     // eslint-disable-next-line no-new-func
     new Function("module", "exports", "require", ...h3Names, handlerCode)(mod, mod.exports, restrictedRequire, ...h3Values);
   } catch (error: unknown) {

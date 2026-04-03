@@ -117,7 +117,12 @@ export async function loadInstalledAppHooks(discordClient: Client) {
       continue;
     }
 
-    // Evaluate the CJS bundle once per app, then register each declared hook
+    // Evaluate the CJS bundle once per app, then register each declared hook.
+    // SECURITY: Executes bot hook code from the database (codeBundle).
+    // Mitigations: require() is blocked, app must be active with valid manifest.
+    // The executed code receives a scoped app DB and a BotClient wrapper.
+    // Risk: No true sandboxing — code shares the Node.js process. Accepted trade-off
+    // for the plugin system. Consider isolated-vm for stricter isolation in the future.
     const mod = { exports: {} as Record<string, unknown> };
     try {
       // eslint-disable-next-line no-new-func
