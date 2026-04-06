@@ -43,3 +43,5 @@ apps/hub/public/uploads/
 .script/
 .env.local
 .env.tunnel
+.pw-browsers/
+test-results/
