@@ -1,39 +1,31 @@
+import { defineAsyncComponent, type Component } from "vue";
+
 /**
- * Maps block type slugs (kebab-case) to Nuxt auto-imported component names.
- * Self-hosters can add custom blocks by dropping a .vue file in this directory —
- * Nuxt auto-imports them, and adding an entry here makes them available.
+ * Maps block type slugs (kebab-case) to lazy-loaded Vue components.
+ * Nuxt auto-imports only work at compile-time in templates, so dynamic
+ * component resolution (e.g. via resolveComponent()) fails at runtime.
+ * We use defineAsyncComponent with explicit imports instead.
  */
-export const blockComponentMap: Record<string, string> = {
-  "hero": "LandingBlocksHero",
-  "features": "LandingBlocksFeatures",
-  "how-it-works": "LandingBlocksHowItWorks",
-  "cta": "LandingBlocksCta",
-  "rich-text": "LandingBlocksRichText",
-  "gallery": "LandingBlocksGallery",
-  "youtube": "LandingBlocksYoutube",
-  "discord-invite": "LandingBlocksDiscordInvite",
-  "testimonials": "LandingBlocksTestimonials",
-  "stats": "LandingBlocksStats",
-  "faq": "LandingBlocksFaq",
-  "team": "LandingBlocksTeam",
-  "applications": "LandingBlocksApplications"
+export const blockComponentMap: Record<string, Component> = {
+  "hero": defineAsyncComponent(() => import("./Hero.vue")),
+  "features": defineAsyncComponent(() => import("./Features.vue")),
+  "how-it-works": defineAsyncComponent(() => import("./HowItWorks.vue")),
+  "cta": defineAsyncComponent(() => import("./Cta.vue")),
+  "rich-text": defineAsyncComponent(() => import("./RichText.vue")),
+  "gallery": defineAsyncComponent(() => import("./Gallery.vue")),
+  "youtube": defineAsyncComponent(() => import("./Youtube.vue")),
+  "discord-invite": defineAsyncComponent(() => import("./DiscordInvite.vue")),
+  "testimonials": defineAsyncComponent(() => import("./Testimonials.vue")),
+  "stats": defineAsyncComponent(() => import("./Stats.vue")),
+  "faq": defineAsyncComponent(() => import("./Faq.vue")),
+  "team": defineAsyncComponent(() => import("./Team.vue")),
+  "applications": defineAsyncComponent(() => import("./Applications.vue"))
 };
 
 /**
- * Resolves a block type to a Nuxt component name.
- * First checks the static map, then falls back to convention-based resolution:
- * "my-block" → "LandingBlocksMyBlock" (kebab-case to PascalCase).
- * This allows self-hosters to add custom blocks without modifying this file.
+ * Resolves a block type to a Vue component.
+ * Returns the component from the static map, or undefined for unknown types.
  */
-export function resolveBlockComponent(blockType: string): string {
-  if (blockComponentMap[blockType]) {
-    return blockComponentMap[blockType];
-  }
-
-  // Convention: kebab-case → PascalCase, prefixed with LandingBlocks
-  const pascal = blockType
-    .split("-")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join("");
-  return `LandingBlocks${pascal}`;
+export function resolveBlockComponent(blockType: string): Component | undefined {
+  return blockComponentMap[blockType];
 }

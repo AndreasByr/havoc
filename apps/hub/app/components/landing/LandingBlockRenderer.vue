@@ -11,9 +11,7 @@ const props = defineProps<{
   };
 }>();
 
-const componentName = computed(() => resolveBlockComponent(props.section.blockType));
-const resolved = computed(() => resolveComponent(componentName.value));
-const isResolved = computed(() => typeof resolved.value !== "string");
+const resolved = computed(() => resolveBlockComponent(props.section.blockType));
 const styleVariant = computed(() => {
   const v = props.section.config?.styleVariant;
   return typeof v === "string" ? v : "normal";
@@ -22,7 +20,7 @@ const styleVariant = computed(() => {
 
 <template>
   <component
-    v-if="isResolved"
+    v-if="resolved"
     :is="resolved"
     :content="section.content"
     :config="section.config"
