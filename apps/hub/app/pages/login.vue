@@ -4,6 +4,7 @@ definePageMeta({
 });
 
 const route = useRoute();
+const config = useRuntimeConfig();
 const { t, te } = useI18n();
 const returnTo = computed(() => {
   const rawValue = typeof route.query.returnTo === "string" ? route.query.returnTo : "/dashboard";
@@ -23,9 +24,11 @@ const loginError = computed(() => {
   return te(key) ? t(key) : t("auth.errors.unknown");
 });
 
-if (import.meta.dev) {
-  await navigateTo(`/api/auth/discord?returnTo=${encodeURIComponent(returnTo.value)}`, { external: true });
-}
+const showDevLogin = computed(() => config.public.authDevBypass === true);
+
+const devLoginUrl = computed(() => {
+  return `/api/auth/dev-login?returnTo=${encodeURIComponent(returnTo.value)}`;
+});
 </script>
 
 <template>
@@ -39,9 +42,12 @@ if (import.meta.dev) {
           {{ loginError }}
         </div>
 
-        <div class="card-actions">
+        <div class="card-actions flex-col gap-2">
           <a class="btn btn-primary" :href="`/api/auth/discord?returnTo=${encodeURIComponent(returnTo)}`">
             {{ $t("nav.login") }}
+          </a>
+          <a v-if="showDevLogin" :href="devLoginUrl" class="btn btn-warning btn-outline btn-sm">
+            {{ $t("auth.devMode.loginButton") }}
           </a>
         </div>
       </div>

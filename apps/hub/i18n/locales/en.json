@@ -48,6 +48,10 @@
     "loginTitle": "Sign in with Discord",
     "loginDescription": "Use your Discord account to access member features.",
     "sessionRequired": "You must be logged in to access this area.",
+    "devMode": {
+      "bannerText": "Development mode — Discord login is bypassed.",
+      "loginButton": "Dev Mode Login"
+    },
     "errors": {
       "not_guild_member": "You must be a member of the Discord server to log in.",
       "missing_required_role": "You do not have the required Discord role to log in.",

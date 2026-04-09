@@ -40,6 +40,7 @@ export default defineNuxtConfig({
     enableSideloading: process.env.NUXT_ENABLE_SIDELOADING === "true",
     public: {
       isDev: process.env.NODE_ENV === "development",
+      authDevBypass: process.env.NODE_ENV === "development" && process.env.NUXT_AUTH_DEV_BYPASS === "true",
       appName: "Guildora",
       hubUrl: process.env.NUXT_PUBLIC_HUB_URL || "http://localhost:3003",
       landingUrl: process.env.NUXT_PUBLIC_APP_URL || "http://localhost:3000",

@@ -81,9 +81,18 @@ const isRouteActive = (target: string) => route.path === target || route.path.st
       <button v-if="loggedIn" class="btn btn-sm btn-outline" type="button" @click="logout">
         {{ $t("nav.logout") }}
       </button>
-      <NuxtLink v-else class="btn btn-sm btn-primary" :to="localePath('/login')">
-        {{ $t("nav.login") }}
-      </NuxtLink>
+      <template v-else>
+        <a
+          v-if="useRuntimeConfig().public.authDevBypass"
+          :href="`/api/auth/dev-login?returnTo=${encodeURIComponent($route.fullPath || '/dashboard')}`"
+          class="btn btn-sm btn-warning btn-outline"
+        >
+          {{ $t("auth.devMode.loginButton") }}
+        </a>
+        <NuxtLink class="btn btn-sm btn-primary" :to="localePath('/login')">
+          {{ $t("nav.login") }}
+        </NuxtLink>
+      </template>
     </div>
   </div>
   </div>

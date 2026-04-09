@@ -48,6 +48,10 @@
     "loginTitle": "Mit Discord anmelden",
     "loginDescription": "Nutze dein Discord-Konto für den Mitgliederbereich.",
     "sessionRequired": "Du musst angemeldet sein, um diesen Bereich zu nutzen.",
+    "devMode": {
+      "bannerText": "Entwicklungsmodus — Discord-Login wird umgangen.",
+      "loginButton": "Dev-Login"
+    },
     "errors": {
       "not_guild_member": "Du musst Mitglied des Discord-Servers sein, um dich einzuloggen.",
       "missing_required_role": "Du besitzt nicht die erforderliche Discord-Rolle, um dich einzuloggen.",
