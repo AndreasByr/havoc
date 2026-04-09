@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { TEMPLATE_COLOR_DEFAULTS, LANDING_COLOR_KEYS, resolveLandingColors, isValidHexColor } from "@guildora/shared";
-import type { LandingColorPalette } from "@guildora/shared";
+import { TEMPLATE_COLOR_DEFAULTS, LANDING_COLOR_KEYS, resolveLandingColors, isValidHexColor, migrateColorOverrides } from "@guildora/shared";
+import type { LandingColorPalette, PerTemplateColorOverrides, LandingColorOverrides } from "@guildora/shared";
 
 definePageMeta({
   middleware: ["landing"],
@@ -22,22 +22,12 @@ interface LandingTemplate {
   previewUrl: string | null;
 }
 
-interface LandingColorOverrides {
-  background?: string;
-  surface?: string;
-  text?: string;
-  textMuted?: string;
-  accent?: string;
-  accentText?: string;
-  border?: string;
-}
-
 interface PageConfig {
   id?: number;
   activeTemplate: string;
   customCss: string | null;
   enabledLocales: string[];
-  colorOverrides: LandingColorOverrides;
+  colorOverrides: PerTemplateColorOverrides;
 }
 
 const pageConfig = ref<PageConfig>({ activeTemplate: "default", customCss: null, enabledLocales: ["en"], colorOverrides: {} });
@@ -47,7 +37,7 @@ const showAddLanguage = ref(false);
 
 // Track the persisted template so we know when there are unsaved changes
 const savedTemplate = ref("default");
-const savedColorOverrides = ref<LandingColorOverrides>({});
+const savedColorOverrides = ref<PerTemplateColorOverrides>({});
 
 const hasUnsavedTemplateChanges = computed(() =>
   pageConfig.value.activeTemplate !== savedTemplate.value ||
@@ -80,26 +70,42 @@ function localeLabel(code: string): string {
   return availableLocales.find((l) => l.code === code)?.label || code.toUpperCase();
 }
 
-// ─── Color overrides ─────────────────────────────────────────────────────
+// ─── Color overrides (per-template) ──────────────────────────────────────
+
+const activeTemplateOverrides = computed<LandingColorOverrides>(() =>
+  pageConfig.value.colorOverrides[pageConfig.value.activeTemplate] ?? {}
+);
 
 const templateDefaults = computed<LandingColorPalette>(() =>
   TEMPLATE_COLOR_DEFAULTS[pageConfig.value.activeTemplate] ?? TEMPLATE_COLOR_DEFAULTS.default
 );
 
 const resolvedColors = computed<LandingColorPalette>(() =>
-  resolveLandingColors(pageConfig.value.activeTemplate, pageConfig.value.colorOverrides)
+  resolveLandingColors(pageConfig.value.activeTemplate, activeTemplateOverrides.value)
 );
 
 const hexColorRegex = /^#[0-9a-fA-F]{6}$/;
 
 function setColorOverride(key: string, value: string) {
   if (!hexColorRegex.test(value)) return;
-  pageConfig.value.colorOverrides = { ...pageConfig.value.colorOverrides, [key]: value.toLowerCase() };
+  const tid = pageConfig.value.activeTemplate;
+  const current = pageConfig.value.colorOverrides[tid] ?? {};
+  pageConfig.value.colorOverrides = {
+    ...pageConfig.value.colorOverrides,
+    [tid]: { ...current, [key]: value.toLowerCase() }
+  };
 }
 
 function clearColorOverride(key: string) {
+  const tid = pageConfig.value.activeTemplate;
+  const current = { ...(pageConfig.value.colorOverrides[tid] ?? {}) };
+  delete current[key as keyof typeof current];
   const next = { ...pageConfig.value.colorOverrides };
-  delete next[key as keyof typeof next];
+  if (Object.keys(current).length > 0) {
+    next[tid] = current;
+  } else {
+    delete next[tid];
+  }
   pageConfig.value.colorOverrides = next;
 }
 
@@ -138,13 +144,15 @@ async function loadData() {
     const { page, templates: tmpl } = await $fetch<{ page: PageConfig | null; templates: LandingTemplate[] }>("/api/admin/landing/page");
     templates.value = tmpl;
     if (page) {
+      const rawOverrides = (page as Record<string, unknown>).colorOverrides as Record<string, unknown> ?? {};
+      const perTemplate = migrateColorOverrides(rawOverrides, page.activeTemplate);
       pageConfig.value = {
         ...page,
         enabledLocales: page.enabledLocales || ["en"],
-        colorOverrides: (page as Record<string, unknown>).colorOverrides as LandingColorOverrides ?? {}
+        colorOverrides: perTemplate
       };
       savedTemplate.value = page.activeTemplate;
-      savedColorOverrides.value = { ...((page as Record<string, unknown>).colorOverrides as LandingColorOverrides ?? {}) };
+      savedColorOverrides.value = JSON.parse(JSON.stringify(perTemplate));
     }
   } catch {
     saveError.value = "Failed to load settings.";
@@ -179,7 +187,7 @@ async function saveTemplateAndColors() {
       }
     });
     savedTemplate.value = pageConfig.value.activeTemplate;
-    savedColorOverrides.value = { ...pageConfig.value.colorOverrides };
+    savedColorOverrides.value = JSON.parse(JSON.stringify(pageConfig.value.colorOverrides));
     flashSuccess();
   } catch {
     saveError.value = "Failed to save template and colors.";
@@ -353,7 +361,7 @@ onMounted(() => loadData());
                 />
                 <span class="text-xs font-mono opacity-50">{{ resolvedColors[colorKey] }}</span>
                 <button
-                  v-if="(pageConfig.colorOverrides as Record<string, string>)[colorKey]"
+                  v-if="activeTemplateOverrides[colorKey]"
                   class="text-xs opacity-40 hover:opacity-70 transition-opacity"
                   :title="t('landingEditor.colors.reset')"
                   @click="clearColorOverride(colorKey)"
@@ -361,7 +369,7 @@ onMounted(() => loadData());
                   <Icon name="proicons:cancel" class="h-3 w-3" />
                 </button>
               </div>
-              <span v-if="(pageConfig.colorOverrides as Record<string, string>)[colorKey]" class="text-[10px] opacity-40">
+              <span v-if="activeTemplateOverrides[colorKey]" class="text-[10px] opacity-40">
                 {{ t("landingEditor.colors.default") }}: {{ templateDefaults[colorKey] }}
               </span>
             </div>

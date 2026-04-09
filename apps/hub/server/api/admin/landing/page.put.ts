@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { landingPages, landingTemplates, sanitizeLandingColorOverrides } from "@guildora/shared";
+import { landingPages, landingTemplates, sanitizePerTemplateColorOverrides } from "@guildora/shared";
 import { z } from "zod";
 import { requireAdminSession } from "../../../utils/auth";
 import { getDb } from "../../../utils/db";
@@ -12,7 +12,7 @@ const updatePageSchema = z.object({
   metaTitle: z.string().nullable().optional(),
   metaDescription: z.string().nullable().optional(),
   enabledLocales: z.array(z.string().min(2).max(5)).min(1).optional(),
-  colorOverrides: z.record(z.string()).nullable().optional()
+  colorOverrides: z.record(z.record(z.string())).nullable().optional()
 });
 
 export default defineEventHandler(async (event) => {
@@ -40,7 +40,7 @@ export default defineEventHandler(async (event) => {
   if (body.enabledLocales !== undefined) updateData.enabledLocales = body.enabledLocales;
   if (body.colorOverrides !== undefined) {
     updateData.colorOverrides = body.colorOverrides
-      ? sanitizeLandingColorOverrides(body.colorOverrides)
+      ? sanitizePerTemplateColorOverrides(body.colorOverrides)
       : {};
   }
 

@@ -37,6 +37,12 @@ export const LANDING_COLOR_KEYS: readonly (keyof LandingColorPalette)[] = [
 
 export type LandingColorOverrides = Partial<LandingColorPalette>;
 
+/**
+ * Per-template color overrides.
+ * Outer key = template id, inner object = partial palette for that template.
+ */
+export type PerTemplateColorOverrides = Record<string, LandingColorOverrides>;
+
 /** Style variant options for individual landing blocks */
 export const STYLE_VARIANTS = ["normal", "accent", "warning"] as const;
 export type StyleVariant = (typeof STYLE_VARIANTS)[number];
@@ -63,6 +69,54 @@ export function sanitizeLandingColorOverrides(
     }
   }
   return result;
+}
+
+/**
+ * Sanitise a per-template color-override object.
+ * Each key is a template id mapping to a partial color palette.
+ */
+export function sanitizePerTemplateColorOverrides(
+  raw: Record<string, unknown> | null | undefined
+): PerTemplateColorOverrides {
+  if (!raw || typeof raw !== "object") return {};
+  const result: PerTemplateColorOverrides = {};
+  for (const [templateId, overrides] of Object.entries(raw)) {
+    if (overrides && typeof overrides === "object" && !Array.isArray(overrides)) {
+      const sanitized = sanitizeLandingColorOverrides(overrides as Record<string, unknown>);
+      if (Object.keys(sanitized).length > 0) {
+        result[templateId] = sanitized;
+      }
+    }
+  }
+  return result;
+}
+
+/**
+ * Detect and migrate legacy flat colorOverrides to per-template format.
+ * Old format: { accent: "#ff00ff" }  (values are hex strings)
+ * New format: { default: { accent: "#ff00ff" } }  (values are objects)
+ *
+ * If `raw` is already in per-template format, it passes through unchanged.
+ */
+export function migrateColorOverrides(
+  raw: Record<string, unknown> | null | undefined,
+  activeTemplate: string
+): PerTemplateColorOverrides {
+  if (!raw || typeof raw !== "object") return {};
+
+  // Detect old flat format: if any top-level value is a string, it's legacy
+  const entries = Object.entries(raw);
+  if (entries.length === 0) return {};
+
+  const hasStringValue = entries.some(([, v]) => typeof v === "string");
+  if (hasStringValue) {
+    // Old flat format — wrap under the active template
+    const sanitized = sanitizeLandingColorOverrides(raw);
+    return Object.keys(sanitized).length > 0 ? { [activeTemplate]: sanitized } : {};
+  }
+
+  // Already per-template format
+  return sanitizePerTemplateColorOverrides(raw);
 }
 
 /**

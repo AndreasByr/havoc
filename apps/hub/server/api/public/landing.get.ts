@@ -1,5 +1,5 @@
 import { and, asc, eq } from "drizzle-orm";
-import { landingPages, landingSections, landingTemplates, resolveLandingColors } from "@guildora/shared";
+import { landingPages, landingSections, landingTemplates, resolveLandingColors, migrateColorOverrides } from "@guildora/shared";
 import type { LandingColorOverrides } from "@guildora/shared";
 import { getDb } from "../../utils/db";
 
@@ -44,9 +44,13 @@ export default defineEventHandler(async (event) => {
     };
   });
 
+  const perTemplate = migrateColorOverrides(
+    page.colorOverrides as Record<string, unknown> ?? {},
+    page.activeTemplate
+  );
   const resolvedColors = resolveLandingColors(
     page.activeTemplate,
-    (page.colorOverrides ?? {}) as LandingColorOverrides
+    (perTemplate[page.activeTemplate] ?? {}) as LandingColorOverrides
   );
 
   return {

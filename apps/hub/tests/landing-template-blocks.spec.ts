@@ -41,7 +41,7 @@ test("page.put API accepts activeTemplate field", async ({ request }) => {
   const response = await request.put("/api/admin/landing/page", {
     data: {
       activeTemplate: "default",
-      colorOverrides: { accent: "#ff0000" }
+      colorOverrides: { default: { accent: "#ff0000" } }
     }
   });
   // 401/403 = auth required (expected without login), not 500 = no server crash

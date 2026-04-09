@@ -319,7 +319,7 @@ export const landingPages = pgTable("landing_pages", {
   customCss: text("custom_css"),
   locale: text("locale").notNull().default("en"),
   enabledLocales: jsonb("enabled_locales").$type<string[]>().notNull().default(sql`'["en"]'::jsonb`),
-  colorOverrides: jsonb("color_overrides").$type<Record<string, string>>().default({}),
+  colorOverrides: jsonb("color_overrides").$type<Record<string, Record<string, string>>>().default({}),
   metaTitle: text("meta_title"),
   metaDescription: text("meta_description"),
   publishedAt: timestamp("published_at", { withTimezone: true }),

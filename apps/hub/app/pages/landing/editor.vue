@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { TourStep } from "~/composables/useOnboardingTour";
-import { TEMPLATE_COLOR_DEFAULTS, LANDING_COLOR_KEYS, resolveLandingColors, isValidHexColor } from "@guildora/shared";
-import type { LandingColorPalette } from "@guildora/shared";
+import { TEMPLATE_COLOR_DEFAULTS, LANDING_COLOR_KEYS, resolveLandingColors, isValidHexColor, migrateColorOverrides } from "@guildora/shared";
+import type { LandingColorPalette, PerTemplateColorOverrides, LandingColorOverrides } from "@guildora/shared";
 
 definePageMeta({
   middleware: ["landing"],
@@ -46,21 +46,11 @@ interface LandingTemplate {
   description: string | null;
 }
 
-interface LandingColorOverrides {
-  background?: string;
-  surface?: string;
-  text?: string;
-  textMuted?: string;
-  accent?: string;
-  accentText?: string;
-  border?: string;
-}
-
 interface PageConfig {
   id?: number;
   activeTemplate: string;
   customCss: string | null;
-  colorOverrides: LandingColorOverrides;
+  colorOverrides: PerTemplateColorOverrides;
   metaTitle: string | null;
   metaDescription: string | null;
   enabledLocales: string[];
@@ -177,9 +167,10 @@ async function loadData() {
     blockTypes.value = blocksData.blocks;
     applicationFlows.value = flowsData.flows.filter((f) => f.status === "active");
     if (pageData.page) {
+      const rawOverrides = (pageData.page as Record<string, unknown>).colorOverrides as Record<string, unknown> ?? {};
       pageConfig.value = {
         ...pageData.page,
-        colorOverrides: (pageData.page as Record<string, unknown>).colorOverrides as LandingColorOverrides ?? {},
+        colorOverrides: migrateColorOverrides(rawOverrides, pageData.page.activeTemplate),
         enabledLocales: pageData.page.enabledLocales || ["en"]
       };
     }
@@ -441,25 +432,41 @@ function setConfigValue(section: LandingSection, key: string, value: unknown) {
 
 // ─── Landing Color Overrides ─────���────────────────────────────────────────
 
+const activeTemplateOverrides = computed<LandingColorOverrides>(() =>
+  pageConfig.value.colorOverrides[pageConfig.value.activeTemplate] ?? {}
+);
+
 const templateDefaults = computed<LandingColorPalette>(() =>
   TEMPLATE_COLOR_DEFAULTS[pageConfig.value.activeTemplate] ?? TEMPLATE_COLOR_DEFAULTS.default
 );
 
 const resolvedColors = computed<LandingColorPalette>(() =>
-  resolveLandingColors(pageConfig.value.activeTemplate, pageConfig.value.colorOverrides)
+  resolveLandingColors(pageConfig.value.activeTemplate, activeTemplateOverrides.value)
 );
 
 const hexColorRegex = /^#[0-9a-fA-F]{6}$/;
 
 function setColorOverride(key: string, value: string) {
   if (!hexColorRegex.test(value)) return;
-  pageConfig.value.colorOverrides = { ...pageConfig.value.colorOverrides, [key]: value.toLowerCase() };
+  const tid = pageConfig.value.activeTemplate;
+  const current = pageConfig.value.colorOverrides[tid] ?? {};
+  pageConfig.value.colorOverrides = {
+    ...pageConfig.value.colorOverrides,
+    [tid]: { ...current, [key]: value.toLowerCase() }
+  };
   markDirty();
 }
 
 function clearColorOverride(key: string) {
+  const tid = pageConfig.value.activeTemplate;
+  const current = { ...(pageConfig.value.colorOverrides[tid] ?? {}) };
+  delete current[key as keyof typeof current];
   const next = { ...pageConfig.value.colorOverrides };
-  delete next[key as keyof typeof next];
+  if (Object.keys(current).length > 0) {
+    next[tid] = current;
+  } else {
+    delete next[tid];
+  }
   pageConfig.value.colorOverrides = next;
   markDirty();
 }
