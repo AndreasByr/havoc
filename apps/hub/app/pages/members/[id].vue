@@ -7,15 +7,23 @@ const route = useRoute();
 const localePath = useLocalePath();
 const memberId = typeof route.params.id === "string" ? route.params.id : "";
 
-await navigateTo(
-  localePath({
-    path: "/members",
-    query: {
-      member: memberId
+if (!memberId) {
+  throw createError({ statusCode: 404, statusMessage: "Member not found" });
+}
+
+try {
+  await navigateTo(
+    localePath({
+      path: "/members",
+      query: {
+        member: memberId
+      }
+    }),
+    {
+      redirectCode: 301
     }
-  }),
-  {
-    redirectCode: 301
-  }
-);
+  );
+} catch {
+  throw createError({ statusCode: 404, statusMessage: "Member not found" });
+}
 </script>

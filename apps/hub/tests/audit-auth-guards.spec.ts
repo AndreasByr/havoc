@@ -106,6 +106,67 @@ test.describe("Phase 3: API endpoints return 401 without session", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Phase 3: Open redirect prevention in login.vue (F-04)
+// ---------------------------------------------------------------------------
+
+test.describe("Phase 3: Login page rejects protocol-relative returnTo", () => {
+  test("login page normalizes //evil.com to /dashboard", async ({ page }) => {
+    await page.goto("/login?returnTo=%2F%2Fevil.com", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("networkidle");
+
+    // The Discord login link should use /dashboard, not //evil.com
+    const discordLink = page.locator("a.btn-primary");
+    const href = await discordLink.getAttribute("href");
+    expect(href).toBeTruthy();
+    expect(href).toContain("returnTo=%2Fdashboard");
+    expect(href).not.toContain("evil.com");
+
+    await page.screenshot({
+      path: `${SCREENSHOT_DIR}/guard-login-open-redirect-blocked.png`,
+      fullPage: true,
+    });
+  });
+
+  test("login page normalizes ///path to /dashboard", async ({ page }) => {
+    await page.goto("/login?returnTo=%2F%2F%2Fpath", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("networkidle");
+
+    const discordLink = page.locator("a.btn-primary");
+    const href = await discordLink.getAttribute("href");
+    expect(href).toContain("returnTo=%2Fdashboard");
+  });
+
+  test("login page allows valid relative returnTo", async ({ page }) => {
+    await page.goto("/login?returnTo=%2Fmembers", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("networkidle");
+
+    const discordLink = page.locator("a.btn-primary");
+    const href = await discordLink.getAttribute("href");
+    expect(href).toContain("returnTo=%2Fmembers");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Phase 3: Members page 404 handling (F-05)
+// ---------------------------------------------------------------------------
+
+test.describe("Phase 3: Members detail handles non-existent IDs", () => {
+  test("/members/nonexistent-id does not return 500", async ({ page }) => {
+    const response = await page.goto("/members/00000000-0000-0000-0000-000000000000", {
+      waitUntil: "domcontentloaded",
+    });
+    const status = response?.status() || 0;
+    // Should be redirect (301) to /members?member=... or 404 — never 500
+    expect(status).toBeLessThan(500);
+
+    await page.screenshot({
+      path: `${SCREENSHOT_DIR}/guard-members-nonexistent-id.png`,
+      fullPage: true,
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Phase 3.5 -- Public routes work WITHOUT auth
 // ---------------------------------------------------------------------------
 

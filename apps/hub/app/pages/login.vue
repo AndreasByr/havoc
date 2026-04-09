@@ -14,7 +14,7 @@ const returnTo = computed(() => {
   } catch {
     value = rawValue;
   }
-  return value.startsWith("/") ? value : "/dashboard";
+  return (value.startsWith("/") && !value.startsWith("//")) ? value : "/dashboard";
 });
 
 const loginError = computed(() => {
