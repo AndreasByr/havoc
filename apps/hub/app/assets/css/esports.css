@@ -4,125 +4,212 @@
  * Applied when the landing page uses the "esports" template.
  * Builds on top of landing.css base styles and --landing-* CSS custom-properties.
  *
+ * Visual direction: Professional competitive eSports — bold, aggressive,
+ * diagonal accents, sharp geometry, high contrast, team-centric.
+ *
  * Convention: all selectors are scoped under [data-template="esports"]
  * so they never leak into other templates.
  */
 
-/* --- eSports design tokens (supplemental to --landing-* palette) --- */
+/* --- eSports design tokens --- */
 [data-template="esports"] {
   --es-red: #e53e3e;
   --es-red-bright: #f56565;
   --es-gold: #d69e2e;
   --es-stripe: rgba(229, 62, 62, 0.06);
+  --es-diagonal: 135deg;
 }
 
-/* --- Typography: bold, uppercase headings --- */
+/* --- Diagonal accent stripe on the background --- */
+[data-template="esports"]::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    linear-gradient(
+      var(--es-diagonal),
+      transparent 0%,
+      transparent 48%,
+      rgba(229, 62, 62, 0.03) 48%,
+      rgba(229, 62, 62, 0.03) 52%,
+      transparent 52%,
+      transparent 100%
+    );
+}
+
+/* --- Typography: bold, uppercase, aggressive --- */
 [data-template="esports"] h1,
 [data-template="esports"] h2,
 [data-template="esports"] h3 {
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  font-weight: 800;
+  letter-spacing: 0.05em;
+  font-weight: 900;
+  font-style: italic;
 }
 
-/* --- Card override: sharp edges with subtle red accent --- */
+[data-template="esports"] h1 {
+  letter-spacing: 0.06em;
+  background: linear-gradient(135deg, var(--landing-text) 60%, var(--es-red));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* --- Card: sharp edges, diagonal red accent stripe --- */
 [data-template="esports"] .landing-card {
-  border-radius: 0.5rem;
-  border-color: var(--landing-border);
-  background: linear-gradient(
-    135deg,
-    var(--landing-surface) 0%,
-    var(--es-stripe) 100%
-  );
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  border-radius: 4px !important;
+  border: 1px solid var(--landing-border);
+  background:
+    linear-gradient(
+      var(--es-diagonal),
+      var(--landing-surface) 0%,
+      var(--landing-surface) 94%,
+      rgba(229, 62, 62, 0.12) 94%,
+      rgba(229, 62, 62, 0.12) 100%
+    );
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Top red accent bar on cards */
+[data-template="esports"] .landing-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--es-red), var(--es-gold), var(--es-red));
+  opacity: 0.8;
+  pointer-events: none;
 }
 
 [data-template="esports"] .landing-card:hover {
-  border-color: color-mix(in srgb, var(--es-red) 35%, transparent);
-  box-shadow: 0 0 12px rgba(229, 62, 62, 0.1);
+  border-color: color-mix(in srgb, var(--es-red) 40%, transparent);
+  box-shadow: 0 4px 20px rgba(229, 62, 62, 0.12), 0 0 0 1px rgba(229, 62, 62, 0.08);
+  transform: translateY(-2px);
 }
 
-/* --- Primary button: solid red, strong presence --- */
+/* --- Primary button: solid red, strong presence, skew effect --- */
 [data-template="esports"] .landing-btn-primary {
-  background-color: var(--es-red);
+  background: linear-gradient(135deg, var(--es-red), #c53030);
   color: #ffffff;
-  font-weight: 700;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-radius: 0.375rem;
+  letter-spacing: 0.06em;
+  border-radius: 4px !important;
+  border: none;
+  box-shadow: 0 4px 12px rgba(229, 62, 62, 0.3);
+  position: relative;
 }
 
 @media (prefers-reduced-motion: no-preference) {
+  [data-template="esports"] .landing-btn-primary {
+    transition: box-shadow 0.2s ease, transform 0.15s ease;
+  }
+
   [data-template="esports"] .landing-btn-primary:hover {
-    background-color: var(--es-red-bright);
-    transform: translateY(-1px);
+    background: linear-gradient(135deg, var(--es-red-bright), var(--es-red));
+    box-shadow: 0 6px 20px rgba(229, 62, 62, 0.4);
+    transform: translateY(-2px);
   }
 }
 
 /* --- Outline button --- */
 [data-template="esports"] .landing-btn-outline {
-  border-color: color-mix(in srgb, var(--es-red) 40%, transparent);
+  border: 2px solid color-mix(in srgb, var(--es-red) 50%, transparent);
   color: var(--landing-text);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  border-radius: 4px !important;
 }
 
 [data-template="esports"] .landing-btn-outline:hover {
-  background-color: rgba(229, 62, 62, 0.06);
+  background-color: rgba(229, 62, 62, 0.08);
   border-color: var(--es-red);
 }
 
-/* --- Eyebrow / badge --- */
+/* --- Eyebrow / badge: competitive label --- */
 [data-template="esports"] .landing-eyebrow {
-  border-color: color-mix(in srgb, var(--es-red) 30%, transparent);
-  background-color: rgba(229, 62, 62, 0.08);
+  border: 2px solid color-mix(in srgb, var(--es-red) 40%, transparent);
+  background: linear-gradient(135deg, rgba(229, 62, 62, 0.1), rgba(214, 158, 46, 0.05));
   color: var(--es-red-bright);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 700;
-}
-
-/* --- Step indicator --- */
-[data-template="esports"] .landing-step-indicator {
-  border-color: color-mix(in srgb, var(--es-red) 30%, transparent);
-  background-color: rgba(229, 62, 62, 0.08);
-  color: var(--es-red);
+  letter-spacing: 0.1em;
   font-weight: 800;
+  font-style: italic;
+  border-radius: 4px !important;
 }
 
-/* --- Stat value: bold red highlight --- */
+/* --- Step indicator: bold numbered steps --- */
+[data-template="esports"] .landing-step-indicator {
+  border: 2px solid color-mix(in srgb, var(--es-red) 40%, transparent);
+  background: rgba(229, 62, 62, 0.1);
+  color: var(--es-red);
+  font-weight: 900;
+  border-radius: 4px !important;
+}
+
+/* --- Stat value: bold red or gold highlight --- */
 [data-template="esports"] .landing-stat-value {
   color: var(--es-red);
   font-weight: 900;
+  font-style: italic;
+  letter-spacing: 0.02em;
 }
 
-/* --- Divider: red gradient line --- */
+/* --- Divider: sharp red line --- */
 [data-template="esports"] .landing-divider {
   background: linear-gradient(
     to right,
     transparent,
     var(--es-red),
+    var(--es-gold),
+    var(--es-red),
     transparent
   );
-  opacity: 0.3;
+  opacity: 0.4;
+  height: 2px;
 }
 
-/* --- Accent background section --- */
+/* --- Accent background section: dark with red gradient --- */
 [data-template="esports"] .landing-accent-bg {
-  background: linear-gradient(135deg, rgba(229, 62, 62, 0.12), rgba(214, 158, 46, 0.06));
-  border: 1px solid color-mix(in srgb, var(--es-red) 20%, transparent);
+  background: linear-gradient(135deg, rgba(229, 62, 62, 0.15), rgba(214, 158, 46, 0.06), rgba(229, 62, 62, 0.08));
+  border: 2px solid color-mix(in srgb, var(--es-red) 25%, transparent);
   color: var(--landing-text);
+  border-radius: 4px !important;
+  position: relative;
+}
+
+/* Top red bar on accent sections */
+[data-template="esports"] .landing-accent-bg::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--es-red), var(--es-gold));
+  pointer-events: none;
 }
 
 /* --- styleVariant overrides for esports --- */
 [data-template="esports"] [data-style-variant="accent"] .landing-card {
-  background: linear-gradient(135deg, rgba(229, 62, 62, 0.04), var(--landing-surface));
-  border-color: color-mix(in srgb, var(--es-red) 30%, transparent);
+  background: linear-gradient(135deg, rgba(229, 62, 62, 0.06), var(--landing-surface));
+  border-color: color-mix(in srgb, var(--es-red) 35%, transparent);
 }
 
 [data-template="esports"] [data-style-variant="warning"] .landing-card {
-  background: linear-gradient(135deg, rgba(214, 158, 46, 0.04), var(--landing-surface));
-  border-color: color-mix(in srgb, var(--es-gold) 30%, transparent);
+  background: linear-gradient(135deg, rgba(214, 158, 46, 0.06), var(--landing-surface));
+  border-color: color-mix(in srgb, var(--es-gold) 35%, transparent);
+}
+
+[data-template="esports"] [data-style-variant="warning"] .landing-card::before {
+  background: linear-gradient(90deg, var(--es-gold), var(--es-red), var(--es-gold));
 }
 
 [data-template="esports"] [data-style-variant="warning"] .landing-stat-value {
@@ -130,18 +217,18 @@
 }
 
 [data-template="esports"] [data-style-variant="warning"] .landing-step-indicator {
-  border-color: color-mix(in srgb, var(--es-gold) 30%, transparent);
-  background-color: rgba(214, 158, 46, 0.08);
+  border-color: color-mix(in srgb, var(--es-gold) 40%, transparent);
+  background-color: rgba(214, 158, 46, 0.1);
   color: var(--es-gold);
 }
 
 [data-template="esports"] [data-style-variant="warning"] .landing-eyebrow {
-  border-color: color-mix(in srgb, var(--es-gold) 30%, transparent);
-  background-color: rgba(214, 158, 46, 0.08);
+  border-color: color-mix(in srgb, var(--es-gold) 40%, transparent);
+  background: rgba(214, 158, 46, 0.1);
   color: var(--es-gold);
 }
 
 [data-template="esports"] [data-style-variant="warning"] .landing-btn-primary {
-  background-color: var(--es-gold);
+  background: linear-gradient(135deg, var(--es-gold), #b7791f);
   color: #0b0e14;
 }

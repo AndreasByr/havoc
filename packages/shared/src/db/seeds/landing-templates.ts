@@ -22,8 +22,8 @@ export const defaultTemplate: TemplateSeed = {
 
 export const cyberpunkTemplate: TemplateSeed = {
   id: "cyberpunk",
-  name: "Cyberpunk",
-  description: "Neon-lit and futuristic — a high-contrast dark theme with glowing accents for gaming communities.",
+  name: "Gaming",
+  description: "Retro futurism — neon glow, scanlines, angular geometry, and synthwave accents for gaming communities.",
   isBuiltin: true
 };
 

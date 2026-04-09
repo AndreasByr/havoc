@@ -126,7 +126,8 @@ async function run() {
       await db.insert(landingTemplates).values(tmpl);
       console.log(`Inserted landing template: ${tmpl.id}`);
     } else {
-      console.log(`Landing template already exists: ${tmpl.id}`);
+      await db.update(landingTemplates).set({ name: tmpl.name, description: tmpl.description }).where(eq(landingTemplates.id, tmpl.id));
+      console.log(`Updated landing template: ${tmpl.id}`);
     }
   }
 
