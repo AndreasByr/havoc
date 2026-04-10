@@ -1,11 +1,13 @@
-export const logger = {
-  info: (message: string, meta?: unknown) => {
-    console.log(`[INFO] ${message}`, meta ?? "");
+import { createConsola } from "consola";
+
+export const logger = createConsola({
+  level: process.env.NODE_ENV === "production" ? 3 : 4,
+  formatOptions: {
+    date: true,
+    colors: process.env.NODE_ENV !== "production",
+    compact: process.env.NODE_ENV === "production",
   },
-  warn: (message: string, meta?: unknown) => {
-    console.warn(`[WARN] ${message}`, meta ?? "");
+  defaults: {
+    tag: "bot",
   },
-  error: (message: string, meta?: unknown) => {
-    console.error(`[ERROR] ${message}`, meta ?? "");
-  }
-};
+});

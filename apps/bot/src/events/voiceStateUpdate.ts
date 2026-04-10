@@ -36,6 +36,8 @@ export function registerVoiceStateUpdateEvent(client: Client) {
       const db = getDb();
       const now = new Date();
 
+      logger.info("Voice state change", { discordId, oldChannel: oldChannelId ?? null, newChannel: newChannelId ?? null });
+
       const leftRegular = isRegularVoiceChannel(oldChannelId, afkChannelId);
       const joinedRegular = isRegularVoiceChannel(newChannelId, afkChannelId);
 

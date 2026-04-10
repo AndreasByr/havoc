@@ -21,6 +21,7 @@ import { loadInstalledAppHooks } from "./utils/app-hooks";
 import { ensureBaseRoles } from "./utils/community";
 import { loadAndDeployAppCommands, startInternalSyncServer } from "./utils/internal-sync-server";
 import { logger } from "./utils/logger";
+import { stopVoiceSessionReconcileLoop } from "./utils/voice-reconcile";
 
 const token = process.env.DISCORD_BOT_TOKEN;
 
@@ -56,6 +57,27 @@ loadAndDeployAppCommands(commands)
   .catch((error) => logger.error("App command loading failed.", error));
 
 startInternalSyncServer(client, commands);
+
+let shuttingDown = false;
+
+async function shutdown(signal: string) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  logger.info(`Received ${signal}, shutting down gracefully...`);
+
+  try {
+    await stopVoiceSessionReconcileLoop();
+    client.destroy();
+    logger.info("Shutdown complete");
+  } catch (error) {
+    logger.error("Error during shutdown", error);
+  }
+
+  process.exit(0);
+}
+
+process.on("SIGTERM", () => void shutdown("SIGTERM"));
+process.on("SIGINT", () => void shutdown("SIGINT"));
 
 client.login(token).catch((error: unknown) => {
   const message = error instanceof Error ? error.message : String(error);

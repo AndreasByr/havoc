@@ -262,6 +262,7 @@ export function startInternalSyncServer(client: Client, commands: Collection<str
     const rawUrl = req.url || "/";
     const requestUrl = new URL(rawUrl, "http://internal.bot");
     const pathname = requestUrl.pathname;
+    const requestStart = Date.now();
 
     try {
       if (method === "POST" && pathname === "/internal/sync-user") {
@@ -1208,7 +1209,7 @@ export function startInternalSyncServer(client: Client, commands: Collection<str
         jsonError(res, 413, "REQUEST_BODY_TOO_LARGE", "Request body too large");
         return;
       }
-      logger.error("Internal sync request failed.", error);
+      logger.error("Internal sync request failed", { method, path: pathname, error, durationMs: Date.now() - requestStart });
       jsonError(res, 500, "SYNC_FAILED", "Sync failed");
     }
   });

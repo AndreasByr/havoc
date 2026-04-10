@@ -170,11 +170,12 @@ async function runReconcile(client: Client) {
     const result = await reconcileOpenSessionsForGuild(guild, now);
 
     if (duplicateSessionsClosed > 0 || result.closedSessions > 0 || result.splitSessions > 0 || result.openedSessions > 0) {
-      logger.info("Voice session reconcile completed.", {
-        duplicateSessionsClosed,
-        closedSessions: result.closedSessions,
-        splitSessions: result.splitSessions,
-        openedSessions: result.openedSessions
+      logger.info("Voice reconcile completed", {
+        duplicatesClosed: duplicateSessionsClosed,
+        closed: result.closedSessions,
+        split: result.splitSessions,
+        opened: result.openedSessions,
+        durationMs: Date.now() - now.getTime(),
       });
     }
   } catch (error) {
@@ -198,4 +199,26 @@ export function startVoiceSessionReconcileLoop(client: Client) {
   reconcileTimer = setInterval(() => {
     void runReconcile(client);
   }, RECONCILE_INTERVAL_MS);
+}
+
+export function stopVoiceSessionReconcileLoop(): Promise<void> {
+  if (reconcileTimer) {
+    clearInterval(reconcileTimer);
+    reconcileTimer = null;
+  }
+
+  if (!reconcileInProgress) {
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve) => {
+    const timeout = setTimeout(resolve, 5000);
+    const check = setInterval(() => {
+      if (!reconcileInProgress) {
+        clearInterval(check);
+        clearTimeout(timeout);
+        resolve();
+      }
+    }, 100);
+  });
 }

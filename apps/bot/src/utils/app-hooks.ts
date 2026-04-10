@@ -85,8 +85,7 @@ class BotAppHookRegistry {
         }
         await (handler as BotHookHandler<K>)(payload, ctx);
       } catch (error) {
-        // Error-boundary: plugin hooks must never crash the core bot runtime.
-        logger.error(`App hook failed [${appId}] on ${eventName}`, error);
+        logger.error("App hook failed", { appId, hookName: eventName, error });
       }
     }
   }

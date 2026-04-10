@@ -10,11 +10,14 @@
     "typecheck": "tsc --noEmit",
     "lint": "echo \"No lint configured for @guildora/bot\"",
     "format": "echo \"No format script configured for @guildora/bot\"",
-    "deploy:commands": "tsx src/utils/deploy-commands.ts"
+    "deploy:commands": "tsx src/utils/deploy-commands.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@guildora/app-sdk": "workspace:*",
     "@guildora/shared": "workspace:*",
+    "consola": "^3.4.2",
     "discord.js": "^14.25.1",
     "dotenv": "^16.4.7",
     "drizzle-orm": "^0.44.5",
@@ -23,6 +26,7 @@
   "devDependencies": {
     "@types/node": "^22.13.10",
     "tsx": "^4.19.3",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.2",
+    "vitest": "^3.1.1"
   }
 }

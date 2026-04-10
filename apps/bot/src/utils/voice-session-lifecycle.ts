@@ -1,6 +1,7 @@
 import { and, desc, eq, isNull } from "drizzle-orm";
 import { voiceSessions } from "@guildora/shared";
 import type { GuildoraDatabase } from "@guildora/shared/db/client";
+import { logger } from "./logger";
 
 const MINUTE_MS = 60_000;
 
@@ -62,6 +63,8 @@ export async function closeSessionById(
       durationMinutes
     })
     .where(and(eq(voiceSessions.id, session.id), isNull(voiceSessions.endedAt)));
+
+  logger.info("Voice session closed", { sessionId: session.id, channelId: session.channelId, durationMinutes });
 }
 
 export async function closeIfOpen(
@@ -96,6 +99,7 @@ export async function openIfMissing(
       channelId,
       startedAt
     });
+    logger.info("Voice session opened", { userId, channelId });
     return true;
   } catch (error) {
     if (isUniqueViolation(error)) {
