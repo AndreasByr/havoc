@@ -41,7 +41,7 @@ export async function setupTestDb(): Promise<void> {
     return;
   }
 
-  // Try to use testcontainers (requires Docker)
+  // Try to use testcontainers (requires Docker + testcontainers package)
   try {
     const { GenericContainer } = await import("testcontainers");
 
@@ -62,8 +62,27 @@ export async function setupTestDb(): Promise<void> {
 
     await runTestMigrations();
   } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    const isModuleNotFound =
+      message.includes("Cannot find module") ||
+      message.includes("Cannot find package") ||
+      message.includes("ERR_MODULE_NOT_FOUND") ||
+      message.includes("Failed to load url testcontainers");
+    const isDockerUnavailable =
+      message.includes("Docker") ||
+      message.includes("ECONNREFUSED") ||
+      message.includes("socket");
+
+    if (isModuleNotFound || isDockerUnavailable) {
+      throw new Error(
+        `Integration test database unavailable — skipping.\n` +
+        `Reason: ${isModuleNotFound ? "testcontainers package not installed" : "Docker not running"}.\n` +
+        `Fix: set TEST_DATABASE_URL env var, install testcontainers (pnpm add -D testcontainers), or start Docker.`
+      );
+    }
+
     throw new Error(
-      `Failed to start test database container. Is Docker running?\n${err}`
+      `Failed to start test database container.\n${err}`
     );
   }
 }

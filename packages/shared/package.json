@@ -44,6 +44,7 @@
     "format": "echo \"No format script configured for @guildora/shared\"",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
     "db:generate": "node scripts/run-drizzle-generate.mjs",
     "db:migrate": "tsx src/db/migrate.ts",
     "db:seed": "tsx src/db/seed.ts"
