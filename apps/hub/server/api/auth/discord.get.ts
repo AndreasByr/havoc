@@ -10,6 +10,7 @@ import { replaceUserDiscordRolesSnapshotFromMember } from "../../utils/discord-r
 import { persistDiscordAvatarLocally } from "../../utils/avatar-storage";
 import { loadMembershipSettings } from "../../utils/membership-settings";
 import { getDb } from "../../utils/db";
+import { normalizeReturnTo } from "../../utils/redirect-safety";
 
 type DiscordUser = {
   id: string;
@@ -95,20 +96,6 @@ export default defineEventHandler(async (event) => {
   const isDev = import.meta.dev || process.env.NODE_ENV === "development";
   const devBypassEnabled = isDev && config.authDevBypass === true;
   const superadminDiscordId = typeof config.superadminDiscordId === "string" ? config.superadminDiscordId : "";
-
-  const normalizeReturnTo = (rawValue: string | null | undefined, fallback = "/dashboard") => {
-    if (!rawValue) {
-      return fallback;
-    }
-
-    let value = rawValue;
-    try {
-      value = decodeURIComponent(rawValue);
-    } catch {
-      value = rawValue;
-    }
-    return value.startsWith("/") && !value.startsWith("//") ? value : fallback;
-  };
 
   if (isDev && devBypassEnabled) {
     if (!superadminDiscordId) {

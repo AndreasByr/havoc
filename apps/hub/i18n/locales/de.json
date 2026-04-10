@@ -257,7 +257,7 @@
       "title": "Profil bearbeiten",
       "displayName": "Anzeigename",
       "nickname": "Rufname"
-    },
+    }
   },
   "devRoleSwitcher": {
     "trigger": "DEV",

@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { replaceAuthSessionForUserId } from "../../utils/auth-session";
 import { ensureCommunityUser, ensureUserProfile, getUserByDiscordId } from "../../utils/community";
 import { getDb } from "../../utils/db";
+import { normalizeReturnTo } from "../../utils/redirect-safety";
 
 const DEV_USER_DISCORD_ID = "000000000000000000";
 const DEV_USER_DISPLAY_NAME = "Dev Superadmin";
@@ -21,18 +22,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const query = getQuery(event);
-  const rawReturnTo = typeof query.returnTo === "string" ? query.returnTo : null;
-  let returnTo = "/dashboard";
-  if (rawReturnTo) {
-    try {
-      returnTo = decodeURIComponent(rawReturnTo);
-    } catch {
-      returnTo = rawReturnTo;
-    }
-    if (!returnTo.startsWith("/") || returnTo.startsWith("//")) {
-      returnTo = "/dashboard";
-    }
-  }
+  const returnTo = normalizeReturnTo(typeof query.returnTo === "string" ? query.returnTo : null);
 
   const existingUser = await getUserByDiscordId(DEV_USER_DISCORD_ID);
   const profileName = existingUser?.displayName ?? DEV_USER_DISPLAY_NAME;

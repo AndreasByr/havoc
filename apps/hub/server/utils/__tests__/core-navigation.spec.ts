@@ -16,25 +16,26 @@ describe("core navigation localization", () => {
     expect(de.coreRailItems.find((item) => item.id === "members")?.labelKey).toBe("nav.members");
     expect(en.coreRailItems.find((item) => item.id === "members")?.label).toBe("Members");
 
+    // No docs route exists
     expect(de.coreRailItems.some((item) => item.to === "/docs")).toBe(false);
     expect(en.coreRailItems.some((item) => item.to === "/docs")).toBe(false);
     expect(de.corePanelGroups.some((group) => group.items.some((item) => item.to === "/docs"))).toBe(false);
     expect(en.corePanelGroups.some((group) => group.items.some((item) => item.to === "/docs"))).toBe(false);
-    expect(de.corePanelGroups.some((group) => group.items.some((item) => item.to === "/admin/discord-roles"))).toBe(true);
-    expect(en.corePanelGroups.some((group) => group.items.some((item) => item.to === "/admin/discord-roles"))).toBe(true);
-    expect(de.corePanelGroups.some((group) => group.items.some((item) => item.to === "/profile/design"))).toBe(true);
-    expect(en.corePanelGroups.some((group) => group.items.some((item) => item.to === "/profile/design"))).toBe(true);
-    expect(de.corePanelGroups.some((group) => group.items.some((item) => item.to === "/profile/name"))).toBe(true);
-    expect(en.corePanelGroups.some((group) => group.items.some((item) => item.to === "/profile/name"))).toBe(true);
-    expect(de.corePanelGroups.some((group) => group.items.some((item) => item.to === "/profile/roles"))).toBe(true);
-    expect(en.corePanelGroups.some((group) => group.items.some((item) => item.to === "/profile/roles"))).toBe(true);
+
+    // Settings routes exist under /settings/
+    expect(de.corePanelGroups.some((group) => group.items.some((item) => item.to === "/settings/design"))).toBe(true);
+    expect(en.corePanelGroups.some((group) => group.items.some((item) => item.to === "/settings/design"))).toBe(true);
+    expect(de.corePanelGroups.some((group) => group.items.some((item) => item.to === "/settings/permissions"))).toBe(true);
+    expect(en.corePanelGroups.some((group) => group.items.some((item) => item.to === "/settings/permissions"))).toBe(true);
+    expect(de.corePanelGroups.some((group) => group.items.some((item) => item.to === "/settings/community"))).toBe(true);
+    expect(en.corePanelGroups.some((group) => group.items.some((item) => item.to === "/settings/community"))).toBe(true);
   });
 
   it("limits landing route to admin when moderator access is disabled", () => {
     const result = getLocalizedCoreNavigation("en", { allowModeratorCmsAccess: false });
     const landingPanelItem = result.corePanelGroups
-      .find((group) => group.id === "settings-main")
-      ?.items.find((item) => item.id === "settings-landing");
+      .find((group) => group.id === "landing-main")
+      ?.items.find((item) => item.id === "landing-editor");
 
     expect(landingPanelItem?.requiredRoles).toEqual(["admin", "superadmin"]);
   });

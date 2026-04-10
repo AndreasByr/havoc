@@ -17,38 +17,30 @@ afterEach(() => {
   vi.resetModules();
 });
 
-// The session middleware (03-session.ts) is a Nitro event handler that:
-// 1. Calls getUserSession(event) to load the session
-// 2. Attaches it to event.context.userSession
-// 3. On failure, sets event.context.userSession = null and logs a warning
-
 describe("session middleware behavior", () => {
+  async function importSessionMiddleware() {
+    const mod = await import("../../middleware/03-session");
+    return mod.default;
+  }
+
   it("attaches session to event.context when getUserSession succeeds", async () => {
     const session = buildSession("admin");
     mocks.getUserSession.mockResolvedValue(session);
 
+    const handler = await importSessionMiddleware();
     const event = createMockEvent({ path: "/api/test" });
-    // Simulate the middleware logic
-    try {
-      const sessionResult = await mocks.getUserSession(event);
-      event.context.userSession = sessionResult;
-    } catch {
-      event.context.userSession = null;
-    }
+    await handler(event);
 
+    expect(mocks.getUserSession).toHaveBeenCalledWith(event);
     expect(event.context.userSession).toEqual(session);
   });
 
   it("sets event.context.userSession to null when session validation fails", async () => {
     mocks.getUserSession.mockRejectedValue(new Error("Session expired"));
 
+    const handler = await importSessionMiddleware();
     const event = createMockEvent({ path: "/api/test" });
-    try {
-      const sessionResult = await mocks.getUserSession(event);
-      event.context.userSession = sessionResult;
-    } catch {
-      event.context.userSession = null;
-    }
+    await handler(event);
 
     expect(event.context.userSession).toBeNull();
   });
@@ -56,33 +48,20 @@ describe("session middleware behavior", () => {
   it("does not throw when getUserSession throws (graceful degradation)", async () => {
     mocks.getUserSession.mockRejectedValue(new Error("Corrupted session cookie"));
 
+    const handler = await importSessionMiddleware();
     const event = createMockEvent({ path: "/api/test" });
 
-    await expect(
-      (async () => {
-        try {
-          const sessionResult = await mocks.getUserSession(event);
-          event.context.userSession = sessionResult;
-        } catch {
-          event.context.userSession = null;
-        }
-      })()
-    ).resolves.not.toThrow();
+    await expect(handler(event)).resolves.not.toThrow();
   });
 
   it("preserves existing context properties", async () => {
     const session = buildSession("user");
     mocks.getUserSession.mockResolvedValue(session);
 
+    const handler = await importSessionMiddleware();
     const event = createMockEvent({ path: "/api/test" });
     event.context.existingProp = "keep me";
-
-    try {
-      const sessionResult = await mocks.getUserSession(event);
-      event.context.userSession = sessionResult;
-    } catch {
-      event.context.userSession = null;
-    }
+    await handler(event);
 
     expect(event.context.existingProp).toBe("keep me");
     expect(event.context.userSession).toEqual(session);
@@ -91,13 +70,9 @@ describe("session middleware behavior", () => {
   it("handles empty session object from getUserSession", async () => {
     mocks.getUserSession.mockResolvedValue({});
 
+    const handler = await importSessionMiddleware();
     const event = createMockEvent({ path: "/api/test" });
-    try {
-      const sessionResult = await mocks.getUserSession(event);
-      event.context.userSession = sessionResult;
-    } catch {
-      event.context.userSession = null;
-    }
+    await handler(event);
 
     expect(event.context.userSession).toEqual({});
   });
@@ -105,13 +80,9 @@ describe("session middleware behavior", () => {
   it("handles session with user but no roles", async () => {
     mocks.getUserSession.mockResolvedValue({ user: { id: "u1" } });
 
+    const handler = await importSessionMiddleware();
     const event = createMockEvent({ path: "/api/test" });
-    try {
-      const sessionResult = await mocks.getUserSession(event);
-      event.context.userSession = sessionResult;
-    } catch {
-      event.context.userSession = null;
-    }
+    await handler(event);
 
     expect(event.context.userSession).toEqual({ user: { id: "u1" } });
   });

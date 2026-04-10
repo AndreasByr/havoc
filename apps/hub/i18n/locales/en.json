@@ -257,7 +257,7 @@
       "title": "Edit profile",
       "displayName": "Display name",
       "nickname": "Nickname"
-    },
+    }
   },
   "devRoleSwitcher": {
     "trigger": "DEV",

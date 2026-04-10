@@ -62,44 +62,110 @@ describe("validateCsrfToken", () => {
 // ─── CSRF middleware behavior (02-csrf-check.ts) ────────────────────────────
 
 describe("CSRF middleware behavior", () => {
-  // The middleware is a Nitro event handler using auto-imports.
-  // We test the logic patterns rather than importing the middleware directly
-  // since it uses defineEventHandler which needs Nitro runtime.
+  async function importCsrfMiddleware() {
+    const mod = await import("../../middleware/02-csrf-check");
+    return mod.default;
+  }
 
-  it("skips GET requests (safe methods)", () => {
-    const method = "GET";
-    const safeMethods = ["GET", "HEAD", "OPTIONS"];
-    expect(safeMethods.includes(method)).toBe(true);
+  it("skips non-API paths", async () => {
+    const handler = await importCsrfMiddleware();
+    const event = createMockEvent({ method: "POST", path: "/not-api" });
+    const result = await handler(event);
+    expect(result).toBeUndefined();
+    expect(mocks.getUserSession).not.toHaveBeenCalled();
   });
 
-  it("skips csrf-token endpoint", () => {
-    const path = "/api/csrf-token";
-    expect(path === "/api/csrf-token").toBe(true);
+  it("skips GET requests (safe methods)", async () => {
+    const handler = await importCsrfMiddleware();
+    for (const method of ["GET", "HEAD", "OPTIONS"]) {
+      const event = createMockEvent({ method, path: "/api/test" });
+      const result = await handler(event);
+      expect(result).toBeUndefined();
+    }
+    expect(mocks.getUserSession).not.toHaveBeenCalled();
   });
 
-  it("skips Discord auth endpoints", () => {
-    const path = "/api/auth/discord/callback";
-    expect(path.startsWith("/api/auth/discord")).toBe(true);
+  it("skips /api/csrf-token endpoint", async () => {
+    const handler = await importCsrfMiddleware();
+    const event = createMockEvent({ method: "POST", path: "/api/csrf-token" });
+    const result = await handler(event);
+    expect(result).toBeUndefined();
+    expect(mocks.getUserSession).not.toHaveBeenCalled();
   });
 
-  /**
-   * Known behavior: Bearer token bypasses CSRF check.
-   * This is documented in _issues.md #8.
-   * The CSRF middleware returns early when it sees an Authorization: Bearer header,
-   * which means any request with a Bearer token skips CSRF validation entirely.
-   * This is intentional for API/MCP clients but should be reviewed for browser contexts.
-   */
-  it("Bearer token bypasses CSRF check (known behavior — see _issues.md #8)", () => {
-    const authHeader = "Bearer some-token";
-    const bypassesCsrf = authHeader?.startsWith("Bearer ");
-    expect(bypassesCsrf).toBe(true);
+  it("skips /api/auth/discord endpoints", async () => {
+    const handler = await importCsrfMiddleware();
+    const event = createMockEvent({ method: "POST", path: "/api/auth/discord/callback" });
+    const result = await handler(event);
+    expect(result).toBeUndefined();
+    expect(mocks.getUserSession).not.toHaveBeenCalled();
   });
 
-  it("SSR-internal requests without Origin/Referer bypass CSRF", () => {
-    // Server-side requests from Nitro have no Origin/Referer headers
-    const origin = undefined;
-    const referer = undefined;
-    const isInternalRequest = !origin && !referer;
-    expect(isInternalRequest).toBe(true);
+  it("Bearer token bypasses CSRF validation (known behavior — see _issues.md #8)", async () => {
+    const handler = await importCsrfMiddleware();
+    const event = createMockEvent({
+      method: "POST",
+      path: "/api/test",
+      headers: { authorization: "Bearer some-token" }
+    });
+    const result = await handler(event);
+    expect(result).toBeUndefined();
+    expect(mocks.getUserSession).not.toHaveBeenCalled();
+  });
+
+  it("Bearer with empty value still bypasses CSRF", async () => {
+    const handler = await importCsrfMiddleware();
+    const event = createMockEvent({
+      method: "POST",
+      path: "/api/test",
+      headers: { authorization: "Bearer " }
+    });
+    const result = await handler(event);
+    expect(result).toBeUndefined();
+    expect(mocks.getUserSession).not.toHaveBeenCalled();
+  });
+
+  it("non-Bearer auth (Basic) does NOT bypass CSRF", async () => {
+    const handler = await importCsrfMiddleware();
+    mocks.getUserSession.mockResolvedValue({ csrfToken: "tok" });
+    const event = createMockEvent({
+      method: "POST",
+      path: "/api/test",
+      headers: { authorization: "Basic abc", origin: "https://example.com" }
+    });
+    await handler(event);
+    expect(mocks.getUserSession).toHaveBeenCalled();
+    expect(mocks.validateCsrfToken).toHaveBeenCalledWith(event, "tok");
+  });
+
+  it("SSR-internal requests without Origin/Referer bypass CSRF", async () => {
+    const handler = await importCsrfMiddleware();
+    const event = createMockEvent({ method: "POST", path: "/api/test" });
+    const result = await handler(event);
+    expect(result).toBeUndefined();
+    expect(mocks.getUserSession).not.toHaveBeenCalled();
+  });
+
+  it("throws 403 when session has no csrfToken", async () => {
+    const handler = await importCsrfMiddleware();
+    mocks.getUserSession.mockResolvedValue({});
+    const event = createMockEvent({
+      method: "POST",
+      path: "/api/test",
+      headers: { origin: "https://example.com" }
+    });
+    await expect(handler(event)).rejects.toThrow("CSRF token not initialised");
+  });
+
+  it("calls validateCsrfToken with correct session token", async () => {
+    const handler = await importCsrfMiddleware();
+    mocks.getUserSession.mockResolvedValue({ csrfToken: "real-csrf-token" });
+    const event = createMockEvent({
+      method: "POST",
+      path: "/api/test",
+      headers: { origin: "https://example.com" }
+    });
+    await handler(event);
+    expect(mocks.validateCsrfToken).toHaveBeenCalledWith(event, "real-csrf-token");
   });
 });

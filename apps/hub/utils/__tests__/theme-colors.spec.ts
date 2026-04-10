@@ -9,7 +9,7 @@ describe("theme-colors", () => {
     });
 
     expect(normalized.colorAccentContentTone).toBe("light");
-    expect(normalized.colorWarningContentTone).toBe("light");
+    expect(normalized.colorWarningContentTone).toBe("dark");
   });
 
   it("maps content tone to readable status content variables", () => {
