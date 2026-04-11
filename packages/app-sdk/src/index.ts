@@ -1,5 +1,10 @@
 // @guildora/app-sdk — Types for Guildora app plugins
 
+// ─── Platform type ──────────────────────────────────────────────────────────
+
+/** Supported communication platforms. */
+export type GuildoraPlatform = "discord" | "matrix";
+
 // ─── Bot hook payloads ───────────────────────────────────────────────────────
 
 export interface VoiceActivityPayload {
@@ -12,6 +17,8 @@ export interface VoiceActivityPayload {
   /** Seconds spent in the previous channel (only present on leave/move) */
   durationSeconds?: number;
   occurredAt: string;
+  /** The platform this event originated from. */
+  platform?: GuildoraPlatform;
 }
 
 export interface RoleChangePayload {
@@ -19,6 +26,8 @@ export interface RoleChangePayload {
   memberId: string;
   addedRoles: string[];
   removedRoles: string[];
+  /** The platform this event originated from. */
+  platform?: GuildoraPlatform;
 }
 
 export interface MemberJoinPayload {
@@ -26,6 +35,8 @@ export interface MemberJoinPayload {
   memberId: string;
   username: string;
   joinedAt: string | null;
+  /** The platform this event originated from. */
+  platform?: GuildoraPlatform;
 }
 
 export interface InteractionPayload {
@@ -34,6 +45,8 @@ export interface InteractionPayload {
   commandName: string;
   channelId: string | null;
   occurredAt: string;
+  /** The platform this event originated from. */
+  platform?: GuildoraPlatform;
 }
 
 export interface MessageAttachment {
@@ -53,8 +66,10 @@ export interface MessagePayload {
   replyToMessageId?: string;
   /** If this message is a reply, the user ID of the replied-to message's author. */
   replyToUserId?: string;
-  /** Image attachments from the Discord message. */
+  /** Attachments from the message. */
   attachments?: MessageAttachment[];
+  /** The platform this event originated from. */
+  platform?: GuildoraPlatform;
 }
 
 // ─── App KV store ────────────────────────────────────────────────────────────
@@ -73,7 +88,7 @@ export interface AppDb {
 // ─── Bot client ──────────────────────────────────────────────────────────────
 
 export interface BotClient {
-  /** Send a message to a Discord channel by ID. */
+  /** Send a message to a channel by ID. */
   sendMessage(channelId: string, content: string): Promise<void>;
   /** Create a voice channel inside a category. Returns the created channel info or null. */
   createVoiceChannel(name: string, parentId: string): Promise<{ id: string; name: string } | null>;
@@ -83,31 +98,33 @@ export interface BotClient {
   getChannel(channelId: string): Promise<{ id: string; name: string; parentId: string | null; memberCount: number | null } | null>;
   /** Rename a channel. Returns true on success. */
   setChannelName(channelId: string, name: string): Promise<boolean>;
-  /** Move a guild member to a voice channel. Guild is derived from the channel. */
+  /** Move a member to a voice channel. */
   moveMemberToChannel(memberId: string, channelId: string): Promise<boolean>;
   /** Get the voice channel ID a member is currently in. */
   getMemberVoiceChannelId(memberId: string): Promise<string | null>;
-  /** List voice channels in a category. Guild is derived from the category. */
+  /** List voice channels in a category. */
   listVoiceChannelsByCategory(categoryId: string): Promise<Array<{ id: string; name: string; parentId: string | null; memberCount: number | null }>>;
-  /** List all text channels in the guild. */
+  /** List all text channels. */
   listTextChannels(): Promise<Array<{ id: string; name: string }>>;
-  /** List all channels (text, voice, category) in the guild. */
+  /** List all channels (text, voice, category). */
   listAllChannels(): Promise<Array<{ id: string; name: string; type: string; parentId: string | null }>>;
 }
 
 // ─── Bot context ─────────────────────────────────────────────────────────────
 
 export interface BotContext {
-  /** App config values as set by the guild admin. */
+  /** App config values as set by the community admin. */
   config: Record<string, unknown>;
   /** Scoped KV store for this app. */
   db: AppDb;
-  /** Discord bot client. */
+  /** Platform bot client. */
   bot: BotClient;
-  /** The bot's own Discord user ID. */
+  /** The bot's own user ID (Discord snowflake or Matrix MXID). */
   botUserId: string;
-  /** The Discord guild ID this bot instance is bound to. */
+  /** The guild/space ID this bot instance is bound to. */
   guildId: string;
+  /** The platform this bot is running on. */
+  platform: GuildoraPlatform;
 }
 
 // ─── Hub context (injected into event.context.guildora) ──────────────────
@@ -117,7 +134,7 @@ export interface HubAppContext {
   userId: string;
   /** Authenticated user's permission roles. */
   userRoles: string[];
-  /** Current guild ID (null for global routes). */
+  /** Current guild/space ID (null for global routes). */
   guildId: string | null;
   /** App config values. */
   config: Record<string, unknown>;

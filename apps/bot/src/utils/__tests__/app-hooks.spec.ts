@@ -51,7 +51,7 @@ describe("BotAppHookRegistry", () => {
 
   it("register + emit: handler called with correct payload and context", async () => {
     const handler = vi.fn();
-    const ctx = { config: {}, db: {} as any, bot: {} as any, botUserId: "b1", guildId: "g1" };
+    const ctx = { config: {}, db: {} as any, bot: {} as any, botUserId: "b1", guildId: "g1", platform: "discord" as const };
     botAppHookRegistry.register("app1", "onMessage", handler, ctx);
 
     const payload = { content: "hello" } as any;
@@ -63,8 +63,8 @@ describe("BotAppHookRegistry", () => {
   it("register multiple apps: both handlers called", async () => {
     const h1 = vi.fn();
     const h2 = vi.fn();
-    const ctx1 = { config: {}, db: {} as any, bot: {} as any, botUserId: "b1", guildId: "g1" };
-    const ctx2 = { config: {}, db: {} as any, bot: {} as any, botUserId: "b2", guildId: "g1" };
+    const ctx1 = { config: {}, db: {} as any, bot: {} as any, botUserId: "b1", guildId: "g1", platform: "discord" as const };
+    const ctx2 = { config: {}, db: {} as any, bot: {} as any, botUserId: "b2", guildId: "g1", platform: "discord" as const };
     botAppHookRegistry.register("app1", "onMessage", h1, ctx1);
     botAppHookRegistry.register("app2", "onMessage", h2, ctx2);
 
@@ -76,7 +76,7 @@ describe("BotAppHookRegistry", () => {
 
   it("unregister(appId) removes all events for that app", async () => {
     const handler = vi.fn();
-    const ctx = { config: {}, db: {} as any, bot: {} as any, botUserId: "b1", guildId: "g1" };
+    const ctx = { config: {}, db: {} as any, bot: {} as any, botUserId: "b1", guildId: "g1", platform: "discord" as const };
     botAppHookRegistry.register("app1", "onMessage", handler, ctx);
     botAppHookRegistry.register("app1", "onVoiceActivity", handler, ctx);
     botAppHookRegistry.unregister("app1");
@@ -88,7 +88,7 @@ describe("BotAppHookRegistry", () => {
 
   it("unregister(appId, eventName) removes only that event", async () => {
     const handler = vi.fn();
-    const ctx = { config: {}, db: {} as any, bot: {} as any, botUserId: "b1", guildId: "g1" };
+    const ctx = { config: {}, db: {} as any, bot: {} as any, botUserId: "b1", guildId: "g1", platform: "discord" as const };
     botAppHookRegistry.register("app1", "onMessage", handler, ctx);
     botAppHookRegistry.register("app1", "onVoiceActivity", handler, ctx);
     botAppHookRegistry.unregister("app1", "onMessage");
@@ -102,7 +102,7 @@ describe("BotAppHookRegistry", () => {
 
   it("clearAll removes everything", async () => {
     const handler = vi.fn();
-    const ctx = { config: {}, db: {} as any, bot: {} as any, botUserId: "b1", guildId: "g1" };
+    const ctx = { config: {}, db: {} as any, bot: {} as any, botUserId: "b1", guildId: "g1", platform: "discord" as const };
     botAppHookRegistry.register("app1", "onMessage", handler, ctx);
     botAppHookRegistry.clearAll();
 
@@ -117,7 +117,7 @@ describe("BotAppHookRegistry", () => {
   it("error boundary: handler throws, next handler still executes", async () => {
     const bad = vi.fn().mockRejectedValue(new Error("boom"));
     const good = vi.fn();
-    const ctx = { config: {}, db: {} as any, bot: {} as any, botUserId: "b1", guildId: "g1" };
+    const ctx = { config: {}, db: {} as any, bot: {} as any, botUserId: "b1", guildId: "g1", platform: "discord" as const };
     botAppHookRegistry.register("app-bad", "onMessage", bad, ctx);
     botAppHookRegistry.register("app-good", "onMessage", good, ctx);
 
@@ -131,7 +131,7 @@ describe("BotAppHookRegistry", () => {
     mockDbChain.limit.mockResolvedValueOnce([{ config: { theme: "dark" } }]);
 
     const handler = vi.fn();
-    const ctx = { config: {}, db: {} as any, bot: {} as any, botUserId: "b1", guildId: "g1" };
+    const ctx = { config: {}, db: {} as any, bot: {} as any, botUserId: "b1", guildId: "g1", platform: "discord" as const };
     botAppHookRegistry.register("app1", "onMessage", handler, ctx);
 
     await botAppHookRegistry.emit("onMessage", {} as any);

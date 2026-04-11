@@ -57,7 +57,9 @@
       "missing_required_role": "You do not have the required Discord role to log in.",
       "auto_login_not_configured": "Auto-login is not properly configured. Please contact an administrator.",
       "unknown": "Login failed. Please try again."
-    }
+    },
+    "loginWithDiscord": "Login with Discord",
+    "loginWithMatrix": "Login with Matrix"
   },
   "dashboard": {
     "title": "Member Dashboard",
@@ -778,57 +780,6 @@
     "flows": "Flows",
     "flowsDescription": "Create and manage application flows for your community.",
     "newFlow": "New Flow",
-    "flowBuilder": "Flow Builder",
-    "flowSettings": "Flow Settings",
-    "openApplications": "Open Applications",
-    "applicationDetail": "Application Detail",
-    "archive": "Archive",
-    "archivedDetail": "Archived Application",
-    "config": "Application Settings",
-    "open": "Open Applications",
-    "applyTitle": "Application",
-    "applyLoading": "Loading application form...",
-    "applyExpired": "This link has expired. Please go back to Discord and click the button again to get a new link.",
-    "applySuccess": "Your application has been submitted successfully!",
-    "applySuccessHint": "You will be notified about the status of your application. You can close this page now.",
-    "applyExpiredTitle": "Link expired",
-    "applyNoToken": {
-      "errorTitle": "Error",
-      "joinDiscord": "Join our Discord server",
-      "joinDiscordDesc": "You need to be a member of our Discord server before you can apply. Join the server and try again.",
-      "joinDiscordButton": "Join Discord",
-      "alreadyApplied": "Application already submitted",
-      "alreadyAppliedDesc": "You already have a pending application for this flow. Please wait for a response."
-    },
-    "status": {
-      "draft": "Draft",
-      "active": "Active",
-      "inactive": "Inactive",
-      "pending": "Pending",
-      "approved": "Approved",
-      "rejected": "Rejected"
-    },
-    "actions": {
-      "create": "Create Flow",
-      "edit": "Edit",
-      "settings": "Settings",
-      "duplicate": "Duplicate",
-      "delete": "Delete",
-      "approve": "Approve",
-      "reject": "Reject",
-      "retryRoles": "Retry Role Assignment"
-    },
-    "warnings": {
-      "invalidGraph": "Flow graph has structural issues. Edit the flow to fix them.",
-      "missingChannelId": "No Discord channel configured. Set it in flow settings.",
-      "missingTokenSecret": "APPLICATION_TOKEN_SECRET environment variable is not set.",
-      "missingHubUrl": "HUB_URL environment variable is not set."
-    },
-    "empty": {
-      "flows": "No flows created yet.",
-      "open": "No open applications.",
-      "archive": "No archived applications."
-    },
     "flowBuilder": {
       "nodes": {
         "start": "Start",
@@ -977,6 +928,56 @@
         "displayNameFieldKey": "Template Field",
         "noDisplayNameTemplate": "No display name template configured. Please configure it in Community Settings first."
       }
+    },
+    "flowSettings": "Flow Settings",
+    "openApplications": "Open Applications",
+    "applicationDetail": "Application Detail",
+    "archive": "Archive",
+    "archivedDetail": "Archived Application",
+    "config": "Application Settings",
+    "open": "Open Applications",
+    "applyTitle": "Application",
+    "applyLoading": "Loading application form...",
+    "applyExpired": "This link has expired. Please go back to Discord and click the button again to get a new link.",
+    "applySuccess": "Your application has been submitted successfully!",
+    "applySuccessHint": "You will be notified about the status of your application. You can close this page now.",
+    "applyExpiredTitle": "Link expired",
+    "applyNoToken": {
+      "errorTitle": "Error",
+      "joinDiscord": "Join our Discord server",
+      "joinDiscordDesc": "You need to be a member of our Discord server before you can apply. Join the server and try again.",
+      "joinDiscordButton": "Join Discord",
+      "alreadyApplied": "Application already submitted",
+      "alreadyAppliedDesc": "You already have a pending application for this flow. Please wait for a response."
+    },
+    "status": {
+      "draft": "Draft",
+      "active": "Active",
+      "inactive": "Inactive",
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "actions": {
+      "create": "Create Flow",
+      "edit": "Edit",
+      "settings": "Settings",
+      "duplicate": "Duplicate",
+      "delete": "Delete",
+      "approve": "Approve",
+      "reject": "Reject",
+      "retryRoles": "Retry Role Assignment"
+    },
+    "warnings": {
+      "invalidGraph": "Flow graph has structural issues. Edit the flow to fix them.",
+      "missingChannelId": "No Discord channel configured. Set it in flow settings.",
+      "missingTokenSecret": "APPLICATION_TOKEN_SECRET environment variable is not set.",
+      "missingHubUrl": "HUB_URL environment variable is not set."
+    },
+    "empty": {
+      "flows": "No flows created yet.",
+      "open": "No open applications.",
+      "archive": "No archived applications."
     },
     "form": {
       "yes": "Yes",
@@ -1164,7 +1165,35 @@
     "modRightsSectionPageAccess": "Settings Page Access",
     "tagLibraryTitle": "Tag Library",
     "tagDeleteConfirm": "Are you sure you want to delete the tag \"{name}\"? It will be removed from all profiles.",
-    "tagDeleteError": "Failed to delete tag."
+    "tagDeleteError": "Failed to delete tag.",
+    "platforms": {
+      "title": "Platforms",
+      "description": "Connect your community to Discord, Matrix, or both.",
+      "addDiscord": "Connect Discord",
+      "addMatrix": "Connect Matrix",
+      "setupDiscord": "Connect Discord Server",
+      "setupMatrix": "Connect Matrix Space",
+      "connect": "Connect",
+      "disconnect": "Disconnect",
+      "confirmDelete": "Are you sure you want to disconnect {platform}?",
+      "testConnection": "Test Connection",
+      "testSuccess": "Connection successful!",
+      "connectedSince": "Connected since",
+      "lastCheck": "Last check",
+      "botUrl": "Bot Internal URL",
+      "botToken": "Bot Internal Token",
+      "discord": {
+        "botToken": "Discord Bot Token",
+        "clientId": "OAuth Client ID",
+        "clientSecret": "OAuth Client Secret",
+        "guildId": "Guild ID"
+      },
+      "matrix": {
+        "homeserverUrl": "Homeserver URL",
+        "accessToken": "Bot Access Token",
+        "spaceId": "Space ID"
+      }
+    }
   },
   "settingsFiles": {
     "title": "Media Storage",

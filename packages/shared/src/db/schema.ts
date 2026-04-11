@@ -18,6 +18,12 @@ import type { LocaleCode } from "../types/locale";
 import type { ApplicationFlowGraph, ApplicationFlowSettings } from "../types/application-flow";
 import type { DisplayNameField } from "../types/profile";
 
+export const platformTypeEnum = pgEnum("platform_type", ["discord", "matrix"]);
+export const platformConnectionStatusEnum = pgEnum("platform_connection_status", [
+  "connected",
+  "disconnected",
+  "error"
+]);
 export const absenceStatusEnum = pgEnum("absence_status", ["away", "maintenance"]);
 export const appInstallStatusEnum = pgEnum("app_install_status", ["active", "inactive", "error"]);
 export const appInstallSourceEnum = pgEnum("app_install_source", ["marketplace", "sideloaded"]);
@@ -30,12 +36,13 @@ export type ThemeContentTone = "light" | "dark";
 
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
-  discordId: text("discord_id").notNull().unique(),
+  discordId: text("discord_id").unique(),
   email: text("email"),
   displayName: text("display_name").notNull(),
   avatarUrl: text("avatar_url"),
   avatarSource: text("avatar_source"),
   primaryDiscordRoleName: text("primary_discord_role_name"),
+  primaryPlatform: platformTypeEnum("primary_platform").default("discord"),
   lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
@@ -43,6 +50,28 @@ export const users = pgTable("users", {
     .notNull()
     .$onUpdateFn(() => new Date())
 });
+
+// ─── User Platform Accounts ──────────────────────────────────────────────
+
+export const userPlatformAccounts = pgTable(
+  "user_platform_accounts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    platform: platformTypeEnum("platform").notNull(),
+    platformUserId: text("platform_user_id").notNull(),
+    platformUsername: text("platform_username"),
+    platformAvatarUrl: text("platform_avatar_url"),
+    isPrimary: boolean("is_primary").notNull().default(false),
+    linkedAt: timestamp("linked_at", { withTimezone: true }).defaultNow().notNull()
+  },
+  (table) => [
+    uniqueIndex("upa_platform_user_idx").on(table.platform, table.platformUserId),
+    index("upa_user_id_idx").on(table.userId)
+  ]
+);
 
 export const profiles = pgTable("profiles", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -175,6 +204,7 @@ export const voiceSessions = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     channelId: text("channel_id"),
+    platform: platformTypeEnum("platform").default("discord"),
     startedAt: timestamp("started_at", { withTimezone: true }).notNull(),
     endedAt: timestamp("ended_at", { withTimezone: true }),
     durationMinutes: integer("duration_minutes"),
@@ -383,6 +413,42 @@ export const communitySettings = pgTable("community_settings", {
     .notNull()
     .$onUpdateFn(() => new Date()),
   updatedBy: uuid("updated_by").references(() => users.id, { onDelete: "set null" })
+});
+
+// ─── Platform Connections ─────────────────────────────────────────────────
+
+/** Discord credentials stored in platform_connections.credentials */
+export interface DiscordPlatformCredentials {
+  botToken: string;
+  clientId: string;
+  clientSecret: string;
+  guildId: string;
+}
+
+/** Matrix credentials stored in platform_connections.credentials */
+export interface MatrixPlatformCredentials {
+  homeserverUrl: string;
+  accessToken: string;
+  spaceId: string;
+}
+
+export type PlatformCredentials = DiscordPlatformCredentials | MatrixPlatformCredentials;
+
+export const platformConnections = pgTable("platform_connections", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  platform: platformTypeEnum("platform").notNull().unique(),
+  enabled: boolean("enabled").notNull().default(true),
+  credentials: jsonb("credentials").$type<PlatformCredentials>().notNull(),
+  botInternalUrl: text("bot_internal_url"),
+  botInternalToken: text("bot_internal_token"),
+  status: platformConnectionStatusEnum("status").notNull().default("disconnected"),
+  statusMessage: text("status_message"),
+  lastHealthCheck: timestamp("last_health_check", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull()
+    .$onUpdateFn(() => new Date())
 });
 
 // ─── Application Flow Tables ──────────────────────────────────────────────
@@ -604,11 +670,19 @@ export const cleanupLog = pgTable(
 
 // ─── Relations ────────────────────────────────────────────────────────────
 
+export const userPlatformAccountsRelations = relations(userPlatformAccounts, ({ one }) => ({
+  user: one(users, {
+    fields: [userPlatformAccounts.userId],
+    references: [users.id]
+  })
+}));
+
 export const usersRelations = relations(users, ({ one, many }) => ({
   profile: one(profiles, {
     fields: [users.id],
     references: [profiles.userId]
   }),
+  platformAccounts: many(userPlatformAccounts),
   permissionRoles: many(userPermissionRoles),
   communityRole: one(userCommunityRoles, {
     fields: [users.id],

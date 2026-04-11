@@ -141,7 +141,8 @@ export async function loadInstalledAppHooks(discordClient: Client) {
       db: createAppDb(row.appId),
       bot: createBotClient(discordClient),
       botUserId: discordClient.user?.id || "",
-      guildId: process.env.DISCORD_GUILD_ID || ""
+      guildId: process.env.DISCORD_GUILD_ID || "",
+      platform: "discord"
     };
 
     for (const hookName of parsed.data.botHooks as GuildoraAppBotHook[]) {

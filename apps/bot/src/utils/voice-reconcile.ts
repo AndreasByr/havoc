@@ -99,6 +99,7 @@ async function reconcileOpenSessionsForGuild(guild: Guild, now: Date) {
   let openedSessions = 0;
 
   for (const row of openSessions) {
+    if (!row.discordId) continue; // skip non-Discord users
     const currentChannelId = await getCurrentRegularChannelId(guild, row.discordId, afkChannelId);
 
     if (!currentChannelId) {

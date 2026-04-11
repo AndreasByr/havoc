@@ -6,6 +6,7 @@ definePageMeta({
 const lastPath = useCookie<string | null>("guildora_settings_last_path", { sameSite: "lax" });
 const allowedTargets = new Set([
   "/settings/community",
+  "/settings/platforms",
   "/settings/custom-fields",
   "/settings/permissions",
   "/settings/moderation-rights",

@@ -57,7 +57,9 @@
       "missing_required_role": "Du besitzt nicht die erforderliche Discord-Rolle, um dich einzuloggen.",
       "auto_login_not_configured": "Auto-Login ist nicht korrekt konfiguriert. Bitte kontaktiere einen Administrator.",
       "unknown": "Anmeldung fehlgeschlagen. Bitte versuche es erneut."
-    }
+    },
+    "loginWithDiscord": "Login mit Discord",
+    "loginWithMatrix": "Login mit Matrix"
   },
   "dashboard": {
     "title": "Mitglieder-Dashboard",
@@ -778,57 +780,6 @@
     "flows": "Flows",
     "flowsDescription": "Erstelle und verwalte Bewerbungs-Flows für deine Community.",
     "newFlow": "Neuer Flow",
-    "flowBuilder": "Flow-Builder",
-    "flowSettings": "Flow-Einstellungen",
-    "openApplications": "Offene Bewerbungen",
-    "applicationDetail": "Bewerbungsdetails",
-    "archive": "Archiv",
-    "archivedDetail": "Archivierte Bewerbung",
-    "config": "Bewerbungs-Einstellungen",
-    "open": "Offene Bewerbungen",
-    "applyTitle": "Bewerbung",
-    "applyLoading": "Bewerbungsformular wird geladen...",
-    "applyExpired": "Dieser Link ist abgelaufen. Bitte gehe zurück zu Discord und klicke erneut auf den Button, um einen neuen Link zu erhalten.",
-    "applySuccess": "Deine Bewerbung wurde erfolgreich eingereicht!",
-    "applySuccessHint": "Du wirst ueber den Status deiner Bewerbung benachrichtigt. Du kannst diese Seite jetzt schliessen.",
-    "applyExpiredTitle": "Link abgelaufen",
-    "applyNoToken": {
-      "errorTitle": "Fehler",
-      "joinDiscord": "Tritt unserem Discord-Server bei",
-      "joinDiscordDesc": "Du musst Mitglied unseres Discord-Servers sein, bevor du dich bewerben kannst. Tritt dem Server bei und versuche es erneut.",
-      "joinDiscordButton": "Discord beitreten",
-      "alreadyApplied": "Bewerbung bereits eingereicht",
-      "alreadyAppliedDesc": "Du hast bereits eine ausstehende Bewerbung für diesen Ablauf. Bitte warte auf eine Rückmeldung."
-    },
-    "status": {
-      "draft": "Entwurf",
-      "active": "Aktiv",
-      "inactive": "Inaktiv",
-      "pending": "Ausstehend",
-      "approved": "Angenommen",
-      "rejected": "Abgelehnt"
-    },
-    "actions": {
-      "create": "Flow erstellen",
-      "edit": "Bearbeiten",
-      "settings": "Einstellungen",
-      "duplicate": "Duplizieren",
-      "delete": "Löschen",
-      "approve": "Annehmen",
-      "reject": "Ablehnen",
-      "retryRoles": "Rollenvergabe wiederholen"
-    },
-    "warnings": {
-      "invalidGraph": "Der Flow-Graph hat strukturelle Probleme. Bearbeite den Flow, um sie zu beheben.",
-      "missingChannelId": "Kein Discord-Kanal konfiguriert. Setze ihn in den Flow-Einstellungen.",
-      "missingTokenSecret": "Die Umgebungsvariable APPLICATION_TOKEN_SECRET ist nicht gesetzt.",
-      "missingHubUrl": "Die Umgebungsvariable HUB_URL ist nicht gesetzt."
-    },
-    "empty": {
-      "flows": "Noch keine Flows erstellt.",
-      "open": "Keine offenen Bewerbungen.",
-      "archive": "Keine archivierten Bewerbungen."
-    },
     "flowBuilder": {
       "nodes": {
         "start": "Start",
@@ -977,6 +928,56 @@
         "displayNameFieldKey": "Template-Feld",
         "noDisplayNameTemplate": "Kein Namenstemplate konfiguriert. Bitte zuerst in den Community-Einstellungen konfigurieren."
       }
+    },
+    "flowSettings": "Flow-Einstellungen",
+    "openApplications": "Offene Bewerbungen",
+    "applicationDetail": "Bewerbungsdetails",
+    "archive": "Archiv",
+    "archivedDetail": "Archivierte Bewerbung",
+    "config": "Bewerbungs-Einstellungen",
+    "open": "Offene Bewerbungen",
+    "applyTitle": "Bewerbung",
+    "applyLoading": "Bewerbungsformular wird geladen...",
+    "applyExpired": "Dieser Link ist abgelaufen. Bitte gehe zurück zu Discord und klicke erneut auf den Button, um einen neuen Link zu erhalten.",
+    "applySuccess": "Deine Bewerbung wurde erfolgreich eingereicht!",
+    "applySuccessHint": "Du wirst ueber den Status deiner Bewerbung benachrichtigt. Du kannst diese Seite jetzt schliessen.",
+    "applyExpiredTitle": "Link abgelaufen",
+    "applyNoToken": {
+      "errorTitle": "Fehler",
+      "joinDiscord": "Tritt unserem Discord-Server bei",
+      "joinDiscordDesc": "Du musst Mitglied unseres Discord-Servers sein, bevor du dich bewerben kannst. Tritt dem Server bei und versuche es erneut.",
+      "joinDiscordButton": "Discord beitreten",
+      "alreadyApplied": "Bewerbung bereits eingereicht",
+      "alreadyAppliedDesc": "Du hast bereits eine ausstehende Bewerbung für diesen Ablauf. Bitte warte auf eine Rückmeldung."
+    },
+    "status": {
+      "draft": "Entwurf",
+      "active": "Aktiv",
+      "inactive": "Inaktiv",
+      "pending": "Ausstehend",
+      "approved": "Angenommen",
+      "rejected": "Abgelehnt"
+    },
+    "actions": {
+      "create": "Flow erstellen",
+      "edit": "Bearbeiten",
+      "settings": "Einstellungen",
+      "duplicate": "Duplizieren",
+      "delete": "Löschen",
+      "approve": "Annehmen",
+      "reject": "Ablehnen",
+      "retryRoles": "Rollenvergabe wiederholen"
+    },
+    "warnings": {
+      "invalidGraph": "Der Flow-Graph hat strukturelle Probleme. Bearbeite den Flow, um sie zu beheben.",
+      "missingChannelId": "Kein Discord-Kanal konfiguriert. Setze ihn in den Flow-Einstellungen.",
+      "missingTokenSecret": "Die Umgebungsvariable APPLICATION_TOKEN_SECRET ist nicht gesetzt.",
+      "missingHubUrl": "Die Umgebungsvariable HUB_URL ist nicht gesetzt."
+    },
+    "empty": {
+      "flows": "Noch keine Flows erstellt.",
+      "open": "Keine offenen Bewerbungen.",
+      "archive": "Keine archivierten Bewerbungen."
     },
     "form": {
       "yes": "Ja",
@@ -1164,7 +1165,35 @@
     "modRightsSectionPageAccess": "Seitenzugriff unter Einstellungen",
     "tagLibraryTitle": "Tag-Bibliothek",
     "tagDeleteConfirm": "Tag \"{name}\" wirklich löschen? Es wird aus allen Profilen entfernt.",
-    "tagDeleteError": "Fehler beim Löschen des Tags."
+    "tagDeleteError": "Fehler beim Löschen des Tags.",
+    "platforms": {
+      "title": "Plattformen",
+      "description": "Verbinde deine Community mit Discord, Matrix oder beidem.",
+      "addDiscord": "Discord verbinden",
+      "addMatrix": "Matrix verbinden",
+      "setupDiscord": "Discord Server verbinden",
+      "setupMatrix": "Matrix Space verbinden",
+      "connect": "Verbinden",
+      "disconnect": "Trennen",
+      "confirmDelete": "Moechtest du {platform} wirklich trennen?",
+      "testConnection": "Verbindung testen",
+      "testSuccess": "Verbindung erfolgreich!",
+      "connectedSince": "Verbunden seit",
+      "lastCheck": "Letzter Check",
+      "botUrl": "Bot Interne URL",
+      "botToken": "Bot Internes Token",
+      "discord": {
+        "botToken": "Discord Bot Token",
+        "clientId": "OAuth Client ID",
+        "clientSecret": "OAuth Client Secret",
+        "guildId": "Guild ID"
+      },
+      "matrix": {
+        "homeserverUrl": "Homeserver URL",
+        "accessToken": "Bot Access Token",
+        "spaceId": "Space ID"
+      }
+    }
   },
   "settingsFiles": {
     "title": "Medienspeicher",

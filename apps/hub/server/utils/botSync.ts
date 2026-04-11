@@ -63,15 +63,30 @@ export class BotBridgeError extends Error {
   }
 }
 
-function getBotRequestConfig() {
+function getBotRequestConfigSync() {
   const runtime = useRuntimeConfig();
   const baseUrl = typeof runtime.botInternalUrl === "string" ? runtime.botInternalUrl : "";
   const token = typeof runtime.botInternalToken === "string" ? runtime.botInternalToken : "";
   return { baseUrl, token };
 }
 
+/**
+ * Get bot connection config. Tries platform_connections DB first, falls back to .env.
+ * This is async because it may read from the database.
+ */
+async function getBotRequestConfig(): Promise<{ baseUrl: string; token: string }> {
+  try {
+    const { getPlatformBotConfig } = await import("./platformConfig");
+    const dbConfig = await getPlatformBotConfig("discord");
+    if (dbConfig) return dbConfig;
+  } catch {
+    // platformConfig not available (e.g. during early startup) — fall through to ENV
+  }
+  return getBotRequestConfigSync();
+}
+
 async function requestBotInternal<T>(path: string, options?: { method?: "GET" | "POST" | "PATCH" | "DELETE"; body?: unknown }) {
-  const { baseUrl, token } = getBotRequestConfig();
+  const { baseUrl, token } = await getBotRequestConfig();
   if (!baseUrl) {
     throw new Error("BOT_INTERNAL_URL is not configured.");
   }
@@ -119,7 +134,7 @@ async function requestBotInternal<T>(path: string, options?: { method?: "GET" | 
 }
 
 export async function syncDiscordUserFromWebsite(payload: SyncUserPayload): Promise<DiscordUserSyncResult | null> {
-  const { baseUrl } = getBotRequestConfig();
+  const { baseUrl } = await getBotRequestConfig();
   if (!baseUrl) {
     return null;
   }
@@ -166,13 +181,13 @@ export async function removeDiscordRolesFromBot(discordId: string, payload: Remo
 }
 
 export async function refreshBotCommands(): Promise<void> {
-  const { baseUrl } = getBotRequestConfig();
+  const { baseUrl } = await getBotRequestConfig();
   if (!baseUrl) return;
   await requestBotInternal<{ ok: boolean }>("/internal/sync-commands", { method: "POST" });
 }
 
 export async function reloadBotHooks(): Promise<void> {
-  const { baseUrl } = getBotRequestConfig();
+  const { baseUrl } = await getBotRequestConfig();
   if (!baseUrl) return;
   await requestBotInternal<{ ok: boolean }>("/internal/reload-hooks", { method: "POST" });
 }
@@ -201,7 +216,7 @@ export async function postApplicationEmbed(
   channelId: string,
   embed: EmbedConfig
 ): Promise<{ messageId: string } | null> {
-  const { baseUrl } = getBotRequestConfig();
+  const { baseUrl } = await getBotRequestConfig();
   if (!baseUrl) return null;
 
   try {
@@ -221,7 +236,7 @@ export async function patchApplicationEmbed(
   flowId: string,
   embed: EmbedConfig
 ): Promise<void> {
-  const { baseUrl } = getBotRequestConfig();
+  const { baseUrl } = await getBotRequestConfig();
   if (!baseUrl) return;
 
   await requestBotInternal<{ ok: boolean }>("/internal/applications/embed", {
@@ -231,7 +246,7 @@ export async function patchApplicationEmbed(
 }
 
 export async function deleteApplicationEmbed(channelId: string, messageId: string): Promise<void> {
-  const { baseUrl } = getBotRequestConfig();
+  const { baseUrl } = await getBotRequestConfig();
   if (!baseUrl) return;
 
   await requestBotInternal<{ ok: boolean }>("/internal/applications/embed", {
@@ -244,7 +259,7 @@ export async function addDiscordRolesToMember(
   discordId: string,
   roleIds: string[]
 ): Promise<{ ok: boolean; addedRoleIds: string[] } | null> {
-  const { baseUrl } = getBotRequestConfig();
+  const { baseUrl } = await getBotRequestConfig();
   if (!baseUrl) return null;
   if (roleIds.length === 0) return { ok: true, addedRoleIds: [] };
 
@@ -259,7 +274,7 @@ export async function setDiscordNickname(
   discordId: string,
   nickname: string
 ): Promise<{ ok: boolean } | null> {
-  const { baseUrl } = getBotRequestConfig();
+  const { baseUrl } = await getBotRequestConfig();
   if (!baseUrl) return null;
 
   const encodedDiscordId = encodeURIComponent(discordId);
@@ -273,7 +288,7 @@ export async function sendDiscordDm(
   discordId: string,
   message: string
 ): Promise<{ ok: boolean } | null> {
-  const { baseUrl } = getBotRequestConfig();
+  const { baseUrl } = await getBotRequestConfig();
   if (!baseUrl) return null;
 
   const encodedDiscordId = encodeURIComponent(discordId);
@@ -302,7 +317,7 @@ export type RolePickerEmbedPayload = {
 export async function postRolePickerEmbed(
   payload: RolePickerEmbedPayload
 ): Promise<{ messageId: string } | null> {
-  const { baseUrl } = getBotRequestConfig();
+  const { baseUrl } = await getBotRequestConfig();
   if (!baseUrl) return null;
 
   try {
@@ -321,7 +336,7 @@ export async function patchRolePickerEmbed(
   messageId: string,
   payload: Omit<RolePickerEmbedPayload, "channelId">
 ): Promise<void> {
-  const { baseUrl } = getBotRequestConfig();
+  const { baseUrl } = await getBotRequestConfig();
   if (!baseUrl) return;
 
   await requestBotInternal<{ ok: boolean }>("/internal/role-picker/embed", {
@@ -331,7 +346,7 @@ export async function patchRolePickerEmbed(
 }
 
 export async function deleteRolePickerEmbed(channelId: string, messageId: string): Promise<void> {
-  const { baseUrl } = getBotRequestConfig();
+  const { baseUrl } = await getBotRequestConfig();
   if (!baseUrl) return;
 
   await requestBotInternal<{ ok: boolean }>("/internal/role-picker/embed", {
@@ -346,7 +361,7 @@ export async function kickDiscordMember(
   discordId: string,
   reason?: string
 ): Promise<{ ok: boolean } | null> {
-  const { baseUrl } = getBotRequestConfig();
+  const { baseUrl } = await getBotRequestConfig();
   if (!baseUrl) return null;
 
   const encodedDiscordId = encodeURIComponent(discordId);
@@ -361,7 +376,7 @@ export async function banDiscordMember(
   reason?: string,
   deleteMessageSeconds?: number
 ): Promise<{ ok: boolean } | null> {
-  const { baseUrl } = getBotRequestConfig();
+  const { baseUrl } = await getBotRequestConfig();
   if (!baseUrl) return null;
 
   const encodedDiscordId = encodeURIComponent(discordId);
@@ -377,7 +392,7 @@ export async function createDiscordChannel(
   parentId?: string,
   options?: { denyEveryone?: boolean; permissionOverwrites?: Array<{ id: string; type: number; allow: string; deny: string }> }
 ): Promise<{ ok: boolean; channelId: string; channelName: string } | null> {
-  const { baseUrl } = getBotRequestConfig();
+  const { baseUrl } = await getBotRequestConfig();
   if (!baseUrl) return null;
 
   return requestBotInternal<{ ok: boolean; channelId: string; channelName: string }>(
@@ -391,7 +406,7 @@ export async function createDiscordThread(
   name: string,
   options?: { type?: "public" | "private"; memberUserIds?: string[] }
 ): Promise<{ ok: boolean; threadId: string; threadName: string } | null> {
-  const { baseUrl } = getBotRequestConfig();
+  const { baseUrl } = await getBotRequestConfig();
   if (!baseUrl) return null;
 
   const encodedChannelId = encodeURIComponent(parentChannelId);
@@ -405,7 +420,7 @@ export async function moveDiscordChannel(
   channelId: string,
   parentId: string | null
 ): Promise<{ ok: boolean; channelId: string; parentId: string | null } | null> {
-  const { baseUrl } = getBotRequestConfig();
+  const { baseUrl } = await getBotRequestConfig();
   if (!baseUrl) return null;
 
   const encodedChannelId = encodeURIComponent(channelId);
@@ -418,7 +433,7 @@ export async function moveDiscordChannel(
 export async function deleteDiscordChannel(
   channelId: string
 ): Promise<{ ok: boolean } | null> {
-  const { baseUrl } = getBotRequestConfig();
+  const { baseUrl } = await getBotRequestConfig();
   if (!baseUrl) return null;
 
   const encodedChannelId = encodeURIComponent(channelId);
@@ -432,7 +447,7 @@ export async function deleteDiscordMessage(
   channelId: string,
   messageId: string
 ): Promise<{ ok: boolean } | null> {
-  const { baseUrl } = getBotRequestConfig();
+  const { baseUrl } = await getBotRequestConfig();
   if (!baseUrl) return null;
 
   const encodedChannelId = encodeURIComponent(channelId);
@@ -447,7 +462,7 @@ export async function sendChannelMessage(
   channelId: string,
   message: string
 ): Promise<{ ok: boolean } | null> {
-  const { baseUrl } = getBotRequestConfig();
+  const { baseUrl } = await getBotRequestConfig();
   if (!baseUrl) return null;
 
   const encodedChannelId = encodeURIComponent(channelId);
