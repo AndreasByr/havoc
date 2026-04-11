@@ -101,28 +101,43 @@ describe("CSRF middleware behavior", () => {
     expect(mocks.getUserSession).not.toHaveBeenCalled();
   });
 
-  it("Bearer token bypasses CSRF validation (known behavior — see _issues.md #8)", async () => {
+  it("Bearer garbage does NOT bypass CSRF (regression: CVE-like bypass removed)", async () => {
     const handler = await importCsrfMiddleware();
+    mocks.getUserSession.mockResolvedValue({ csrfToken: "tok" });
     const event = createMockEvent({
       method: "POST",
       path: "/api/test",
-      headers: { authorization: "Bearer some-token" }
+      headers: { authorization: "Bearer garbage", origin: "https://evil.com" }
     });
-    const result = await handler(event);
-    expect(result).toBeUndefined();
-    expect(mocks.getUserSession).not.toHaveBeenCalled();
+    await handler(event);
+    expect(mocks.getUserSession).toHaveBeenCalled();
+    expect(mocks.validateCsrfToken).toHaveBeenCalledWith(event, "tok");
   });
 
-  it("Bearer with empty value still bypasses CSRF", async () => {
+  it("Bearer with valid-looking token does NOT bypass CSRF", async () => {
     const handler = await importCsrfMiddleware();
+    mocks.getUserSession.mockResolvedValue({ csrfToken: "tok" });
     const event = createMockEvent({
       method: "POST",
       path: "/api/test",
-      headers: { authorization: "Bearer " }
+      headers: { authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test.sig", origin: "https://example.com" }
     });
-    const result = await handler(event);
-    expect(result).toBeUndefined();
-    expect(mocks.getUserSession).not.toHaveBeenCalled();
+    await handler(event);
+    expect(mocks.getUserSession).toHaveBeenCalled();
+    expect(mocks.validateCsrfToken).toHaveBeenCalledWith(event, "tok");
+  });
+
+  it("Bearer with empty value does NOT bypass CSRF", async () => {
+    const handler = await importCsrfMiddleware();
+    mocks.getUserSession.mockResolvedValue({ csrfToken: "tok" });
+    const event = createMockEvent({
+      method: "POST",
+      path: "/api/test",
+      headers: { authorization: "Bearer ", origin: "https://evil.com" }
+    });
+    await handler(event);
+    expect(mocks.getUserSession).toHaveBeenCalled();
+    expect(mocks.validateCsrfToken).toHaveBeenCalledWith(event, "tok");
   });
 
   it("non-Bearer auth (Basic) does NOT bypass CSRF", async () => {
