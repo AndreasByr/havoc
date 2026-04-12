@@ -94,6 +94,7 @@ export default defineEventHandler(async (event) => {
   const code = typeof query.code === "string" ? query.code : null;
   const state = typeof query.state === "string" ? query.state : null;
   const isDev = import.meta.dev || process.env.NODE_ENV === "development";
+  const secureCookie = process.env.NUXT_SESSION_COOKIE_SECURE !== "false";
   const devBypassEnabled = isDev && config.authDevBypass === true;
   const superadminDiscordId = typeof config.superadminDiscordId === "string" ? config.superadminDiscordId : "";
 
@@ -164,7 +165,7 @@ export default defineEventHandler(async (event) => {
       httpOnly: true,
       maxAge: oauthStateTtlSeconds,
       sameSite: "lax",
-      secure: !isDev,
+      secure: secureCookie,
       path: "/"
     });
 

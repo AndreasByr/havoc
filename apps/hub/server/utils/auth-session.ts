@@ -48,7 +48,7 @@ export async function replaceAuthSession(
     sessionData.csrfToken = existingSession.csrfToken;
   }
 
-  const isDev = import.meta.dev || process.env.NODE_ENV === "development";
+  const secureCookie = process.env.NUXT_SESSION_COOKIE_SECURE !== "false";
   const cookieDomain = process.env.NUXT_SESSION_COOKIE_DOMAIN || undefined;
 
   await replaceUserSession(
@@ -59,7 +59,7 @@ export async function replaceAuthSession(
       cookie: {
         maxAge: sessionMaxAgeSeconds,
         sameSite: "lax",
-        secure: !isDev,
+        secure: secureCookie,
         httpOnly: true,
         domain: cookieDomain
       }
