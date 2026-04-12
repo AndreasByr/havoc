@@ -49,6 +49,7 @@ export async function replaceAuthSession(
   }
 
   const isDev = import.meta.dev || process.env.NODE_ENV === "development";
+  const cookieDomain = process.env.NUXT_SESSION_COOKIE_DOMAIN || undefined;
 
   await replaceUserSession(
     event,
@@ -59,7 +60,8 @@ export async function replaceAuthSession(
         maxAge: sessionMaxAgeSeconds,
         sameSite: "lax",
         secure: !isDev,
-        httpOnly: true
+        httpOnly: true,
+        domain: cookieDomain
       }
     }
   );
