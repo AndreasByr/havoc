@@ -67,6 +67,7 @@ const hasMultipleVisibleGroups = (section: InternalNavSection) =>
             :to="section.to"
             class="sidebar-item"
             :class="{ 'sidebar-item-active': section.isActive }"
+            :data-tour="`sidebar-${section.id}`"
             @click="$emit('navigate')"
           >
             <Icon v-if="section.iconPath?.includes(':')" :name="section.iconPath" class="h-4 w-4 shrink-0 opacity-60" aria-hidden="true" />
@@ -81,6 +82,7 @@ const hasMultipleVisibleGroups = (section: InternalNavSection) =>
             type="button"
             class="sidebar-item w-full text-left"
             :class="{ 'sidebar-item-active': section.isActive || isExpanded(section.id) }"
+            :data-tour="`sidebar-${section.id}`"
             :aria-expanded="isExpanded(section.id)"
             @click="$emit('toggle-section', section.id)"
           >

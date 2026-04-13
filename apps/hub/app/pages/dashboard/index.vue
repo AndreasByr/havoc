@@ -169,6 +169,57 @@ const visibleLeaderboard = ref(10);
 const visibleChanges = ref(5);
 const profileSectionExpanded = ref(false);
 const leaderboardExpanded = ref(false);
+
+// ─── Onboarding Tour ──────────────────────────────────────────────────
+
+const setupJustCompleted = useState<boolean>("setup-just-completed", () => false);
+
+const tourSteps = computed(() => [
+  {
+    target: '[data-tour="sidebar-dashboard"]',
+    title: t("tour.dashboard.title"),
+    description: t("tour.dashboard.description"),
+    placement: "right" as const
+  },
+  {
+    target: '[data-tour="sidebar-members"]',
+    title: t("tour.members.title"),
+    description: t("tour.members.description"),
+    placement: "right" as const
+  },
+  {
+    target: '[data-tour="sidebar-settings"]',
+    title: t("tour.settings.title"),
+    description: t("tour.settings.description"),
+    placement: "right" as const
+  },
+  {
+    target: '[data-tour="sidebar-profile"]',
+    title: t("tour.profile.title"),
+    description: t("tour.profile.description"),
+    placement: "right" as const
+  },
+  {
+    target: '[data-tour="sidebar-user"]',
+    title: t("tour.userMenu.title"),
+    description: t("tour.userMenu.description"),
+    placement: "top" as const
+  }
+]);
+
+const { state: tourState, start: startTour, next: nextTour, skip: skipTour } = useOnboardingTour(
+  "dashboard-setup",
+  tourSteps.value,
+  user.value?.id as string | undefined
+);
+
+onMounted(() => {
+  if (setupJustCompleted.value) {
+    setupJustCompleted.value = false;
+    // Small delay to let the sidebar render
+    setTimeout(() => startTour(), 800);
+  }
+});
 </script>
 
 <template>
@@ -341,5 +392,13 @@ const leaderboardExpanded = ref(false);
         </div>
       </div>
     </template>
+
+    <!-- Onboarding Tour -->
+    <SharedOnboardingTour
+      :state="tourState"
+      :skip-label="$t('setup.back')"
+      @next="nextTour"
+      @skip="skipTour"
+    />
   </section>
 </template>

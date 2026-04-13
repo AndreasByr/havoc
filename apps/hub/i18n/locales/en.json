@@ -381,6 +381,7 @@
     "selectableTitle": "Selectable roles",
     "selectedCount": "{count} selected",
     "loadError": "Failed to load Discord roles.",
+    "botUnavailable": "The Discord bot is currently unavailable. Some features may not work.",
     "saveSuccess": "Selectable roles saved.",
     "saveError": "Failed to save selectable roles.",
     "empty": "No guild roles found.",
@@ -431,6 +432,7 @@
     "embedDeployed": "Embed is deployed",
     "embedNotDeployed": "Embed not deployed",
     "selectChannel": "Select Channel",
+    "channelsLoadError": "Failed to load Discord channels. The bot may be unavailable.",
     "saveSuccess": "Role group saved.",
     "saveError": "Failed to save role group.",
     "deleteSuccess": "Role group deleted.",
@@ -1182,6 +1184,14 @@
       "lastCheck": "Last check",
       "botUrl": "Bot Internal URL",
       "botToken": "Bot Internal Token",
+      "edit": "Edit",
+      "editTitle": "Edit {platform}",
+      "editHint": "Leave credential fields empty to keep the current values. Only filled fields will be updated.",
+      "editPlaceholder": "Leave empty to keep current",
+      "editError": "Failed to update platform.",
+      "editSuccess": "Platform updated successfully.",
+      "addSuccess": "Platform connected successfully.",
+      "noPlatforms": "No platforms connected yet. Complete the setup wizard to connect your first platform.",
       "discord": {
         "botToken": "Discord Bot Token",
         "clientId": "OAuth Client ID",
@@ -1327,6 +1337,88 @@
     "messages": {
       "saved": "Membership settings saved.",
       "saveFailed": "Failed to save membership settings."
+    }
+  },
+  "setup": {
+    "welcome": {
+      "title": "Welcome to Guildora Hub",
+      "description": "Let's set up your community platform in a few quick steps. You'll configure your community, connect a platform, and create your admin account.",
+      "continue": "Get Started"
+    },
+    "community": {
+      "title": "Community Info",
+      "description": "Tell us about your community.",
+      "nameLabel": "Community Name",
+      "namePlaceholder": "e.g. My Gaming Community",
+      "localeLabel": "Default Language",
+      "continue": "Continue"
+    },
+    "platform": {
+      "title": "Connect a Platform",
+      "description": "Connect your Discord server or Matrix space to Guildora.",
+      "saveAndContinue": "Save & Continue",
+      "saving": "Saving...",
+      "error": "Failed to connect platform.",
+      "botConnectionOptional": "Bot connection (optional — can be configured later)",
+      "botUrl": "Bot Internal URL",
+      "botToken": "Bot Internal Token",
+      "discord": {
+        "clientId": "Discord Client ID",
+        "clientSecret": "Discord Client Secret",
+        "botToken": "Discord Bot Token",
+        "guildId": "Discord Server (Guild) ID",
+        "redirectUriLabel": "OAuth Redirect URI",
+        "redirectUriHint": "Add this URL as a redirect URI in your Discord Developer Portal application."
+      },
+      "matrix": {
+        "homeserverUrl": "Homeserver URL",
+        "accessToken": "Access Token",
+        "spaceId": "Space ID"
+      }
+    },
+    "admin": {
+      "title": "Create Admin Account",
+      "description": "Log in to become the first administrator of your community.",
+      "loginPrompt": "You'll be redirected to authenticate. The first user to log in after setup becomes the superadmin.",
+      "loginButton": "Login with Discord",
+      "loginButtonMatrix": "Login with Matrix",
+      "completing": "Setting up your admin account...",
+      "retry": "Retry"
+    },
+    "complete": {
+      "title": "Setup Complete!",
+      "description": "Your community platform is ready. You've been granted administrator access.",
+      "goToDashboard": "Go to Dashboard"
+    },
+    "steps": {
+      "welcome": "Welcome",
+      "community": "Community",
+      "platform": "Platform",
+      "admin": "Admin",
+      "complete": "Done"
+    },
+    "back": "Back"
+  },
+  "tour": {
+    "dashboard": {
+      "title": "Dashboard",
+      "description": "Your central overview with community stats, voice activity, and member growth."
+    },
+    "members": {
+      "title": "Members",
+      "description": "View and manage all community members, their roles, and profiles."
+    },
+    "settings": {
+      "title": "Settings",
+      "description": "Configure your community name, platform connections, roles, and permissions."
+    },
+    "profile": {
+      "title": "Profile",
+      "description": "Customize your own profile, set your display name, and upload an avatar."
+    },
+    "userMenu": {
+      "title": "Your Account",
+      "description": "Access your profile and see your current roles at a glance."
     }
   }
 }

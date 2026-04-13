@@ -25,6 +25,7 @@ export default defineEventHandler(async (event) => {
     botInternalUrl?: string;
     botInternalToken?: string;
     communityName?: string;
+    defaultLocale?: "en" | "de";
   }>(event);
 
   if (!body?.platform || !VALID_PLATFORMS.includes(body.platform as (typeof VALID_PLATFORMS)[number])) {
@@ -53,14 +54,19 @@ export default defineEventHandler(async (event) => {
 
   invalidatePlatformCache();
 
-  // Optionally set community name
-  if (body.communityName) {
+  // Optionally set community name and default locale
+  if (body.communityName || body.defaultLocale) {
     try {
       const { communitySettings } = await import("@guildora/shared");
       const { eq } = await import("drizzle-orm");
+      const updates: Record<string, unknown> = {};
+      if (body.communityName) updates.communityName = body.communityName;
+      if (body.defaultLocale && (body.defaultLocale === "en" || body.defaultLocale === "de")) {
+        updates.defaultLocale = body.defaultLocale;
+      }
       await db
         .update(communitySettings)
-        .set({ communityName: body.communityName })
+        .set(updates)
         .where(eq(communitySettings.id, 1));
     } catch {
       // Community settings may not exist yet — ignore

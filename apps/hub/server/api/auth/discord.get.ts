@@ -11,6 +11,7 @@ import { persistDiscordAvatarLocally } from "../../utils/avatar-storage";
 import { loadMembershipSettings } from "../../utils/membership-settings";
 import { getDb } from "../../utils/db";
 import { normalizeReturnTo } from "../../utils/redirect-safety";
+import { getDiscordCredentials } from "../../utils/platformConfig";
 
 type DiscordUser = {
   id: string;
@@ -135,8 +136,19 @@ export default defineEventHandler(async (event) => {
     return sendRedirect(event, returnTo);
   }
 
-  const clientId = typeof config.discordClientId === "string" ? config.discordClientId : "";
-  const clientSecret = typeof config.discordClientSecret === "string" ? config.discordClientSecret : "";
+  let clientId = typeof config.discordClientId === "string" ? config.discordClientId : "";
+  let clientSecret = typeof config.discordClientSecret === "string" ? config.discordClientSecret : "";
+
+  // Fall back to platform_connections credentials when env vars are not set
+  // (e.g. after setup wizard stored credentials in the database)
+  if (!clientId || !clientSecret) {
+    const dbCreds = await getDiscordCredentials();
+    if (dbCreds) {
+      clientId = clientId || dbCreds.clientId;
+      clientSecret = clientSecret || dbCreds.clientSecret;
+    }
+  }
+
   const hubUrl = typeof config.public.hubUrl === "string" ? config.public.hubUrl : "http://localhost:3003";
   const redirectUri =
     typeof config.discordRedirectUri === "string" && config.discordRedirectUri.length > 0

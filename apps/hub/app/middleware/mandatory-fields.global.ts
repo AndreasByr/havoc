@@ -1,6 +1,6 @@
 export default defineNuxtRouteMiddleware(async (to) => {
   if (!import.meta.client) return;
-  if (to.path.includes("/profile/customize") || to.path.includes("/login") || to.path.includes("/apply/")) return;
+  if (to.path.includes("/profile/customize") || to.path.includes("/login") || to.path.includes("/apply/") || to.path.startsWith("/setup")) return;
 
   const { user } = useAuth();
   if (!user.value) return;

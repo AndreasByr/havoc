@@ -381,6 +381,7 @@
     "selectableTitle": "Freigegebene Rollen",
     "selectedCount": "{count} ausgewählt",
     "loadError": "Discord-Rollen konnten nicht geladen werden.",
+    "botUnavailable": "Der Discord-Bot ist derzeit nicht erreichbar. Einige Funktionen sind möglicherweise eingeschränkt.",
     "saveSuccess": "Freigegebene Rollen gespeichert.",
     "saveError": "Freigegebene Rollen konnten nicht gespeichert werden.",
     "empty": "Keine Guild-Rollen gefunden.",
@@ -431,6 +432,7 @@
     "embedDeployed": "Embed ist veröffentlicht",
     "embedNotDeployed": "Embed nicht veröffentlicht",
     "selectChannel": "Kanal auswählen",
+    "channelsLoadError": "Discord-Kanäle konnten nicht geladen werden. Der Bot ist möglicherweise nicht erreichbar.",
     "saveSuccess": "Rollengruppe gespeichert.",
     "saveError": "Rollengruppe konnte nicht gespeichert werden.",
     "deleteSuccess": "Rollengruppe gelöscht.",
@@ -1182,6 +1184,14 @@
       "lastCheck": "Letzter Check",
       "botUrl": "Bot Interne URL",
       "botToken": "Bot Internes Token",
+      "edit": "Bearbeiten",
+      "editTitle": "{platform} bearbeiten",
+      "editHint": "Lass Credential-Felder leer, um die aktuellen Werte beizubehalten. Nur ausgefuellte Felder werden aktualisiert.",
+      "editPlaceholder": "Leer lassen um beizubehalten",
+      "editError": "Plattform konnte nicht aktualisiert werden.",
+      "editSuccess": "Plattform erfolgreich aktualisiert.",
+      "addSuccess": "Plattform erfolgreich verbunden.",
+      "noPlatforms": "Noch keine Plattformen verbunden. Schliesse den Setup-Wizard ab, um deine erste Plattform zu verbinden.",
       "discord": {
         "botToken": "Discord Bot Token",
         "clientId": "OAuth Client ID",
@@ -1327,6 +1337,88 @@
     "messages": {
       "saved": "Mitgliedschafts-Einstellungen gespeichert.",
       "saveFailed": "Fehler beim Speichern der Mitgliedschafts-Einstellungen."
+    }
+  },
+  "setup": {
+    "welcome": {
+      "title": "Willkommen bei Guildora Hub",
+      "description": "Richte deine Community-Plattform in wenigen Schritten ein. Du konfigurierst deine Community, verbindest eine Plattform und erstellst dein Admin-Konto.",
+      "continue": "Los geht's"
+    },
+    "community": {
+      "title": "Community-Infos",
+      "description": "Erzaehl uns etwas ueber deine Community.",
+      "nameLabel": "Community-Name",
+      "namePlaceholder": "z.B. Meine Gaming-Community",
+      "localeLabel": "Standard-Sprache",
+      "continue": "Weiter"
+    },
+    "platform": {
+      "title": "Plattform verbinden",
+      "description": "Verbinde deinen Discord-Server oder Matrix-Space mit Guildora.",
+      "saveAndContinue": "Speichern & Weiter",
+      "saving": "Speichern...",
+      "error": "Plattform-Verbindung fehlgeschlagen.",
+      "botConnectionOptional": "Bot-Verbindung (optional — kann spaeter konfiguriert werden)",
+      "botUrl": "Bot-interne URL",
+      "botToken": "Bot-interner Token",
+      "discord": {
+        "clientId": "Discord Client-ID",
+        "clientSecret": "Discord Client-Secret",
+        "botToken": "Discord Bot-Token",
+        "guildId": "Discord Server (Guild) ID",
+        "redirectUriLabel": "OAuth Redirect-URI",
+        "redirectUriHint": "Fuege diese URL als Redirect-URI in deinem Discord Developer Portal hinzu."
+      },
+      "matrix": {
+        "homeserverUrl": "Homeserver-URL",
+        "accessToken": "Access-Token",
+        "spaceId": "Space-ID"
+      }
+    },
+    "admin": {
+      "title": "Admin-Konto erstellen",
+      "description": "Melde dich an, um der erste Administrator deiner Community zu werden.",
+      "loginPrompt": "Du wirst zur Authentifizierung weitergeleitet. Der erste User nach dem Setup wird automatisch Superadmin.",
+      "loginButton": "Mit Discord anmelden",
+      "loginButtonMatrix": "Mit Matrix anmelden",
+      "completing": "Admin-Konto wird eingerichtet...",
+      "retry": "Erneut versuchen"
+    },
+    "complete": {
+      "title": "Setup abgeschlossen!",
+      "description": "Deine Community-Plattform ist bereit. Du hast Administrator-Zugriff erhalten.",
+      "goToDashboard": "Zum Dashboard"
+    },
+    "steps": {
+      "welcome": "Willkommen",
+      "community": "Community",
+      "platform": "Plattform",
+      "admin": "Admin",
+      "complete": "Fertig"
+    },
+    "back": "Zurueck"
+  },
+  "tour": {
+    "dashboard": {
+      "title": "Dashboard",
+      "description": "Deine zentrale Uebersicht mit Community-Statistiken, Sprachaktivitaet und Mitglieder-Wachstum."
+    },
+    "members": {
+      "title": "Mitglieder",
+      "description": "Alle Community-Mitglieder anzeigen und verwalten, Rollen zuweisen."
+    },
+    "settings": {
+      "title": "Einstellungen",
+      "description": "Community-Name, Plattform-Verbindungen, Rollen und Berechtigungen konfigurieren."
+    },
+    "profile": {
+      "title": "Profil",
+      "description": "Dein eigenes Profil anpassen, Anzeigename setzen und Avatar hochladen."
+    },
+    "userMenu": {
+      "title": "Dein Account",
+      "description": "Schnellzugriff auf dein Profil und deine aktuellen Rollen."
     }
   }
 }
