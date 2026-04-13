@@ -215,22 +215,16 @@ describe("replaceAuthSession", () => {
     expect(callArgs[1].originalUserId).toBeUndefined();
   });
 
-  it("sets secure cookie in production mode", async () => {
+  it("delegates to replaceUserSession without custom cookie config", async () => {
     mocks.getUserSession.mockResolvedValue({});
-    // Simulate production mode
-    const origDev = (import.meta as any).dev;
-    const origEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = "production";
 
     const { replaceAuthSession } = await importAuthSession();
     const event = createMockEvent();
     await replaceAuthSession(event, buildSessionUser("user"));
 
     const callArgs = mocks.replaceUserSession.mock.calls[0];
-    expect(callArgs[2].cookie.sameSite).toBe("lax");
-    expect(callArgs[2].cookie.httpOnly).toBe(true);
-
-    process.env.NODE_ENV = origEnv;
+    // Cookie config is handled centrally via nuxt.config, not per-call
+    expect(callArgs).toHaveLength(2);
   });
 });
 

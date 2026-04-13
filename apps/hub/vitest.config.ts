@@ -18,6 +18,9 @@ export default defineConfig({
     include: ["**/*.spec.ts", "**/*.test.ts"],
     exclude: ["**/node_modules/**", "**/.nuxt/**", "**/.output/**", "**/dist/**", "tests/**"]
   },
+  esbuild: {
+    tsconfigRaw: '{}'
+  },
   resolve: {
     alias: {
       h3: resolveH3()
