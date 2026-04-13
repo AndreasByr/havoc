@@ -94,9 +94,8 @@ export default defineEventHandler(async (event) => {
   const code = typeof query.code === "string" ? query.code : null;
   const state = typeof query.state === "string" ? query.state : null;
   const isDev = import.meta.dev || process.env.NODE_ENV === "development";
-  const secureCookie = process.env.NUXT_SESSION_COOKIE_SECURE
-    ? process.env.NUXT_SESSION_COOKIE_SECURE !== "false"
-    : (process.env.NUXT_PUBLIC_HUB_URL || "").startsWith("https://");
+  const sessionCookieConfig = (config as { session?: { cookie?: { secure?: boolean } } }).session?.cookie;
+  const secureCookie = sessionCookieConfig?.secure ?? true;
   const devBypassEnabled = isDev && config.authDevBypass === true;
   const superadminDiscordId = typeof config.superadminDiscordId === "string" ? config.superadminDiscordId : "";
 

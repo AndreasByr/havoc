@@ -5,8 +5,6 @@ import { getCommunityRoleName, getUserRoles } from "./community";
 import { getDb } from "./db";
 import { loadModerationRights, defaultModerationRights } from "./moderation-rights";
 
-const sessionMaxAgeSeconds = 60 * 60 * 24 * 7;
-
 export async function getSessionUserById(userId: string): Promise<AppSessionUser | null> {
   const db = getDb();
   const rows = await db.select().from(users).where(eq(users.id, userId)).limit(1);
@@ -48,26 +46,7 @@ export async function replaceAuthSession(
     sessionData.csrfToken = existingSession.csrfToken;
   }
 
-  const secureCookie = process.env.NUXT_SESSION_COOKIE_SECURE
-    ? process.env.NUXT_SESSION_COOKIE_SECURE !== "false"
-    : (process.env.NUXT_PUBLIC_HUB_URL || "").startsWith("https://");
-  const cookieDomain = process.env.NUXT_SESSION_COOKIE_DOMAIN || undefined;
-
-  await replaceUserSession(
-    event,
-    sessionData,
-    {
-      maxAge: sessionMaxAgeSeconds,
-      cookie: {
-        maxAge: sessionMaxAgeSeconds,
-        sameSite: "lax",
-        secure: secureCookie,
-        httpOnly: true,
-        path: "/",
-        domain: cookieDomain
-      }
-    }
-  );
+  await replaceUserSession(event, sessionData);
 }
 
 export async function replaceAuthSessionForUserId(

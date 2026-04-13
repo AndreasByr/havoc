@@ -1,3 +1,10 @@
+const hubUrl = process.env.NUXT_PUBLIC_HUB_URL || "";
+const hubHostname = (() => {
+  try { return hubUrl ? new URL(hubUrl).hostname : ""; }
+  catch { return ""; }
+})();
+const needsTunnelHmr = hubUrl.startsWith("https://") && hubHostname && hubHostname !== "localhost";
+
 export default defineNuxtConfig({
   app: {
     head: {
@@ -33,6 +40,7 @@ export default defineNuxtConfig({
         secure: process.env.NUXT_SESSION_COOKIE_SECURE
           ? process.env.NUXT_SESSION_COOKIE_SECURE !== "false"
           : (process.env.NUXT_PUBLIC_HUB_URL || "").startsWith("https://"),
+        domain: undefined as string | undefined,
       },
     },
     discordClientId: process.env.NUXT_OAUTH_DISCORD_CLIENT_ID,
@@ -82,13 +90,13 @@ export default defineNuxtConfig({
   },
   vite: {
     server: {
-      allowedHosts: ["guildora-hub.myweby.org"],
-      ...(process.env.NUXT_PUBLIC_HUB_URL?.includes("myweby.org")
+      ...(hubHostname ? { allowedHosts: [hubHostname] } : {}),
+      ...(needsTunnelHmr
         ? {
             hmr: {
               clientPort: 443,
               protocol: "wss",
-              host: "guildora-hub.myweby.org"
+              host: hubHostname
             }
           }
         : {})
