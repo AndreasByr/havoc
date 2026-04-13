@@ -265,6 +265,14 @@ export function startInternalSyncServer(client: Client, commands: Collection<str
     const requestStart = Date.now();
 
     try {
+      // Health check endpoint
+      if (method === "GET" && pathname === "/internal/health") {
+        const isReady = client.isReady();
+        res.writeHead(isReady ? 200 : 503, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: isReady, status: isReady ? "connected" : "not_ready", uptime: process.uptime() }));
+        return;
+      }
+
       if (method === "POST" && pathname === "/internal/sync-user") {
         const bodyRaw = await readBody(req);
         let body: SyncPayload = {};
