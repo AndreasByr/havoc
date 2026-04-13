@@ -78,6 +78,233 @@ const saveCommunitySettings = async () => {
   }
 };
 
+// ─── Platform Connections ───────────────────────────────────────────────
+
+type PlatformConnection = {
+  id: string;
+  platform: "discord" | "matrix";
+  enabled: boolean;
+  botInternalUrl: string | null;
+  status: "connected" | "disconnected" | "error";
+  statusMessage: string | null;
+  lastHealthCheck: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+const { data: platformsData, refresh: refreshPlatforms } = await useFetch<{ platforms: PlatformConnection[] }>(
+  "/api/admin/platforms",
+  { key: "admin-platforms" }
+);
+
+const connectedPlatforms = computed(() => platformsData.value?.platforms ?? []);
+
+const showPlatformEditDialog = ref(false);
+const editingPlatform = ref<PlatformConnection | null>(null);
+const platformEditPending = ref(false);
+const platformEditError = ref("");
+const platformEditSuccess = ref("");
+
+// Discord edit fields
+const pEditDiscordBotToken = ref("");
+const pEditDiscordClientId = ref("");
+const pEditDiscordClientSecret = ref("");
+const pEditDiscordGuildId = ref("");
+const pEditDiscordBotUrl = ref("");
+const pEditDiscordBotInternalToken = ref("");
+
+// Matrix edit fields
+const pEditMatrixHomeserverUrl = ref("");
+const pEditMatrixAccessToken = ref("");
+const pEditMatrixSpaceId = ref("");
+const pEditMatrixBotUrl = ref("");
+const pEditMatrixBotInternalToken = ref("");
+
+const platformTestPending = ref<string | null>(null);
+const platformTestResult = ref<{ id: string; ok: boolean; message?: string } | null>(null);
+
+const platformLabel = (platform: string) => platform === "discord" ? "Discord" : "Matrix";
+
+const statusColor = (status: string) => {
+  if (status === "connected") return "text-success";
+  if (status === "error") return "text-error";
+  return "text-warning";
+};
+
+const openPlatformEdit = (connection: PlatformConnection) => {
+  platformEditError.value = "";
+  platformEditSuccess.value = "";
+  editingPlatform.value = connection;
+  if (connection.platform === "discord") {
+    pEditDiscordBotToken.value = "";
+    pEditDiscordClientId.value = "";
+    pEditDiscordClientSecret.value = "";
+    pEditDiscordGuildId.value = "";
+    pEditDiscordBotUrl.value = connection.botInternalUrl ?? "";
+    pEditDiscordBotInternalToken.value = "";
+  } else {
+    pEditMatrixHomeserverUrl.value = "";
+    pEditMatrixAccessToken.value = "";
+    pEditMatrixSpaceId.value = "";
+    pEditMatrixBotUrl.value = connection.botInternalUrl ?? "";
+    pEditMatrixBotInternalToken.value = "";
+  }
+  showPlatformEditDialog.value = true;
+};
+
+const submitPlatformEdit = async () => {
+  if (!editingPlatform.value) return;
+  platformEditPending.value = true;
+  platformEditError.value = "";
+
+  try {
+    const body: Record<string, unknown> = {};
+
+    if (editingPlatform.value.platform === "discord") {
+      if (pEditDiscordBotToken.value || pEditDiscordClientId.value || pEditDiscordClientSecret.value || pEditDiscordGuildId.value) {
+        body.credentials = {
+          botToken: pEditDiscordBotToken.value,
+          clientId: pEditDiscordClientId.value,
+          clientSecret: pEditDiscordClientSecret.value,
+          guildId: pEditDiscordGuildId.value
+        };
+      }
+      if (pEditDiscordBotUrl.value !== (editingPlatform.value.botInternalUrl ?? "")) {
+        body.botInternalUrl = pEditDiscordBotUrl.value || null;
+      }
+      if (pEditDiscordBotInternalToken.value) {
+        body.botInternalToken = pEditDiscordBotInternalToken.value;
+      }
+    } else {
+      if (pEditMatrixHomeserverUrl.value || pEditMatrixAccessToken.value || pEditMatrixSpaceId.value) {
+        body.credentials = {
+          homeserverUrl: pEditMatrixHomeserverUrl.value,
+          accessToken: pEditMatrixAccessToken.value,
+          spaceId: pEditMatrixSpaceId.value
+        };
+      }
+      if (pEditMatrixBotUrl.value !== (editingPlatform.value.botInternalUrl ?? "")) {
+        body.botInternalUrl = pEditMatrixBotUrl.value || null;
+      }
+      if (pEditMatrixBotInternalToken.value) {
+        body.botInternalToken = pEditMatrixBotInternalToken.value;
+      }
+    }
+
+    if (Object.keys(body).length === 0) {
+      showPlatformEditDialog.value = false;
+      return;
+    }
+
+    await $fetch(`/api/admin/platforms/${editingPlatform.value.id}`, { method: "PUT", body });
+    showPlatformEditDialog.value = false;
+    editingPlatform.value = null;
+    platformEditSuccess.value = t("settings.platforms.editSuccess");
+    await refreshPlatforms();
+  } catch (error: unknown) {
+    const fetchError = error as { data?: { statusMessage?: string }; message?: string };
+    platformEditError.value = fetchError?.data?.statusMessage || fetchError?.message || t("settings.platforms.editError");
+  } finally {
+    platformEditPending.value = false;
+  }
+};
+
+const testPlatformConnection = async (connection: PlatformConnection) => {
+  platformTestPending.value = connection.id;
+  platformTestResult.value = null;
+  try {
+    const result = await $fetch<{ ok: boolean; status: string; message?: string }>(
+      `/api/admin/platforms/${connection.id}/test`,
+      { method: "POST" }
+    );
+    platformTestResult.value = { id: connection.id, ok: result.ok, message: result.message };
+    await refreshPlatforms();
+  } catch {
+    platformTestResult.value = { id: connection.id, ok: false, message: "Request failed." };
+  } finally {
+    platformTestPending.value = null;
+  }
+};
+
+// ─── Add Platform ─────────────────────────────────────────────────────
+
+const discordConnection = computed(() => connectedPlatforms.value.find((p) => p.platform === "discord"));
+const matrixConnection = computed(() => connectedPlatforms.value.find((p) => p.platform === "matrix"));
+
+const showPlatformAddDialog = ref(false);
+const addPlatformType = ref<"discord" | "matrix">("discord");
+const platformAddPending = ref(false);
+const platformAddError = ref("");
+
+// Add form fields
+const pAddDiscordBotToken = ref("");
+const pAddDiscordClientId = ref("");
+const pAddDiscordClientSecret = ref("");
+const pAddDiscordGuildId = ref("");
+const pAddDiscordBotUrl = ref("");
+const pAddDiscordBotInternalToken = ref("");
+const pAddMatrixHomeserverUrl = ref("");
+const pAddMatrixAccessToken = ref("");
+const pAddMatrixSpaceId = ref("");
+const pAddMatrixBotUrl = ref("");
+const pAddMatrixBotInternalToken = ref("");
+
+const openPlatformAdd = (platform: "discord" | "matrix") => {
+  platformAddError.value = "";
+  platformEditSuccess.value = "";
+  addPlatformType.value = platform;
+  pAddDiscordBotToken.value = "";
+  pAddDiscordClientId.value = "";
+  pAddDiscordClientSecret.value = "";
+  pAddDiscordGuildId.value = "";
+  pAddDiscordBotUrl.value = "";
+  pAddDiscordBotInternalToken.value = "";
+  pAddMatrixHomeserverUrl.value = "";
+  pAddMatrixAccessToken.value = "";
+  pAddMatrixSpaceId.value = "";
+  pAddMatrixBotUrl.value = "";
+  pAddMatrixBotInternalToken.value = "";
+  showPlatformAddDialog.value = true;
+};
+
+const submitPlatformAdd = async () => {
+  platformAddPending.value = true;
+  platformAddError.value = "";
+
+  try {
+    const body: Record<string, unknown> = { platform: addPlatformType.value };
+
+    if (addPlatformType.value === "discord") {
+      body.credentials = {
+        botToken: pAddDiscordBotToken.value,
+        clientId: pAddDiscordClientId.value,
+        clientSecret: pAddDiscordClientSecret.value,
+        guildId: pAddDiscordGuildId.value
+      };
+      body.botInternalUrl = pAddDiscordBotUrl.value || undefined;
+      body.botInternalToken = pAddDiscordBotInternalToken.value || undefined;
+    } else {
+      body.credentials = {
+        homeserverUrl: pAddMatrixHomeserverUrl.value,
+        accessToken: pAddMatrixAccessToken.value,
+        spaceId: pAddMatrixSpaceId.value
+      };
+      body.botInternalUrl = pAddMatrixBotUrl.value || undefined;
+      body.botInternalToken = pAddMatrixBotInternalToken.value || undefined;
+    }
+
+    await $fetch("/api/admin/platforms", { method: "POST", body });
+    showPlatformAddDialog.value = false;
+    platformEditSuccess.value = t("settings.platforms.addSuccess");
+    await refreshPlatforms();
+  } catch (error: unknown) {
+    const fetchError = error as { data?: { statusMessage?: string }; message?: string };
+    platformAddError.value = fetchError?.data?.statusMessage || fetchError?.message || t("settings.platforms.editError");
+  } finally {
+    platformAddPending.value = false;
+  }
+};
+
 // ─── Display Name Template ──────────────────────────────────────────────
 
 const templateFields = ref<DisplayNameField[]>([]);
@@ -170,7 +397,7 @@ const saveDisplayNameTemplate = async () => {
 
 // ─── Discord Roles ──────────────────────────────────────────────────────
 
-const { data: discordRolesData, pending: discordRolesPending, error: discordRolesError, refresh: refreshDiscordRoles } = await useFetch<AdminDiscordRolesResponse>("/api/admin/discord-roles");
+const { data: discordRolesData, pending: discordRolesPending, error: discordRolesError, refresh: refreshDiscordRoles } = useFetch<AdminDiscordRolesResponse>("/api/admin/discord-roles");
 
 const selectedRoleIds = ref<string[]>([]);
 const rolesSavePending = ref(false);
@@ -241,7 +468,7 @@ const saveSelectableRoles = async () => {
 type ChannelItem = { id: string; name: string; type: string; parentId: string | null };
 
 const { data: roleGroupsData, refresh: refreshRoleGroups } = await useFetch<{ groups: RoleGroup[] }>("/api/admin/role-groups");
-const { data: channelsData } = await useFetch<{ channels: ChannelItem[] }>("/api/admin/discord-channels");
+const { data: channelsData, error: channelsError, refresh: refreshChannels } = useFetch<{ channels: ChannelItem[] }>("/api/admin/discord-channels");
 
 const textChannels = computed(() => (channelsData.value?.channels || []).filter((c) => c.type === "text"));
 
@@ -490,6 +717,184 @@ async function removeEmbed(group: RoleGroup) {
       </div>
     </div>
 
+    <!-- Platform Connections -->
+    <div class="mt-8 pt-6 border-t border-line">
+      <h2 class="text-xl font-bold mb-2">{{ $t("settings.platforms.title") }}</h2>
+      <p class="text-sm opacity-70 mb-4">{{ $t("settings.platforms.description") }}</p>
+    </div>
+
+    <div class="space-y-4">
+      <div
+        v-for="connection in connectedPlatforms"
+        :key="connection.id"
+        class="rounded-2xl bg-base-200 p-5 shadow-md space-y-3"
+      >
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <Icon :name="connection.platform === 'discord' ? 'simple-icons:discord' : 'simple-icons:matrix'" class="text-2xl" />
+            <div>
+              <h3 class="font-semibold text-lg">{{ platformLabel(connection.platform) }}</h3>
+              <span :class="statusColor(connection.status)" class="text-sm flex items-center gap-1">
+                {{ connection.status === "connected" ? "●" : connection.status === "error" ? "✕" : "○" }}
+                {{ connection.status }}
+                <span v-if="connection.statusMessage" class="opacity-60">— {{ connection.statusMessage }}</span>
+              </span>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <UiButton size="sm" variant="ghost" @click="openPlatformEdit(connection)">
+              {{ $t("settings.platforms.edit") }}
+            </UiButton>
+            <UiButton
+              size="sm"
+              variant="ghost"
+              :disabled="platformTestPending === connection.id"
+              @click="testPlatformConnection(connection)"
+            >
+              {{ $t("settings.platforms.testConnection") }}
+            </UiButton>
+          </div>
+        </div>
+
+        <div
+          v-if="platformTestResult?.id === connection.id"
+          :class="platformTestResult.ok ? 'bg-success/10 text-success' : 'bg-error/10 text-error'"
+          class="text-sm rounded-xl px-4 py-2"
+        >
+          {{ platformTestResult.ok ? $t("settings.platforms.testSuccess") : platformTestResult.message }}
+        </div>
+
+        <ClientOnly>
+          <div class="text-xs opacity-40">
+            {{ $t("settings.platforms.connectedSince") }}: {{ new Date(connection.createdAt).toLocaleDateString() }}
+            <span v-if="connection.lastHealthCheck">
+              · {{ $t("settings.platforms.lastCheck") }}: {{ new Date(connection.lastHealthCheck).toLocaleString() }}
+            </span>
+          </div>
+        </ClientOnly>
+      </div>
+
+      <div v-if="connectedPlatforms.length === 0" class="rounded-2xl bg-base-200 p-6 shadow-md">
+        <p class="text-sm opacity-60">{{ $t("settings.platforms.noPlatforms") }}</p>
+      </div>
+
+      <!-- Add Platform Buttons -->
+      <div v-if="!discordConnection || !matrixConnection" class="flex gap-3">
+        <UiButton
+          v-if="!discordConnection"
+          variant="outline"
+          @click="openPlatformAdd('discord')"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z" />
+          </svg>
+          {{ $t("settings.platforms.addDiscord") }}
+        </UiButton>
+        <UiButton
+          v-if="!matrixConnection"
+          variant="outline"
+          @click="openPlatformAdd('matrix')"
+        >
+          <Icon name="simple-icons:matrix" class="mr-2 h-4 w-4" />
+          {{ $t("settings.platforms.addMatrix") }}
+        </UiButton>
+      </div>
+
+      <div v-if="platformEditSuccess" class="alert alert-success">{{ platformEditSuccess }}</div>
+    </div>
+
+    <!-- Platform Edit Dialog -->
+    <Teleport to="body">
+      <div v-if="showPlatformEditDialog && editingPlatform" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click.self="showPlatformEditDialog = false">
+        <div class="bg-base-100 rounded-2xl p-6 w-full max-w-lg space-y-5 shadow-xl max-h-[90vh] overflow-y-auto">
+          <UiModalTitle :title="$t('settings.platforms.editTitle', { platform: platformLabel(editingPlatform.platform) })" @close="showPlatformEditDialog = false" />
+
+          <div class="rounded-xl bg-info/10 px-4 py-3 text-sm text-info">
+            {{ $t("settings.platforms.editHint") }}
+          </div>
+
+          <!-- Discord Edit -->
+          <template v-if="editingPlatform.platform === 'discord'">
+            <UiInput v-model="pEditDiscordClientId" :label="$t('settings.platforms.discord.clientId')" :placeholder="$t('settings.platforms.editPlaceholder')" />
+            <UiInput v-model="pEditDiscordClientSecret" :label="$t('settings.platforms.discord.clientSecret')" type="password" :placeholder="$t('settings.platforms.editPlaceholder')" />
+            <UiInput v-model="pEditDiscordBotToken" :label="$t('settings.platforms.discord.botToken')" type="password" :placeholder="$t('settings.platforms.editPlaceholder')" />
+            <UiInput v-model="pEditDiscordGuildId" :label="$t('settings.platforms.discord.guildId')" :placeholder="$t('settings.platforms.editPlaceholder')" />
+            <div class="border-t border-base-content/10 pt-4 space-y-4">
+              <UiInput v-model="pEditDiscordBotUrl" :label="$t('settings.platforms.botUrl')" placeholder="http://bot:3050" />
+              <UiInput v-model="pEditDiscordBotInternalToken" :label="$t('settings.platforms.botToken')" type="password" :placeholder="$t('settings.platforms.editPlaceholder')" />
+            </div>
+          </template>
+
+          <!-- Matrix Edit -->
+          <template v-if="editingPlatform.platform === 'matrix'">
+            <UiInput v-model="pEditMatrixHomeserverUrl" :label="$t('settings.platforms.matrix.homeserverUrl')" :placeholder="$t('settings.platforms.editPlaceholder')" />
+            <UiInput v-model="pEditMatrixAccessToken" :label="$t('settings.platforms.matrix.accessToken')" type="password" :placeholder="$t('settings.platforms.editPlaceholder')" />
+            <UiInput v-model="pEditMatrixSpaceId" :label="$t('settings.platforms.matrix.spaceId')" :placeholder="$t('settings.platforms.editPlaceholder')" />
+            <div class="border-t border-base-content/10 pt-4 space-y-4">
+              <UiInput v-model="pEditMatrixBotUrl" :label="$t('settings.platforms.botUrl')" />
+              <UiInput v-model="pEditMatrixBotInternalToken" :label="$t('settings.platforms.botToken')" type="password" :placeholder="$t('settings.platforms.editPlaceholder')" />
+            </div>
+          </template>
+
+          <div v-if="platformEditError" class="bg-error/10 text-error text-sm rounded-xl px-4 py-2">
+            {{ platformEditError }}
+          </div>
+
+          <div class="flex gap-3 justify-end">
+            <UiButton variant="ghost" @click="showPlatformEditDialog = false">{{ $t("common.cancel") }}</UiButton>
+            <UiButton :disabled="platformEditPending" @click="submitPlatformEdit">
+              {{ platformEditPending ? $t("common.loading") : $t("common.save") }}
+            </UiButton>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- Add Platform Dialog -->
+    <Teleport to="body">
+      <div v-if="showPlatformAddDialog" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click.self="showPlatformAddDialog = false">
+        <div class="bg-base-100 rounded-2xl p-6 w-full max-w-lg space-y-5 shadow-xl max-h-[90vh] overflow-y-auto">
+          <UiModalTitle :title="addPlatformType === 'discord' ? $t('settings.platforms.setupDiscord') : $t('settings.platforms.setupMatrix')" @close="showPlatformAddDialog = false" />
+
+          <!-- Discord Add -->
+          <template v-if="addPlatformType === 'discord'">
+            <UiInput v-model="pAddDiscordClientId" :label="$t('settings.platforms.discord.clientId')" />
+            <UiInput v-model="pAddDiscordClientSecret" :label="$t('settings.platforms.discord.clientSecret')" type="password" />
+            <UiInput v-model="pAddDiscordBotToken" :label="$t('settings.platforms.discord.botToken')" type="password" />
+            <UiInput v-model="pAddDiscordGuildId" :label="$t('settings.platforms.discord.guildId')" />
+            <div class="border-t border-base-content/10 pt-4 space-y-4">
+              <p class="text-xs font-medium opacity-50">{{ $t("setup.platform.botConnectionOptional") }}</p>
+              <UiInput v-model="pAddDiscordBotUrl" :label="$t('settings.platforms.botUrl')" placeholder="http://bot:3050" />
+              <UiInput v-model="pAddDiscordBotInternalToken" :label="$t('settings.platforms.botToken')" type="password" />
+            </div>
+          </template>
+
+          <!-- Matrix Add -->
+          <template v-if="addPlatformType === 'matrix'">
+            <UiInput v-model="pAddMatrixHomeserverUrl" :label="$t('settings.platforms.matrix.homeserverUrl')" placeholder="https://matrix.example.org" />
+            <UiInput v-model="pAddMatrixAccessToken" :label="$t('settings.platforms.matrix.accessToken')" type="password" />
+            <UiInput v-model="pAddMatrixSpaceId" :label="$t('settings.platforms.matrix.spaceId')" placeholder="!abc:matrix.example.org" />
+            <div class="border-t border-base-content/10 pt-4 space-y-4">
+              <p class="text-xs font-medium opacity-50">{{ $t("setup.platform.botConnectionOptional") }}</p>
+              <UiInput v-model="pAddMatrixBotUrl" :label="$t('settings.platforms.botUrl')" />
+              <UiInput v-model="pAddMatrixBotInternalToken" :label="$t('settings.platforms.botToken')" type="password" />
+            </div>
+          </template>
+
+          <div v-if="platformAddError" class="bg-error/10 text-error text-sm rounded-xl px-4 py-2">
+            {{ platformAddError }}
+          </div>
+
+          <div class="flex gap-3 justify-end">
+            <UiButton variant="ghost" @click="showPlatformAddDialog = false">{{ $t("common.cancel") }}</UiButton>
+            <UiButton :disabled="platformAddPending" @click="submitPlatformAdd">
+              {{ platformAddPending ? $t("common.loading") : $t("settings.platforms.connect") }}
+            </UiButton>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
     <!-- Display Name Template -->
     <div class="mt-8 pt-6 border-t border-line">
       <h2 class="text-xl font-bold mb-2">{{ $t("settings.displayNameTemplate.title") }}</h2>
@@ -590,7 +995,10 @@ async function removeEmbed(group: RoleGroup) {
         </div>
 
         <div v-if="discordRolesPending" class="loading loading-spinner loading-md" />
-        <div v-else-if="discordRolesError" class="alert alert-error">{{ $t("adminDiscordRoles.loadError") }}</div>
+        <div v-else-if="discordRolesError" class="alert alert-warning">
+          <span>{{ $t("adminDiscordRoles.botUnavailable") }}</span>
+          <UiButton variant="secondary" size="sm" @click="refreshDiscordRoles">{{ $t("common.retry") }}</UiButton>
+        </div>
         <div v-else-if="selectableRoles.length === 0" class="alert alert-info">{{ $t("adminDiscordRoles.empty") }}</div>
         <div v-else class="flex flex-wrap gap-2">
           <button
@@ -750,7 +1158,11 @@ async function removeEmbed(group: RoleGroup) {
 
           <!-- Channel for Embed -->
           <div v-if="editingGroup">
-            <UiSelect v-model="groupChannelIdInput" :label="$t('roleGroups.selectChannel')">
+            <div v-if="channelsError" class="alert alert-warning text-sm">
+              <span>{{ $t("roleGroups.channelsLoadError") }}</span>
+              <UiButton variant="secondary" size="sm" @click="refreshChannels">{{ $t("common.retry") }}</UiButton>
+            </div>
+            <UiSelect v-else v-model="groupChannelIdInput" :label="$t('roleGroups.selectChannel')">
               <option value="">—</option>
               <option v-for="ch in textChannels" :key="ch.id" :value="ch.id">
                 #{{ ch.name }}
