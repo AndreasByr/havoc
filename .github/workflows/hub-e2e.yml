@@ -1,0 +1,103 @@
+name: Hub E2E Tests
+
+on:
+  pull_request:
+    branches: [main, master]
+    paths:
+      - 'apps/hub/**'
+      - 'packages/motion/**'
+      - '.github/workflows/hub-e2e.yml'
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  hub-e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: guildora_test
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U test -d guildora_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://test:test@localhost:5432/guildora_test
+      DATABASE_SSL: "false"
+      NUXT_SESSION_PASSWORD: test-session-password-minimum-32-characters-long
+      NUXT_OAUTH_GITHUB_CLIENT_ID: test-client-id
+      NUXT_OAUTH_GITHUB_CLIENT_SECRET: test-client-secret
+      NUXT_PUBLIC_GITHUB_URL: https://github.com/guildora
+      NUXT_PUBLIC_HUB_URL: http://localhost:3003
+      NUXT_AUTH_DEV_BYPASS: "true"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Get Playwright version
+        id: pw-version
+        run: echo "version=$(node -e "console.log(require('./apps/hub/node_modules/@playwright/test/package.json').version)")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw-version.outputs.version }}
+
+      - name: Install Playwright Chromium
+        if: steps.pw-cache.outputs.cache-hit != 'true'
+        run: cd apps/hub && npx playwright install chromium
+
+      - name: Install Playwright system deps
+        if: steps.pw-cache.outputs.cache-hit == 'true'
+        run: cd apps/hub && npx playwright install-deps chromium
+
+      - name: Run database migrations
+        run: pnpm --filter @guildora/shared db:migrate
+
+      - name: Build Hub
+        run: pnpm turbo run build --filter=@guildora/hub
+        env:
+          NODE_ENV: production
+
+      - name: Start server
+        run: |
+          cd apps/hub && NODE_ENV=development NUXT_AUTH_DEV_BYPASS=true \
+            NITRO_PORT=3003 node .output/server/index.mjs &
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:3003 > /dev/null 2>&1 && break || sleep 1
+          done
+
+      - name: Run Playwright tests
+        run: cd apps/hub && npx playwright test
+        env:
+          PLAYWRIGHT_BASE_URL: http://localhost:3003
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hub-e2e-results
+          path: |
+            apps/hub/playwright-report/
+            apps/hub/test-results/
+          retention-days: 7

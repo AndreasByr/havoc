@@ -28,6 +28,10 @@
     "test": {
       "dependsOn": ["^build"]
     },
+    "test:e2e": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
     "test:integration": {
       "dependsOn": ["^build"],
       "env": ["DATABASE_URL"]
