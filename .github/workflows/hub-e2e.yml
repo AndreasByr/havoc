@@ -63,9 +63,9 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.pw-version.outputs.version }}
 
-      - name: Install Playwright Chromium
+      - name: Install Playwright Chromium + system deps
         if: steps.pw-cache.outputs.cache-hit != 'true'
-        run: cd apps/hub && npx playwright install chromium
+        run: cd apps/hub && npx playwright install --with-deps chromium
 
       - name: Install Playwright system deps
         if: steps.pw-cache.outputs.cache-hit == 'true'
@@ -84,8 +84,10 @@ jobs:
           cd apps/hub && NODE_ENV=development NUXT_AUTH_DEV_BYPASS=true \
             NITRO_PORT=3003 node .output/server/index.mjs &
           for i in $(seq 1 30); do
-            curl -sf http://localhost:3003 > /dev/null 2>&1 && break || sleep 1
+            curl -sf http://localhost:3003 > /dev/null 2>&1 && exit 0 || sleep 1
           done
+          echo "::error::Server failed to start within 30 seconds"
+          exit 1
 
       - name: Run Playwright tests
         run: cd apps/hub && npx playwright test
