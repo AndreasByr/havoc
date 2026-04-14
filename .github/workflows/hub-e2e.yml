@@ -1,4 +1,4 @@
-name: Hub E2E Tests
+name: Hub E2E
 
 on:
   pull_request:
