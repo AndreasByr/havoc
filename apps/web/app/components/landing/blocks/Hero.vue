@@ -1,10 +1,20 @@
 <script setup lang="ts">
+import { useGsapTextReveal, useGsapReveal } from '@guildora/motion'
+
 const props = defineProps<{
   content: Record<string, unknown>;
   config: Record<string, unknown>;
 }>();
 
 const variant = computed(() => String(props.config.layoutVariant || "default"));
+
+const headingRef = ref<HTMLElement | null>(null)
+const subheadingRef = ref<HTMLElement | null>(null)
+const ctaRef = ref<HTMLElement | null>(null)
+
+useGsapTextReveal(headingRef, { splitBy: 'lines', stagger: 0.08, duration: 0.9 })
+useGsapReveal(subheadingRef, { delay: 300, duration: 0.7 })
+useGsapReveal(ctaRef, { delay: 500, duration: 0.7 })
 </script>
 
 <template>
@@ -24,6 +34,7 @@ const variant = computed(() => String(props.config.layoutVariant || "default"));
         {{ content.eyebrowLabel }}
       </span>
       <h1
+        ref="headingRef"
         :class="[
           'landing-section-title mb-5 font-extrabold leading-[1.08] tracking-tight',
           variant === 'esports' ? 'text-4xl md:text-6xl lg:text-7xl uppercase' :
@@ -32,8 +43,8 @@ const variant = computed(() => String(props.config.layoutVariant || "default"));
       >
         {{ content.heading }}
       </h1>
-      <p class="landing-text-muted mb-10 max-w-2xl text-base leading-relaxed md:text-lg">{{ content.subheading }}</p>
-      <div class="flex flex-wrap items-center justify-center gap-4">
+      <p ref="subheadingRef" class="landing-text-muted mb-10 max-w-2xl text-base leading-relaxed md:text-lg">{{ content.subheading }}</p>
+      <div ref="ctaRef" class="flex flex-wrap items-center justify-center gap-4">
         <a
           v-if="content.ctaLink"
           :href="safeLandingHref(content.ctaLink)"

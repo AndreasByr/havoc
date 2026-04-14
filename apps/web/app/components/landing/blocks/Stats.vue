@@ -1,16 +1,24 @@
 <script setup lang="ts">
+import { useGsapReveal, useGsapStagger } from '@guildora/motion'
+
 const props = defineProps<{
   content: Record<string, unknown>;
   config: Record<string, unknown>;
 }>();
+
+const titleRef = ref<HTMLElement | null>(null)
+const gridRef = ref<HTMLElement | null>(null)
+
+useGsapReveal(titleRef)
+useGsapStagger(gridRef, '.landing-card')
 </script>
 
 <template>
   <section class="py-16 md:py-24">
-    <h2 v-if="content.sectionTitle" class="landing-section-title mb-10 text-center text-3xl font-bold tracking-tight md:text-4xl">
+    <h2 v-if="content.sectionTitle" ref="titleRef" class="landing-section-title mb-10 text-center text-3xl font-bold tracking-tight md:text-4xl">
       {{ content.sectionTitle }}
     </h2>
-    <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4 md:gap-6">
+    <div ref="gridRef" class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4 md:gap-6">
       <div
         v-for="(stat, i) in (content.stats as Array<Record<string, unknown>>)"
         :key="i"

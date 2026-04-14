@@ -1,8 +1,13 @@
 <script setup lang="ts">
+import { useGsapReveal } from '@guildora/motion'
+
 const props = defineProps<{
   content: Record<string, unknown>;
   config: Record<string, unknown>;
 }>();
+
+const sectionRef = ref<HTMLElement | null>(null)
+useGsapReveal(sectionRef)
 
 const runtimeConfig = useRuntimeConfig();
 const hubUrl = computed(() => String(runtimeConfig.public.hubUrl || "http://localhost:3003").replace(/\/+$/, ""));
@@ -19,7 +24,7 @@ const buttonText = computed(() => String(props.content.buttonText || props.conte
 </script>
 
 <template>
-  <section class="landing-card rounded-2xl px-6 py-14 text-center shadow-md md:px-8 md:py-20">
+  <section ref="sectionRef" class="landing-card rounded-2xl px-6 py-14 text-center shadow-md md:px-8 md:py-20">
     <h2 class="landing-section-title mx-auto max-w-2xl text-3xl font-bold tracking-tight md:text-4xl">
       {{ content.heading }}
     </h2>

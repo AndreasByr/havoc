@@ -1,13 +1,20 @@
 <script setup lang="ts">
+import { useGsapStagger } from '@guildora/motion'
+
 defineProps<{
   content: Record<string, unknown>;
   config: Record<string, unknown>;
 }>();
+
+const gridRef = ref<HTMLElement | null>(null)
+
+useGsapStagger(gridRef, '.landing-card')
 </script>
 
 <template>
   <section class="py-16 md:py-24">
     <div
+      ref="gridRef"
       :class="[
         'grid gap-4',
         (content.images as Array<unknown>)?.length === 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-2 lg:grid-cols-3'

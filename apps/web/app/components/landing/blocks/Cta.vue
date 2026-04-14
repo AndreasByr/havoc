@@ -1,14 +1,20 @@
 <script setup lang="ts">
+import { useGsapReveal } from '@guildora/motion'
+
 const props = defineProps<{
   content: Record<string, unknown>;
   config: Record<string, unknown>;
 }>();
 
 const variant = computed(() => String(props.config.variant || props.content.variant || "default"));
+
+const sectionRef = ref<HTMLElement | null>(null)
+useGsapReveal(sectionRef)
 </script>
 
 <template>
   <section
+    ref="sectionRef"
     :class="[
       'rounded-2xl px-6 py-14 text-center md:px-8 md:py-20',
       variant === 'accent'

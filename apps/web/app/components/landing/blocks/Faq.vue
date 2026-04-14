@@ -1,12 +1,17 @@
 <script setup lang="ts">
+import { useGsapReveal } from '@guildora/motion'
+
 defineProps<{
   content: Record<string, unknown>;
   config: Record<string, unknown>;
 }>();
+
+const sectionRef = ref<HTMLElement | null>(null)
+useGsapReveal(sectionRef)
 </script>
 
 <template>
-  <section class="mx-auto max-w-3xl py-16 md:py-24">
+  <section ref="sectionRef" class="mx-auto max-w-3xl py-16 md:py-24">
     <h2 v-if="content.sectionTitle" class="landing-section-title mb-10 text-center text-3xl font-bold tracking-tight md:text-4xl">
       {{ content.sectionTitle }}
     </h2>

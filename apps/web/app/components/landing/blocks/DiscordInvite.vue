@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useGsapReveal } from '@guildora/motion'
+
 const props = defineProps<{
   content: Record<string, unknown>;
   config: Record<string, unknown>;
@@ -7,10 +9,13 @@ const props = defineProps<{
 const { data: branding } = await useCommunityName();
 const communityName = computed(() => branding.value?.communityName ?? undefined);
 const inviteCode = computed(() => String(branding.value?.discordInviteCode || props.content.inviteCode || ""));
+
+const sectionRef = ref<HTMLElement | null>(null)
+useGsapReveal(sectionRef)
 </script>
 
 <template>
-  <div v-if="inviteCode" class="py-16 md:py-24">
+  <div v-if="inviteCode" ref="sectionRef" class="py-16 md:py-24">
     <DiscordInviteWidget
       :invite-code="inviteCode"
       :fallback-heading="String(content.heading || '')"

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import gsap from 'gsap'
+import { useReducedMotion } from '@guildora/motion'
 import {
   CategoryScale,
   Chart as ChartJS,
@@ -213,11 +215,30 @@ const { state: tourState, start: startTour, next: nextTour, skip: skipTour } = u
   user.value?.id as string | undefined
 );
 
+const statsGridRef = ref<HTMLElement | null>(null)
+
 onMounted(() => {
   if (setupJustCompleted.value) {
     setupJustCompleted.value = false;
     // Small delay to let the sidebar render
     setTimeout(() => startTour(), 800);
+  }
+
+  // Stagger dashboard stat cards on first load
+  if (statsGridRef.value) {
+    const { prefersReduced } = useReducedMotion()
+    if (!prefersReduced.value) {
+      const cards = statsGridRef.value.querySelectorAll('.stat')
+      if (cards.length) {
+        gsap.from(cards, {
+          opacity: 0,
+          y: 12,
+          duration: 0.3,
+          stagger: 0.04,
+          ease: 'power3.out',
+        })
+      }
+    }
   }
 });
 </script>
@@ -260,7 +281,7 @@ onMounted(() => {
             </div>
           </div>
 
-          <div class="grid grid-cols-3 gap-3">
+          <div ref="statsGridRef" class="grid grid-cols-3 gap-3">
             <div class="stat rounded-xl bg-base-100 p-4 shadow-sm">
               <div class="stat-title text-xs md:text-sm">{{ $t("dashboard.totalHours") }}</div>
               <div class="stat-value text-lg text-primary md:text-xl">{{ data?.voiceSummary?.totalHours || 0 }}</div>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useGsapStagger } from '@guildora/motion'
 import MemberExpandableCard from "~/components/members/MemberExpandableCard.vue";
 import MemberDetailsModal from "~/components/members/MemberDetailsModal.vue";
 import BulkRoleChangeDialog from "~/components/members/BulkRoleChangeDialog.vue";
@@ -156,6 +157,9 @@ watch([page, search, communityRole, sort], () => {
   selectedIds.value = new Set();
 });
 
+const membersGridRef = ref<HTMLElement | null>(null)
+useGsapStagger(membersGridRef, ':scope > *', {}, 'hub')
+
 const selectedMemberId = ref<string | null>(null);
 const selectedProfile = ref<MemberProfileResponse | null>(null);
 const selectedProfilePending = ref(false);
@@ -271,7 +275,7 @@ watch(
         <span class="opacity-60">{{ $t("bulk.selectedCount", { count: selectedIds.size, total: data?.items?.length || 0 }) }}</span>
       </div>
 
-      <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+      <div ref="membersGridRef" class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
         <MemberExpandableCard
           v-for="item in data?.items || []"
           :key="item.id"
