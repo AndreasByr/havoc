@@ -25,6 +25,7 @@ vi.mock("../../utils/db", () => ({
 
 vi.mock("../../utils/platformConfig", () => ({
   invalidatePlatformCache: vi.fn(),
+  getPlatformConnection: vi.fn().mockResolvedValue(null),
 }));
 
 vi.mock("@guildora/shared", () => ({
