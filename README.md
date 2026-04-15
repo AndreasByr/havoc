@@ -1,5 +1,8 @@
 # Guildora
 
+![CI](https://github.com/guildora/guildora/actions/workflows/ci.yml/badge.svg)
+![Test](https://github.com/guildora/guildora/actions/workflows/test.yml/badge.svg)
+
 > **Status: Experimental / Active Development**
 > Guildora is under active development. APIs, database schema, and features may change without notice. Not recommended for production use yet.
 
@@ -35,6 +38,48 @@ Useful workspace scripts:
 - `pnpm db:migrate`
 - `pnpm db:seed`
 - `pnpm bot:deploy-commands`
+
+## Contributing
+
+`main` is protected — no direct pushes. Development flow:
+
+```
+Feature branch → PR on dev → PR on main → Tag → Release
+```
+
+To create a release:
+
+```bash
+git tag v0.1.0-alpha && git push --tags
+```
+
+The release pipeline validates, publishes a GitHub Pre-release, and pushes Docker images automatically.
+
+## Local Testing
+
+### Hub unit tests (also run in CI)
+
+```bash
+pnpm --filter @guildora/hub test
+```
+
+### Landing integration tests (local only)
+
+Requires web app on port 3000 and CMS on port 3002.
+
+```bash
+pnpm dev
+node --test apps/web/tests/landing.test.mjs
+```
+
+### Hub E2E tests (local only)
+
+Requires all services running, PostgreSQL, and Discord credentials.
+
+```bash
+pnpm dev
+# see apps/hub/e2e/README.md for setup
+```
 
 ## Documentation
 
