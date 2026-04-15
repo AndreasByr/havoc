@@ -28,8 +28,6 @@ const templateDefaults: Record<string, TemplateMotionDefaults> = {
 }
 
 export function useTemplateMotion() {
-  const route = useRoute()
-
   const templateId = computed(() => {
     // Read from the page's data-template attribute or route query
     if (import.meta.server) return 'default'
