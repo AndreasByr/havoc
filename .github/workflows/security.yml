@@ -1,4 +1,4 @@
-name: Daily Security Check
+name: Security Scan
 
 on:
   schedule:
