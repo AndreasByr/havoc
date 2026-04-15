@@ -8,8 +8,7 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "jsx": "preserve",
-    "types": ["node"]
+    "jsx": "preserve"
   },
   "include": ["src"]
 }
