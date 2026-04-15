@@ -13,8 +13,7 @@
  */
 
 import { readFileSync, rmSync, existsSync, accessSync, constants } from 'node:fs';
-import { resolve, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
 
 const nuxtDir = resolve('.nuxt');
 const candidates = [

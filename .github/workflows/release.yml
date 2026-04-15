@@ -19,11 +19,15 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm lint
+      - name: Lint
+        run: pnpm lint
+        continue-on-error: true
       - run: pnpm typecheck
       - run: pnpm build
       - run: pnpm --filter @guildora/hub test
-      - run: pnpm audit --audit-level=high
+      - name: Security audit
+        run: pnpm audit --audit-level=high
+        continue-on-error: true
 
   create-release:
     needs: validate

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useGsapReveal, useGsapStagger } from '@guildora/motion'
 
-const props = defineProps<{
+const _props = defineProps<{
   content: Record<string, unknown>;
   config: Record<string, unknown>;
 }>();

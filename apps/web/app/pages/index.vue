@@ -118,6 +118,7 @@ onMounted(() => {
       />
     </template>
 
+    <!-- eslint-disable-next-line vue/no-v-text-v-html-on-component -->
     <component v-if="activeCustomCss" :is="'style'" v-text="activeCustomCss" />
   </div>
 </template>
