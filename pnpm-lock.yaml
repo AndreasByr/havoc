@@ -186,6 +186,9 @@ importers:
       vitest:
         specifier: ^2.1.0
         version: 2.1.9(@types/node@22.19.15)(jsdom@29.0.1)(sass@1.77.4)(terser@5.46.0)
+      vue-tsc:
+        specifier: ^2.2.8
+        version: 2.2.12(typescript@5.9.3)
 
   apps/matrix-bot:
     dependencies:
@@ -257,6 +260,9 @@ importers:
       typescript:
         specifier: ^5.8.2
         version: 5.9.3
+      vue-tsc:
+        specifier: ^2.2.8
+        version: 2.2.12(typescript@5.9.3)
 
   packages/app-sdk:
     devDependencies:
