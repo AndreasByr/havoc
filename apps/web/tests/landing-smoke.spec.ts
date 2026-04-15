@@ -12,7 +12,7 @@
  *   PLAYWRIGHT_BROWSERS_PATH=../../.pw-browsers npx playwright test --config playwright.config.ts
  */
 
-import { test, expect } from "playwright/test";
+import { test, expect } from "@playwright/test";
 
 const MOCK_HUB = "http://localhost:3003";
 

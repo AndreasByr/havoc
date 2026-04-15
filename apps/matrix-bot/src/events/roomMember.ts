@@ -33,14 +33,8 @@ export function registerRoomMemberHandler(client: MatrixClient, spaceId: string 
       }
     }
 
-    // TODO: Emit onMemberJoin app hook with payload:
-    // {
-    //   guildId: spaceId,
-    //   memberId: event.state_key,
-    //   username: content.displayname || event.state_key,
-    //   joinedAt: new Date().toISOString(),
-    //   platform: "matrix"
-    // }
+    // PLANNED: Emit onMemberJoin app hook after Hub provides a webhook intake API for Matrix events.
+    // Dependency: shared signed webhook contract + Hub endpoint for matrix.member.joined payloads.
     console.log(`[matrix-bot] Member joined ${roomId}: ${event.state_key as string}`);
   });
 }

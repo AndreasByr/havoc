@@ -1,4 +1,4 @@
-import { defineConfig } from "playwright/test";
+import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./tests",
@@ -9,10 +9,18 @@ export default defineConfig({
     baseURL: "http://localhost:3000",
     headless: true,
   },
-  webServer: {
-    command: "npx nuxt dev -p 3000 --dotenv ../../.env",
-    port: 3000,
-    timeout: 60_000,
-    reuseExistingServer: true,
-  },
+  webServer: [
+    {
+      command: "node tests/mock-hub.mjs",
+      port: 3003,
+      timeout: 30_000,
+      reuseExistingServer: true,
+    },
+    {
+      command: "npx nuxt dev -p 3000 --dotenv ../../.env",
+      port: 3000,
+      timeout: 60_000,
+      reuseExistingServer: true,
+    },
+  ],
 });

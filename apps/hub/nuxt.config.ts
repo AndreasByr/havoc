@@ -53,6 +53,7 @@ export default defineNuxtConfig({
     authDevBypass: process.env.NUXT_AUTH_DEV_BYPASS === "true",
     mcpInternalToken: process.env.MCP_INTERNAL_TOKEN || "",
     enableSideloading: process.env.NUXT_ENABLE_SIDELOADING === "true",
+    trustProxy: process.env.NUXT_TRUST_PROXY === "true",
     public: {
       isDev: process.env.NODE_ENV === "development",
       authDevBypass: process.env.NODE_ENV === "development" && process.env.NUXT_AUTH_DEV_BYPASS === "true",
