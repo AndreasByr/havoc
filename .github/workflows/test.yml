@@ -29,5 +29,5 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: npx playwright install --with-deps chromium
+      - run: pnpm --filter @guildora/web exec playwright install --with-deps chromium
       - run: pnpm --filter @guildora/web test:smoke
