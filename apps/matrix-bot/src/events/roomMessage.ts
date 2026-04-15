@@ -25,16 +25,8 @@ export function registerRoomMessageHandler(client: MatrixClient, spaceId: string
     const content = event.content as { body?: string; msgtype?: string } | undefined;
     if (!content?.body || content.msgtype !== "m.text") return;
 
-    // TODO: Emit onMessage app hook with payload:
-    // {
-    //   guildId: spaceId,
-    //   channelId: roomId,
-    //   messageId: event.event_id,
-    //   memberId: event.sender,
-    //   content: content.body,
-    //   occurredAt: new Date().toISOString(),
-    //   platform: "matrix"
-    // }
+    // PLANNED: Emit onMessage app hook after Hub provides a webhook intake API for Matrix events.
+    // Dependency: shared signed webhook contract + Hub endpoint for matrix.message.created payloads.
     console.log(`[matrix-bot] Message in ${roomId} from ${event.sender as string}: ${content.body.substring(0, 50)}`);
   });
 }
