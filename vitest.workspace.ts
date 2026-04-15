@@ -5,5 +5,4 @@ export default defineWorkspace([
   "apps/hub/vitest.config.ts",
   "apps/matrix-bot/vitest.config.ts",
   "packages/shared/vitest.config.ts",
-  "packages/motion/vitest.config.ts",
 ]);

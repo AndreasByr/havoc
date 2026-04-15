@@ -12,7 +12,6 @@
     "typecheck": "nuxt typecheck",
     "format": "prettier --write .",
     "test": "vitest run",
-    "test:e2e": "playwright test",
     "test:watch": "vitest"
   },
   "dependencies": {
