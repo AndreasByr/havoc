@@ -32,7 +32,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Jedes Finding ist mit Severity (Critical/High/Medium/Low), Datei-Pfad und Fix-Ansatz versehen
   3. Die Findings sind nach Severity sortiert und die Phasen 2–4 lassen sich eindeutig auf Gruppen von Findings abbilden (keine offenen Critical/High-Findings ohne zugeordnete Folge-Phase)
   4. Das Audit nennt explizit, welche bekannten Risiken bewusst NICHT in dieser Milestone gefixt werden (mit Begründung → v2)
-**Plans**: TBD
+**Plans**: 5 plans
+- [ ] 01-01-PLAN.md — Audit-Doc-Skelett + ripgrep-Sanity + scratch-Dir (Wave 1)
+- [ ] 01-02-PLAN.md — 5 ripgrep-Pattern-Scans (P-1..P-5) in scratch/grep-results.md (Wave 2, parallel zu Wave 3)
+- [ ] 01-03-PLAN.md — Kopf-Review mit Andi: 8 Bereiche, 27 Fragen, 3-Bucket-Zuordnung (Wave 3, human-in-loop)
+- [ ] 01-04-PLAN.md — Finding-Consolidation: 15-25 F-Findings + Operational + Deferred in §§4-9 (Wave 4)
+- [ ] 01-05-PLAN.md — Exec-Summary + Traceability + validation.sh + SEC-01 Done-Flip + git-Tag (Wave 5)
 
 ### Phase 2: Apps-Plugin-Sandbox
 **Goal**: Fremd-Code (sideloaded + marketplace Apps) läuft nicht mehr im Haupt-Prozess mit Vollzugriff, sondern in einer echten Sandbox mit harten Ressourcen-Limits. Die kritischste bekannte Lücke ist geschlossen.
@@ -120,7 +125,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Security Audit & Priorisierung | 0/TBD | Not started | - |
+| 1. Security Audit & Priorisierung | 0/5 | Not started | - |
 | 2. Apps-Plugin-Sandbox | 0/TBD | Not started | - |
 | 3. Auth- & Session-Härtung | 0/TBD | Not started | - |
 | 4. Supply-Chain & Secrets | 0/TBD | Not started | - |
