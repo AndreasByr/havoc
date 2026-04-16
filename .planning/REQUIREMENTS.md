@@ -77,27 +77,27 @@ Mapping von Requirements auf Phasen. Wird vom Roadmapper gefüllt.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SEC-01 | — | Pending |
-| SEC-02 | — | Pending |
-| SEC-03 | — | Pending |
-| SEC-04 | — | Pending |
-| SEC-05 | — | Pending |
-| SEC-06 | — | Pending |
-| SEC-07 | — | Pending |
-| CI-01 | — | Pending |
-| CI-02 | — | Pending |
-| QA-01 | — | Pending |
-| BOT-01 | — | Pending |
-| BOT-02 | — | Pending |
-| PREV-01 | — | Pending |
-| PREV-02 | — | Pending |
-| DOC-01 | — | Pending |
+| SEC-01 | Phase 1 | Pending |
+| SEC-02 | Phase 2 | Pending |
+| SEC-03 | Phase 3 | Pending |
+| SEC-04 | Phase 3 | Pending |
+| SEC-05 | Phase 3 | Pending |
+| SEC-06 | Phase 4 | Pending |
+| SEC-07 | Phase 4 | Pending |
+| CI-01 | Phase 5 | Pending |
+| CI-02 | Phase 5 | Pending |
+| QA-01 | Phase 5 | Pending |
+| BOT-01 | Phase 6 | Pending |
+| BOT-02 | Phase 6 | Pending |
+| PREV-01 | Phase 7 | Pending |
+| PREV-02 | Phase 7 | Pending |
+| DOC-01 | Phase 8 | Pending |
 
 **Coverage:**
 - v1 requirements: 15 total
-- Mapped to phases: 0 (before roadmap)
-- Unmapped: 15 ⚠️ (wird vom Roadmapper aufgelöst)
+- Mapped to phases: 15 (100%)
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-04-16*
-*Last updated: 2026-04-16 after initial definition*
+*Last updated: 2026-04-16 after roadmap mapping*
