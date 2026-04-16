@@ -910,27 +910,27 @@ Tagged claims im Text:
 - [VERIFIED via Grep] P-4 Delta-Count (161 vs 140) per Grep-Scan bestätigt.
 - [ASSUMED] A1, A4, A5, A6 — brauchen User-Confirmation vor Wave-Start.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Kopf-Review als Appendix oder in Findings aufgelöst?**
    - Was wir wissen: D-13 verlangt strukturierte Abfrage; D-16 begrenzt das Audit-Volumen.
-   - Was unklar ist: Ob die Roh-Antworten als "Appendix A: Kopf-Review-Protokoll" im Audit-Doc landen, oder ob nur die daraus destillierten Findings sichtbar werden.
-   - Recommendation: **In Wave 3 als eigene `.planning/phases/01-.../kopf-review.md` protokollieren; in Wave 4 zu Findings verdichten; am Ende des Phases-Lebens entweder (a) als Appendix in den Audit einfliessen lassen oder (b) als separates Kurzdoc im Phase-Dir belassen.** Planner entscheidet in Wave 5.
+   - Was unklar war: Ob die Roh-Antworten als "Appendix A: Kopf-Review-Protokoll" im Audit-Doc landen, oder ob nur die daraus destillierten Findings sichtbar werden.
+   - RESOLVED: **In Wave 3 als eigene `.planning/phases/01-.../kopf-review.md` protokollieren; in Wave 4 zu Findings verdichten; am Ende des Phases-Lebens entweder (a) als Appendix in den Audit einfliessen lassen oder (b) als separates Kurzdoc im Phase-Dir belassen.** Planner entscheidet in Wave 5. (Umgesetzt in 01-03-PLAN.md und 01-05-PLAN.md.)
 
 2. **SEC-01 Self-Reference in der Traceability-Tabelle?**
    - Was wir wissen: SEC-01 ist "Audit existiert" — das Audit-Dokument selbst ist der Deliverable.
-   - Was unklar ist: Ob SEC-01 in der Traceability-Tabelle als "covered by: the document itself" steht oder weggelassen wird.
-   - Recommendation: **Weglassen.** Die Tabelle dient der Gegenprobe SEC-02…SEC-07; SEC-01 ist das Meta-Requirement der Phase.
+   - Was unklar war: Ob SEC-01 in der Traceability-Tabelle als "covered by: the document itself" steht oder weggelassen wird.
+   - RESOLVED: **Weglassen.** Die Tabelle dient der Gegenprobe SEC-02…SEC-07; SEC-01 ist das Meta-Requirement der Phase. (Umgesetzt in 01-01-PLAN.md Wave-1-Skeleton.)
 
 3. **Was tun, wenn ein Kopf-Review-Finding eine SEC-Req-Lücke aufdeckt?**
    - Was wir wissen: Phase 1 ist Audit, nicht Requirements-Änderung.
-   - Was unklar ist: Wenn Andi in Bereich H.3 ein Finding aufdeckt, das in keinem SEC-Req landet (z.B. "Secret-Rotation-Policy fehlt") — wird das ein neues SEC-08, oder landet es im Deferred?
-   - Recommendation: **Deferred mit Phase `v2`** und expliziter Notiz "wurde in Phase 1 entdeckt, fällt nicht in SEC-02…SEC-07, wird in nächster Milestone als neues Requirement aufgenommen." Requirements-Änderung läuft durch `/gsd-transition`, nicht durch Phase 1.
+   - Was unklar war: Wenn Andi in Bereich H.3 ein Finding aufdeckt, das in keinem SEC-Req landet (z.B. "Secret-Rotation-Policy fehlt") — wird das ein neues SEC-08, oder landet es im Deferred?
+   - RESOLVED: **Deferred mit Phase `v2`** und expliziter Notiz "wurde in Phase 1 entdeckt, fällt nicht in SEC-02…SEC-07, wird in nächster Milestone als neues Requirement aufgenommen." Requirements-Änderung läuft durch `/gsd-transition`, nicht durch Phase 1. (Umgesetzt in 01-03-PLAN.md H.3-Special-Note und 01-04-PLAN.md Deferred-Handling.)
 
 4. **Ist `apps/hub/media/uploads/` git-status-Drift (ungetracked) ein Finding?**
    - Was wir wissen: `git status` zeigt `apps/hub/media/`, `apps/hub/playwright-report/`, `apps/hub/server/routes/uploads/`, `apps/matrix-bot/matrix-bot-state.json` als untracked.
-   - Was unklar ist: Ob diese Drift-Einträge zu einem Phase-1-Finding führen sollen oder ob sie zu Phase-6/BOT-02 (matrix-bot-state) gehören.
-   - Recommendation: **Nicht Phase-1-Finding.** `matrix-bot-state.json` ist expliziter BOT-02-Scope; `media/uploads/` ist Runtime-Output (Upload-Ziel), `playwright-report/` ist CI/Test-Output, `server/routes/uploads/` ist evtl. neu entstanden (prüfen). Wenn davon wirklich ein Security-Issue ausgeht (z.B. server/routes/uploads lädt ungeprüft was hoch), landet es als eigenes Finding CF-18 — sonst nicht.
+   - Was unklar war: Ob diese Drift-Einträge zu einem Phase-1-Finding führen sollen oder ob sie zu Phase-6/BOT-02 (matrix-bot-state) gehören.
+   - RESOLVED: **Nicht Phase-1-Finding.** `matrix-bot-state.json` ist expliziter BOT-02-Scope; `media/uploads/` ist Runtime-Output (Upload-Ziel), `playwright-report/` ist CI/Test-Output, `server/routes/uploads/` ist evtl. neu entstanden (prüfen). Wenn davon wirklich ein Security-Issue ausgeht (z.B. server/routes/uploads lädt ungeprüft was hoch), landet es als eigenes Finding CF-18 — sonst nicht. (Scope-Grenze in 01-02-PLAN.md acceptance criteria verankert.)
 
 ## Risks to Phase Planning
 
