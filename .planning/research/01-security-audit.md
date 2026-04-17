@@ -233,10 +233,118 @@ Severity bewertet **Restrisiko** nach heutiger Mitigation (`Current Mitigation`-
 >
 > Jedes Item: `### [OP-NN] <Titel>` + Bullets mit `- **Class:** Operational` (NICHT `Severity:`).
 
+### [OP-01] In-Memory Rate-Limit (nicht horizontal skalierbar)
+
+- **Class:** Operational
+- **Area:** Rate-Limiting
+- **Datei-Pfad(e):** `platform/apps/hub/server/utils/rate-limit.ts:13` (Map-Store), `platform/apps/hub/server/middleware/01-rate-limit.ts:7`
+- **Current Mitigation:** Solo-Deployment (ein Hub-Prozess) — Rate-Limit ist effektiv, weil es pro Prozess korrekt zählt. Kein horizontales Scaling heute.
+- **Fix-Ansatz:** Redis-backed Store einführen (bereits als v2 `INFRA-01` geplant).
+- **Target Phase:** v2 (INFRA-01)
+
+### [OP-02] App-Registry Thundering Herd auf DB
+
+- **Class:** Operational
+- **Area:** Apps-Plugin
+- **Datei-Pfad(e):** `platform/apps/hub/server/plugins/app-loader.ts:67`
+- **Current Mitigation:** 15-Sekunden-Cache (`cacheUntil`) reduziert DB-Load; Cache-Invalidierung wirkt aber nicht als Mutex — parallele Requests triggern gleichzeitig DB-Read nach Cache-Expiry.
+- **Fix-Ansatz:** Mutex/Lock für Cache-Refresh einführen ODER Event-basierte Invalidierung bei App-Install/Update.
+- **Target Phase:** v2 (INFRA-02)
+
+### [OP-03] DB-Migration-Fixups laufen bei jedem Start
+
+- **Class:** Operational
+- **Area:** DB-Migrations
+- **Datei-Pfad(e):** `platform/packages/shared/src/db/run-migrations.ts:101-444` (~200 Zeilen idempotente SQL-Fixups)
+- **Current Mitigation:** `IF NOT EXISTS`-Guards machen Fixups idempotent — keine falschen Schema-Änderungen, nur Startup-Latenz.
+- **Fix-Ansatz:** Fixups in Drizzle-Baseline-Migration konsolidieren; Inline-SQL-Block aus `run-migrations.ts` entfernen.
+- **Target Phase:** v2 (DEBT-01)
+
+### [OP-04] Session-Error-Handling verschleiert Auth-Fehler als Anonymous
+
+- **Class:** Operational
+- **Area:** Auth/Session
+- **Datei-Pfad(e):** `platform/apps/hub/server/middleware/03-session.ts`
+- **Current Mitigation:** `getUserSession`-Fehler werden gecatcht und `userSession = null` gesetzt. Sensible Routen gehen über `requireSession()`/`requireAdminSession()` und failen korrekt mit 401/403 — kein Security-Exploit-Pfad.
+- **Fix-Ansatz:** Session-Parse-Fehler als Observability-Event loggen statt stillem Null-Fallback; Locale-Context-Endpoint (`internal/locale-context.get.ts`) explizit als graceful-null-tolerant dokumentieren.
+- **Target Phase:** v2 (OBS-01)
+
 ## 9. Deferred / Accepted Risks
 
 > Findings, die bewusst NICHT in dieser Milestone adressiert werden — mit Begründung.
 > Jedes Item: `### [D-NN] <Titel>` + Pflicht-Bullet `- **Warum nicht jetzt:** <Begründung>`.
+
+### [D-01] Fehlender `pnpm audit`-Lauf
+
+- **Severity:** Low (Defense-in-Depth, Prozess-Lücke)
+- **Area:** Supply-Chain
+- **Datei-Pfad(e):** — (Prozess-Lücke, nicht Code)
+- **Current Mitigation:** 12 `pnpm.overrides` in `platform/package.json` decken bekannte CVE-Patches ab (serialize-javascript, undici, node-forge, h3, srvx, postcss, ...).
+- **Warum nicht jetzt:** `pnpm audit`-Durchlauf + Finding-Auflösung ist als eigener Phase-4-Arbeitsblock (SEC-07) geplant. Ein Audit-Lauf hier würde Arbeit duplizieren und Phase 1 aus dem Volumen-Budget (15–25 Findings) schieben.
+- **Target Phase:** Phase 4 (SEC-07)
+
+### [D-02] ESLint-Security-Plugins nicht installiert
+
+- **Severity:** Low (Defense-in-Depth)
+- **Area:** CI / Tooling
+- **Datei-Pfad(e):** — (Prozess-Lücke)
+- **Current Mitigation:** Manuelle grep/ripgrep-Scans (Phase 1 Wave 2) decken die wichtigsten Pattern-Klassen ab. ESLint ist aktuell non-blocking.
+- **Warum nicht jetzt:** ESLint-Integration ist CI-Arbeit; CI wird erst in Phase 5 stabilisiert (Lint ist heute non-blocking). Plugin-Install ohne stabile Lint-Pipeline bringt keinen operativen Nutzen.
+- **Target Phase:** Phase 5 (CI-02)
+
+### [D-03] Kein CVSS-Scoring / externes Review-Format
+
+- **Severity:** Low (Prozess)
+- **Area:** Audit-Prozess
+- **Datei-Pfad(e):** — (Meta-Entscheidung)
+- **Current Mitigation:** Qualitative C/H/M/L-Kriterien (D-05) sind für Solo-Projekt ausreichend und intern konsistent.
+- **Warum nicht jetzt:** Solo-Projekt ohne externen Reviewer — CVSS-Vektoren wären Overhead ohne Mehrwert. Wenn ein externer Reviewer einbezogen wird, lässt sich C/H/M/L nachträglich auf CVSS hochziehen.
+- **Target Phase:** out-of-scope (v2 falls externes Review kommt)
+
+### [D-04] Runtime-/Infra-Audit (Docker-Daemon, Cloudflare-Tunnel, Host-OS)
+
+- **Severity:** Medium (vermutet, nicht geprüft)
+- **Area:** Infrastruktur
+- **Datei-Pfad(e):** — (Out-of-platform)
+- **Current Mitigation:** Container läuft als unprivileged User; Cloudflare-Tunnel-Policy wird von Cloudflare gemanaged.
+- **Warum nicht jetzt:** Out-of-Scope dieses Stabilisierungs-Projekts (D-14). Könnte eigene "Ops-Hardening"-Milestone werden wenn Platform-Sicherheits-Baseline steht.
+- **Target Phase:** out-of-scope
+
+### [D-05] Audit für marketplace/guildai/voice-rooms/app-template
+
+- **Severity:** unbekannt (nicht geprüft)
+- **Area:** Fremd-Repos
+- **Datei-Pfad(e):** — (Out-of-platform)
+- **Current Mitigation:** Getrennte Repos mit getrennten Lifecycles; marketplace hat eigene Auth und eigenen Review-Prozess.
+- **Warum nicht jetzt:** D-14 — dieses Projekt ist `platform/`-only. Wenn dort Audits nötig werden, bekommen sie ihre eigene Milestone.
+- **Target Phase:** out-of-scope
+
+### [D-06] KV-Scope-Leakage via `createAppDb` (App-Layer-Scoping ohne DB-Isolation)
+
+- **Severity:** Low (systemisch, bedingt durch unsandboxed Execution)
+- **Area:** Apps-Plugin
+- **Datei-Pfad(e):** `platform/apps/bot/src/utils/app-hooks.ts:141` (createAppDb(row.appId))
+- **Current Mitigation:** `createAppDb(appId)` ist korrekt scoped: get/set/delete/list filtern immer auf `appKv.appId = appId`; PRIMARY KEY (appId, key) verhindert Kollisionen. Kein API-Pfad um fremde appId direkt anzugeben.
+- **Warum nicht jetzt:** Das systemische Risiko (App-Layer-Scoping ≠ harte DB-Isolation, kein RLS) ist Bestandteil von F-01 (unsandboxed Execution) — kein eigenständiges Finding. Adressierung durch Sandbox-Isolation in Phase 2 löst das systemische Problem.
+- **Target Phase:** Phase 2 (SEC-02, als Sub-Concern von F-01)
+
+### [D-07] `installed_apps.code_bundle` Manipulations-Pfad via Admin-Update-Flow
+
+- **Severity:** Medium (abgedeckt durch F-01)
+- **Area:** Apps-Plugin
+- **Datei-Pfad(e):** `platform/apps/hub/server/api/admin/apps/[appId]/update.post.ts`
+- **Current Mitigation:** Admin/Superadmin-gated; kein direkter API-Endpoint der `codeBundle` im Body akzeptiert; Code-Neubau nur über vorhandene `repositoryUrl`/lokalen Pfad.
+- **Warum nicht jetzt:** "Admin compromise → code_bundle manipulation → RCE" ist ein Sub-Szenario von F-01 (unsandboxed Execution). Kein eigenständiger Angriffspfad jenseits von F-01. Adressierung durch Sandbox-Isolation in Phase 2.
+- **Target Phase:** Phase 2 (SEC-02, als Sub-Concern von F-01)
+
+### [D-08] PII in Logs (Console.log / logger.info mit E-Mail/discordId)
+
+- **Severity:** Low (ungeklärt — kein aktiver Scan durchgeführt)
+- **Area:** Logging
+- **Datei-Pfad(e):** — (Prozess-Lücke; Scan ausstehend)
+- **Current Mitigation:** Andi hat nie aktiv auf PII-Logging geachtet; kein konkreter Fund im Kopf.
+- **Warum nicht jetzt:** Wave-4-offener Scan-Task (G.2 aus Kopf-Review) — kein Kopf-Review-Finding, daher in Deferred. Separater grep-Scan auf PII-Pattern in console.log/logger.info wird als eigenständiger Task in Phase 4 aufgenommen.
+- **Target Phase:** Phase 4 (SEC-07 adjacent)
 
 ---
 
