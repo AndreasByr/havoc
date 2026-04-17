@@ -66,7 +66,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. Session-Cookies haben HttpOnly, Secure (in Production), und SameSite gesetzt; Session-ID rotiert nach erfolgreichem Login; CSRF-Schutz (`02-csrf-check.ts`) deckt alle zustandsändernden Routen ab — verifiziert durch einen Review-Abschnitt in `docs/` oder einer `.planning/research/`-Notiz mit Datei-Referenzen
 **Plans**: 4 plans
 - [x] 03-01-PLAN.md — Timing-safe token comparisons: internal-auth.ts (F-03) + matrix-bot (F-04) + tests (Wave 1)
-- [ ] 03-02-PLAN.md — deny-by-default session middleware: 03-session.ts PUBLIC_PATHS + locale-context guard (F-02) + tests (Wave 1)
+- [x] 03-02-PLAN.md — deny-by-default session middleware: 03-session.ts PUBLIC_PATHS + locale-context guard (F-02) + tests (Wave 1)
 - [x] 03-03-PLAN.md — Dev endpoint guards (F-07) + Cookie Secure NODE_ENV fix (F-10) (Wave 2)
 - [x] 03-04-PLAN.md — CSRF comment (F-17) + session-rotation verification test (F-09) (Wave 2)
 
