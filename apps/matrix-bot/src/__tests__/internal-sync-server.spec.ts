@@ -76,6 +76,12 @@ describe("internal sync server", () => {
     expect(res.status).toBe(401);
   });
 
+  it("rejects requests with equal-length wrong auth token (timing-safe, same-length)", async () => {
+    const sameLength = "X".repeat(TEST_TOKEN.length); // same byte length, different value
+    const res = await fetch("/internal/health", { token: sameLength });
+    expect(res.status).toBe(401);
+  });
+
   it("GET /internal/health returns ok", async () => {
     const res = await fetch("/internal/health");
     expect(res.status).toBe(200);

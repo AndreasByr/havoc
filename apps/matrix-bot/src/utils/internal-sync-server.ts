@@ -4,6 +4,7 @@
  * This allows the Hub's platformBridge to route requests to either bot transparently.
  */
 
+import crypto from "node:crypto";
 import http from "node:http";
 import type { MatrixClient } from "matrix-bot-sdk";
 import { getSpaceHierarchy } from "./matrix-helpers.js";
@@ -67,7 +68,11 @@ export function startInternalSyncServer(config: ServerConfig) {
     // Auth check
     if (token && token.length > 0) {
       const authHeader = req.headers.authorization;
-      if (!authHeader || authHeader !== `Bearer ${token}`) {
+      if (
+        !authHeader ||
+        !authHeader.startsWith("Bearer ") ||
+        !timingSafeEqualString(authHeader.slice("Bearer ".length), token)
+      ) {
         res.writeHead(401, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ error: "Unauthorized", errorCode: "UNAUTHORIZED" }));
         return;
@@ -260,6 +265,12 @@ async function handleSyncUser(
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
+
+function timingSafeEqualString(left: string, right: string): boolean {
+  const leftBuffer = Buffer.from(left, "utf8");
+  const rightBuffer = Buffer.from(right, "utf8");
+  return leftBuffer.length === rightBuffer.length && crypto.timingSafeEqual(leftBuffer, rightBuffer);
+}
 
 function parseBody(req: http.IncomingMessage): Promise<unknown> {
   return new Promise((resolve, reject) => {
