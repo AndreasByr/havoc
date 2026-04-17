@@ -64,7 +64,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Eine neue, in diesem Projekt hinzugefügte API-Route ohne expliziten Public-Marker wird von der Session-Middleware geblockt — verifiziert durch einen Integration-Test, der eine Dummy-Route unter `/api/` trifft und 401 erhält, ohne dass die Route selbst `requireSession()` aufruft
   3. Die Menge öffentlicher Routen (`/api/public/*`, `/api/auth/*`, `/api/theme.get`, `/api/setup/*`) ist explizit als Allow-List im Code deklariert und dokumentiert; alles andere ist auth-required by default
   4. Session-Cookies haben HttpOnly, Secure (in Production), und SameSite gesetzt; Session-ID rotiert nach erfolgreichem Login; CSRF-Schutz (`02-csrf-check.ts`) deckt alle zustandsändernden Routen ab — verifiziert durch einen Review-Abschnitt in `docs/` oder einer `.planning/research/`-Notiz mit Datei-Referenzen
-**Plans**: TBD
+**Plans**: 4 plans
+- [ ] 03-01-PLAN.md — Timing-safe token comparisons: internal-auth.ts (F-03) + matrix-bot (F-04) + tests (Wave 1)
+- [ ] 03-02-PLAN.md — deny-by-default session middleware: 03-session.ts PUBLIC_PATHS + locale-context guard (F-02) + tests (Wave 1)
+- [ ] 03-03-PLAN.md — Dev endpoint guards (F-07) + Cookie Secure NODE_ENV fix (F-10) (Wave 2)
+- [ ] 03-04-PLAN.md — CSRF comment (F-17) + session-rotation verification test (F-09) (Wave 2)
 
 ### Phase 4: Supply-Chain & Secrets
 **Goal**: Infrastruktur-Konfiguration und Dependencies haben keine bekannten, unbehandelten Risiken: keine hartkodierten Credentials im Compose-File, kein offener `pnpm audit`, Overrides sind absichtlich.
@@ -131,7 +135,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 |-------|----------------|--------|-----------|
 | 1. Security Audit & Priorisierung | 5/5 | Complete | 2026-04-17 |
 | 2. Apps-Plugin-Sandbox | 0/4 | Not started | - |
-| 3. Auth- & Session-Härtung | 0/TBD | Not started | - |
+| 3. Auth- & Session-Härtung | 0/4 | Not started | - |
 | 4. Supply-Chain & Secrets | 0/TBD | Not started | - |
 | 5. CI-Vertrauen & API-Test-Abdeckung | 0/TBD | Not started | - |
 | 6. Matrix-Bot-Parity | 0/TBD | Not started | - |
@@ -140,4 +144,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 ---
 *Roadmap created: 2026-04-16*
-*Last updated: 2026-04-17 after Phase 2 planning*
+*Last updated: 2026-04-17 after Phase 3 planning*
