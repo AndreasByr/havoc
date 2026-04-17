@@ -2,12 +2,8 @@
 phase: 03-auth-session-haertung
 reviewed: 2026-04-17T00:00:00Z
 depth: standard
-files_reviewed: 17
+files_reviewed: 15
 files_reviewed_list:
-  - apps/hub/server/utils/internal-auth.ts
-  - apps/hub/server/utils/__tests__/internal-auth.spec.ts
-  - apps/matrix-bot/src/utils/internal-sync-server.ts
-  - apps/matrix-bot/src/__tests__/internal-sync-server.spec.ts
   - apps/hub/nuxt.config.ts
   - apps/hub/server/api/dev/restore-user.post.ts
   - apps/hub/server/api/dev/switch-user.post.ts
@@ -21,11 +17,13 @@ files_reviewed_list:
   - apps/hub/server/utils/dev-role-switcher.ts
   - apps/hub/server/utils/__tests__/session-middleware.spec.ts
   - apps/hub/server/utils/__tests__/session-rotation.spec.ts
+  - apps/matrix-bot/src/__tests__/internal-sync-server.spec.ts
+  - apps/matrix-bot/src/utils/internal-sync-server.ts
 findings:
-  critical: 2
+  critical: 0
   warning: 3
-  info: 2
-  total: 7
+  info: 3
+  total: 6
 status: issues_found
 ---
 
@@ -33,171 +31,137 @@ status: issues_found
 
 **Reviewed:** 2026-04-17
 **Depth:** standard
-**Files Reviewed:** 17
+**Files Reviewed:** 15
 **Status:** issues_found
 
 ## Summary
 
-This phase delivers the auth/session hardening work: `crypto.timingSafeEqual` for internal token comparisons on both Hub and Matrix-Bot, a deny-by-default session middleware with an explicit `PUBLIC_PATHS` allow-list, `requireSession()` on the previously-unprotected `locale-context` endpoint, `import.meta.dev` guards on all `/api/dev/` endpoints, a `NODE_ENV`-based cookie `secure` flag, CSRF origin-skip documentation, and structural session-rotation verification tests.
+This review covers the auth/session hardening deliverables: NODE_ENV-based cookie `secure` flag, deny-by-default session middleware with an explicit `PUBLIC_PATHS` allow-list, CSRF middleware with documented SSR-internal origin-skip, `import.meta.dev` compile-time guards on all dev endpoints, dev role switcher with no runtime fallbacks, CSRF-preserving session rotation, and the Matrix bot internal sync server with timing-safe token comparison and fail-loud 503 on empty token.
 
-The implementation is largely solid. The timing-safe comparison logic is correct in both services, the session middleware allow-list covers all currently-known public routes, and the CSRF origin/referer skip is correctly documented. However, two critical gaps were found: the Matrix-Bot auth guard has a bypass path when the token is empty, and the `/api/internal/` prefix in `PUBLIC_PATHS` allows completely unauthenticated access to those endpoints at the session-middleware layer (their per-endpoint `requireInternalToken` guard only triggers if the route handler is reached, but there is nothing stopping an attacker who spoofs that prefix). There are also two warning-level issues in the dev-endpoint hardening.
+The core hardening changes are sound. The 503 MISCONFIGURED path in the Matrix bot correctly addresses the previous CR-01 (empty-token auth bypass). The `import.meta.dev` guard pattern, timing-safe comparison, and session rotation logic are all implemented correctly.
 
----
-
-## Critical Issues
-
-### CR-01: Matrix-Bot auth guard silently disabled when `token` is empty string
-
-**File:** `apps/matrix-bot/src/utils/internal-sync-server.ts:69`
-
-**Issue:** The entire auth block is wrapped in `if (token && token.length > 0)`. When the bot is started with `BOT_INTERNAL_TOKEN=""` (empty string, which is the default fallback in `nuxt.config.ts` — `process.env.BOT_INTERNAL_TOKEN || ""`), the token check is silently skipped and every request is accepted without authentication. This is the exact "silent security fallback" pattern the project's "Fail Loud, Never Fake" constraint prohibits.
-
-The Hub counterpart (`requireInternalToken` in `internal-auth.ts`) correctly throws a `503` when the token is unconfigured. The Matrix-Bot does the opposite: it treats an unconfigured token as "no auth required."
-
-**Fix:**
-```typescript
-// Replace the conditional auth block with fail-loud behavior:
-if (!token || token.length === 0) {
-  // Misconfiguration: token not provided at startup — refuse all requests
-  res.writeHead(503, { "Content-Type": "application/json" });
-  res.end(JSON.stringify({ error: "Server misconfigured: internal token not set", errorCode: "MISCONFIGURED" }));
-  return;
-}
-
-const authHeader = req.headers.authorization;
-if (
-  !authHeader ||
-  !authHeader.startsWith("Bearer ") ||
-  !timingSafeEqualString(authHeader.slice("Bearer ".length), token)
-) {
-  res.writeHead(401, { "Content-Type": "application/json" });
-  res.end(JSON.stringify({ error: "Unauthorized", errorCode: "UNAUTHORIZED" }));
-  return;
-}
-```
-
----
-
-### CR-02: `/api/internal/` in `PUBLIC_PATHS` means the session middleware never enforces auth on those routes
-
-**File:** `apps/hub/server/middleware/03-session.ts:11`
-
-**Issue:** Adding `/api/internal/` to `PUBLIC_PATHS` means `03-session.ts` returns immediately without attaching or validating any session for those routes. The per-endpoint `requireInternalToken()` call in each handler acts as the only gate. This is fine in isolation, but creates a brittle single-layer defence:
-
-1. Any future internal endpoint that forgets to call `requireInternalToken()` is fully public with zero auth (the session middleware will pass it through unconditionally).
-2. The session middleware comment says "MCP internal endpoints (requireInternalToken as their own auth)" — this is an implicit contract that must be enforced manually on each handler, rather than by the middleware itself.
-
-The safer pattern is to keep `/api/internal/` out of `PUBLIC_PATHS` and instead exempt those routes from the *session* check while still letting the middleware run, or to add an explicit `requireInternalToken` assertion in a dedicated internal middleware. The current design is one forgotten `requireInternalToken()` call away from an open endpoint.
-
-**Fix (option A — belt-and-suspenders in middleware):**
-```typescript
-// In 03-session.ts, replace the simple PUBLIC_PATHS pass-through for /api/internal/
-// with a dedicated token check:
-if (event.path.startsWith("/api/internal/")) {
-  // Internal endpoints use bearer-token auth; do NOT require a user session,
-  // but do not pass them through silently either — leave enforcement to each handler.
-  // (The alternative is to call requireInternalToken here directly.)
-  return; // acceptable only if requireInternalToken is guaranteed by convention
-}
-```
-
-**Fix (option B — enforce at middleware layer, removing reliance on per-handler guards):**
-```typescript
-if (event.path.startsWith("/api/internal/")) {
-  const config = useRuntimeConfig(event);
-  const expectedToken = String(config.mcpInternalToken || "").trim();
-  if (!expectedToken) throw createError({ statusCode: 503, statusMessage: "MCP internal token is not configured." });
-  const authHeader = getHeader(event, "authorization") || "";
-  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
-  if (!token || !timingSafeEqualString(token, expectedToken)) {
-    throw createError({ statusCode: 401, statusMessage: "Unauthorized." });
-  }
-  return;
-}
-```
-
-Option B is the stronger fix; option A preserves the status quo but adds a comment that should become a lint rule.
-
----
+Three warnings were found: a CSRF bypass prefix that over-matches future routes with a `/api/auth/discord` prefix; a sort in the dev users listing that will throw a TypeError if any user's `displayName` is null; and an unbounded body accumulation in the Matrix bot's `parseBody` that allows arbitrary memory growth from large POST bodies. Three info items cover dead code and silent error suppression in the Matrix bot route handlers.
 
 ## Warnings
 
-### WR-01: `restore-user.post.ts` — double-invocation pattern in test causes `requireSession` to fire twice if the first throw check fails
+### WR-01: CSRF bypass prefix over-matches `/api/auth/discord*` suffixes
 
-**File:** `apps/hub/server/api/dev/restore-user.post.ts:9` / `apps/hub/server/utils/__tests__/session-middleware.spec.ts`
+**File:** `apps/hub/server/middleware/02-csrf-check.ts:8`
 
-**Issue:** This is a pattern issue in the production code. `restore-user.post.ts` calls `requireSession(event)` after the `import.meta.dev` guard, then calls `assertDevRoleSwitcherAccess(event, session)`. However, `assertDevRoleSwitcherAccess` internally calls `isDevRoleSwitcherEnabled` which checks `import.meta.dev` again (line 17 of `dev-role-switcher.ts`). In production builds both will be `false`, so `assertDevRoleSwitcherAccess` will throw 403, but `requireSession` has already been called and a session parsed. This is benign (the session is discarded) but it means in production a request that reaches this handler will:
+**Issue:** The exemption `path.startsWith("/api/auth/discord")` would silently bypass CSRF validation for any future route whose path begins with `/api/auth/discord` — for example `/api/auth/discord-link`, `/api/auth/discord-connect`, `/api/auth/discord2`. The current Discord OAuth routes use locale-prefixed paths (`/[locale]/auth/discord/callback`) and do not appear to go through `/api/auth/discord` as a prefix, meaning this bypass may already be broader than necessary. Any future developer adding a route like `/api/auth/discord-settings` (POST) would bypass CSRF validation silently.
 
-1. Parse the session (I/O + HMAC verify)
-2. Then throw 403 because `import.meta.dev === false`
-
-The `import.meta.dev` check (step 1 in the handler: line 6) fires before `requireSession`, which does prevent the session parse in the normal path — the handler returns 404 immediately. But the *second* guard inside `assertDevRoleSwitcherAccess` is unreachable because the handler-level guard fires first. This creates dead but confusing double-guard logic.
-
-**Fix:** Either remove the `import.meta.dev` check from `assertDevRoleSwitcherAccess`/`isDevRoleSwitcherEnabled` (relying solely on the handler-level guard) or document that the function-level check is a defence-in-depth backstop for callers who forget the handler guard. The current state is unclear.
-
----
-
-### WR-02: `internal-auth.ts` accepts token via `x-internal-token` header — not documented in Matrix-Bot server
-
-**File:** `apps/hub/server/utils/internal-auth.ts:21`
-
-**Issue:** `requireInternalToken` accepts the token in two ways: `Authorization: Bearer <token>` or `x-internal-token: <token>`. The Matrix-Bot's internal server only accepts `Authorization: Bearer`. The Hub's bot-bridge caller (in `platformBridge.ts` / `botSync.ts`) presumably sends `Authorization: Bearer`. However the `x-internal-token` fallback path has no callers visible in the codebase and is untested with an integration check against an actual caller. This is a widened attack surface without apparent need.
-
-**Fix:** If `x-internal-token` is not used by any caller, remove it. If it is used by the MCP server or another caller, add a test covering that path end-to-end and document why the alternate header name is needed.
-
----
-
-### WR-03: `session-rotation.spec.ts` — structural test does not verify the CSRF token is actually present in the sealed session
-
-**File:** `apps/hub/server/utils/__tests__/session-rotation.spec.ts:147`
-
-**Issue:** The test at line 147 verifies that `replaceUserSession` was called with a `csrfToken` argument. It does this by inspecting `mocks.replaceUserSession.mock.calls[0][1]`. However, `replaceUserSession` is a mock — calling it with `csrfToken` present only proves `replaceAuthSession` assembled the right object to pass to the mock. It does not verify that the sealed cookie payload actually contains the CSRF token (that would require the real `replaceUserSession` implementation). This is the correct approach given the architecture constraints documented in the test, but it means a regression where `csrfToken` is stripped between the `replaceAuthSession` call-site and `replaceUserSession` would not be caught by this test.
-
-Given the constraints this is acceptable, but the test comment should explicitly note this limitation: "this verifies the call-site contract, not the sealing behavior."
-
-**Fix:** Add a one-line comment to the expectation:
+**Fix:** Replace the open `startsWith` with an exact path match or a trailing-slash-anchored prefix:
 ```typescript
-// Verifies call-site assembles csrfToken correctly (sealing behavior is nuxt-auth-utils's contract)
-expect(callArg.csrfToken).toBe("csrf-preserved-token");
+// Replace:
+if (path === "/api/csrf-token" || path.startsWith("/api/auth/discord")) return;
+
+// With:
+if (path === "/api/csrf-token" || path === "/api/auth/discord" || path.startsWith("/api/auth/discord/")) return;
+```
+If there are no current routes at exactly `/api/auth/discord`, the first two alternatives can be collapsed into just the slash-anchored prefix.
+
+---
+
+### WR-02: Sort in dev users listing throws TypeError when `displayName` is null
+
+**File:** `apps/hub/server/api/dev/users.get.ts:29`
+
+**Issue:** `a.profileName.localeCompare(b.profileName)` throws `TypeError: Cannot read properties of null (reading 'localeCompare')` if `user.displayName` is null for any row. The value is mapped directly: `profileName: user.displayName` (line 26), so any DB row with a null `display_name` crashes the entire dev users endpoint. If a partially-created user record exists (e.g., after a failed OAuth flow before `displayName` is written), this endpoint becomes permanently broken until that row is cleaned up.
+
+**Fix:**
+```typescript
+.sort((a, b) => (a.profileName ?? "").localeCompare(b.profileName ?? ""));
+```
+
+---
+
+### WR-03: No body size limit in Matrix bot `parseBody` allows unbounded memory allocation
+
+**File:** `apps/matrix-bot/src/utils/internal-sync-server.ts:283-297`
+
+**Issue:** `parseBody` accumulates all incoming data chunks into an in-memory buffer with no size cap. The `/internal/sync-user` endpoint invokes this for every POST request. An attacker with the internal token (or a misconfigured Hub sending a large payload) can cause the bot process to allocate arbitrarily large buffers before the JSON parse or garbage collection runs. For a bot process that may run for days, this is a memory exhaustion risk.
+
+**Fix:** Add a size guard of approximately 1 MB (sufficient for any legitimate sync payload):
+```typescript
+function parseBody(req: http.IncomingMessage, maxBytes = 1_048_576): Promise<unknown> {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    let totalBytes = 0;
+    req.on("data", (chunk: Buffer) => {
+      totalBytes += chunk.length;
+      if (totalBytes > maxBytes) {
+        reject(new Error("Request body too large"));
+        req.destroy();
+        return;
+      }
+      chunks.push(chunk);
+    });
+    req.on("end", () => {
+      try {
+        const raw = Buffer.concat(chunks).toString("utf-8");
+        resolve(raw ? JSON.parse(raw) : null);
+      } catch (err) {
+        reject(err);
+      }
+    });
+    req.on("error", reject);
+  });
+}
 ```
 
 ---
 
 ## Info
 
-### IN-01: `internal-auth.spec.ts` — try/catch pattern for status code assertion is fragile
+### IN-01: Dead `if (userId)` guard in `locale-context.get.ts` — always true after `requireSession`
 
-**File:** `apps/hub/server/utils/__tests__/internal-auth.spec.ts:31-35` (and repeated at lines 45-50, 91-95, 108-111)
+**File:** `apps/hub/server/api/internal/locale-context.get.ts:20`
 
-**Issue:** The test pattern `expect(() => fn()).toThrow(); try { fn(); } catch (e) { expect(e.statusCode).toBe(...); }` calls the function twice. If the first call has a side effect (state mutation, session write) it would happen twice. More importantly, the double-call pattern could mask timing issues. The idiomatic Vitest approach is `await expect(async () => fn()).rejects.toMatchObject({ statusCode: 503 })` (or the synchronous `.toThrowError` with a matcher).
+**Issue:** `requireSession(event)` on line 13 throws 401 if the user is unauthenticated, so `session.user.id` is always a non-empty string by line 17. The `if (userId)` guard on line 20 is dead code — the false branch is unreachable. The returned `hasSession` field is always `true`.
 
-**Fix:**
+**Fix:** Remove the redundant guard and simplify:
 ```typescript
-// Replace the expect+try/catch pairs with:
-expect(() => requireInternalToken(event)).toThrow(
-  expect.objectContaining({ statusCode: 503 })
+const [profile] = await db
+  .select({ localePreference: profiles.localePreference, customFields: profiles.customFields })
+  .from(profiles)
+  .where(eq(profiles.userId, userId))
+  .limit(1);
+
+const localePreference = normalizeUserLocalePreference(
+  profile?.localePreference ?? readLegacyLocalePreferenceFromCustomFields(profile?.customFields ?? {}),
+  null
 );
-// or for synchronous throws:
-let caught: any;
-try { requireInternalToken(event); } catch (e) { caught = e; }
-expect(caught?.statusCode).toBe(503);
+```
+If `hasSession` in the return value is used by callers, it can remain as `hasSession: true` (a constant). If it is not used, remove it from the response shape.
+
+---
+
+### IN-02: Silent `catch` blocks in Matrix bot handlers mask real errors
+
+**File:** `apps/matrix-bot/src/utils/internal-sync-server.ts:176,202,268`
+
+**Issue:** Three bare `catch {}` blocks in `handleGetRoles`, `handleGetChannels`, and `handleSyncUser` discard all error information and return an empty/partial success response. A Matrix SDK network timeout, server-side permission error, or API shape change is indistinguishable from a valid empty state (e.g., no rooms in the space). This makes silent regressions very hard to detect.
+
+**Fix:** Log the error before returning the fallback in each catch:
+```typescript
+} catch (err) {
+  console.error("[matrix-bot] handleGetRoles failed:", err instanceof Error ? err.message : err);
+  return { roles: [] };
+}
 ```
 
 ---
 
-### IN-02: `dev-endpoints.spec.ts` path resolution assumes specific directory depth
+### IN-03: Empty try block in `handleSyncUser` is dead code
 
-**File:** `apps/hub/server/api/dev/__tests__/dev-endpoints.spec.ts:30`
+**File:** `apps/matrix-bot/src/utils/internal-sync-server.ts:245-251`
 
-**Issue:** `const HUB_ROOT = resolve(__dirname, "../../../..");` hard-codes four directory levels up from the test file to reach the hub root. If the test file is moved or the directory structure changes, this silently resolves to the wrong directory and the `readFileSync` calls succeed (returning a different file) rather than failing loudly.
+**Issue:** Lines 245-251 contain a try block with no executable statements inside. The comment explains that Matrix does not support setting other users' display names, so the intent is to do nothing — but the try/catch structure implies something was planned and never implemented. The outer `if (payload.profileName && spaceId)` branch evaluates, enters the try, executes nothing, and exits. This is dead code that creates misleading structure.
 
-**Fix:** Use a workspace-relative path or add a sanity assertion:
+**Fix:** Remove the dead block and replace with a comment at the call site:
 ```typescript
-const HUB_ROOT = resolve(__dirname, "../../../..");
-// Sanity check that we resolved to the right root
-if (!existsSync(resolve(HUB_ROOT, "nuxt.config.ts"))) {
-  throw new Error(`HUB_ROOT resolved incorrectly: ${HUB_ROOT}`);
-}
+// Display name sync is not supported for Matrix (cannot set other users' display names).
+// Power level sync below handles permission role enforcement.
 ```
 
 ---
