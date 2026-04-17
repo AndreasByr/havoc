@@ -116,10 +116,15 @@ describe("GET /api/apps/test-app/data — route.timeout", () => {
     const event = createMockEvent({ method: "GET", path: "/api/apps/test-app/data" });
     event.context.installedApps = [makeMockApp(slowHandlerCode)];
 
+    // Start the handler and attach a no-op catch to prevent unhandled rejection
+    // warnings when the timer fires before our assertion catches it.
     const resultPromise = handler(event);
+    resultPromise.catch(() => {});
 
-    // Advance timers past the default 5000ms timeout
-    vi.advanceTimersByTime(5001);
+    // Advance fake timers past timeout — fires the setTimeout rejection.
+    // advanceTimersByTimeAsync drains microtasks between each tick so that
+    // the async handler's awaits settle before we inspect the result.
+    await vi.advanceTimersByTimeAsync(5001);
 
     await expect(resultPromise).rejects.toMatchObject({ statusCode: 504 });
 
@@ -136,7 +141,7 @@ describe("GET /api/apps/test-app/data — route.timeout", () => {
 
     consoleWarnSpy.mockRestore();
     vi.useRealTimers();
-  });
+  }, 10000);
 });
 
 // ─── route.error ─────────────────────────────────────────────────────────────

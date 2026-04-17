@@ -6,6 +6,11 @@ import { hasRequiredRoles, refreshAppRegistry } from "../../utils/apps";
 import { createAppDb } from "../../utils/app-db";
 import { getDb } from "../../utils/db";
 
+// Configurable timeout for app route handler execution.
+// NOTE: Promise.race() only interrupts async-yielding code. Tight synchronous
+// loops in app code will still block the event loop — accepted per D-01 threat model.
+const HOOK_TIMEOUT_MS = parseInt(process.env.APP_HOOK_TIMEOUT_MS ?? "5000", 10);
+
 export default defineEventHandler(async (event) => {
   const session = await requireSession(event);
   const userRoles = session.user.permissionRoles ?? session.user.roles ?? [];
@@ -108,5 +113,28 @@ export default defineEventHandler(async (event) => {
     }
   };
 
-  return handler(event);
+  let timerId: ReturnType<typeof setTimeout>;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timerId = setTimeout(
+      () => reject(new Error("timeout")),
+      HOOK_TIMEOUT_MS
+    );
+  });
+
+  try {
+    return await Promise.race([
+      Promise.resolve(handler(event)),
+      timeoutPromise
+    ]);
+  } catch (error) {
+    const isTimeout = (error as Error).message === "timeout";
+    if (isTimeout) {
+      console.warn(JSON.stringify({ appId, event: "route.timeout", durationMs: HOOK_TIMEOUT_MS }));
+      throw createError({ statusCode: 504, statusMessage: `App '${appId}' route handler timed out.` });
+    }
+    console.error(JSON.stringify({ appId, event: "route.error", error: (error as Error).message }));
+    throw createError({ statusCode: 500, statusMessage: `App '${appId}' route handler failed.` });
+  } finally {
+    clearTimeout(timerId!);
+  }
 });
