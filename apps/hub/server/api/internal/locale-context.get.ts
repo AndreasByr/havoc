@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { profiles } from "@guildora/shared";
 import { getDb } from "../../utils/db";
+import { requireSession } from "../../utils/auth";
 import {
   normalizeUserLocalePreference,
   readLegacyLocalePreferenceFromCustomFields,
@@ -8,18 +9,12 @@ import {
 } from "../../../utils/locale-preference";
 import { loadCommunitySettingsLocale } from "../../utils/community-settings";
 
-type EventUserSession = {
-  user?: {
-    id?: string;
-  };
-} | null;
-
 export default defineEventHandler(async (event) => {
+  const session = await requireSession(event);
   const db = getDb();
   const communityDefaultLocale = await loadCommunitySettingsLocale(db);
 
-  const session = (event.context.userSession ?? null) as EventUserSession;
-  const userId = typeof session?.user?.id === "string" ? session.user.id : null;
+  const userId = session.user.id;
 
   let localePreference = null;
   if (userId) {
