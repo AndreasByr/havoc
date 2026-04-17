@@ -77,7 +77,7 @@ Mapping von Requirements auf Phasen. Wird vom Roadmapper gefüllt.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SEC-01 | Phase 1 | Pending |
+| SEC-01 | Phase 1 | Done |
 | SEC-02 | Phase 2 | Pending |
 | SEC-03 | Phase 3 | Pending |
 | SEC-04 | Phase 3 | Pending |
@@ -100,4 +100,4 @@ Mapping von Requirements auf Phasen. Wird vom Roadmapper gefüllt.
 
 ---
 *Requirements defined: 2026-04-16*
-*Last updated: 2026-04-16 after roadmap mapping*
+*Last updated: 2026-04-17 after Phase 1 audit completion*
