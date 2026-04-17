@@ -40,6 +40,7 @@ vi.mock("../logger", () => ({
 
 import { botAppHookRegistry, loadInstalledAppHooks } from "../app-hooks.js";
 import { safeParseAppManifest } from "@guildora/shared";
+import { logger } from "../logger.js";
 
 // ─── Registry tests ─────────────────────────────────────────────────────────
 
@@ -141,6 +142,50 @@ describe("BotAppHookRegistry", () => {
       expect.anything(),
       expect.objectContaining({ config: { theme: "dark" } })
     );
+  });
+
+  it("hook.timeout: slow async handler is abandoned and warn is logged", async () => {
+    vi.useFakeTimers();
+    const slowHandler = vi.fn(() => new Promise<void>(() => {})); // never resolves
+    const ctx = { config: {}, db: {} as any, bot: {} as any, botUserId: "b1", guildId: "g1", platform: "discord" as const };
+    botAppHookRegistry.register("app-slow", "onMessage", slowHandler, ctx);
+
+    const emitPromise = botAppHookRegistry.emit("onMessage", {} as any);
+    vi.advanceTimersByTime(5001);
+    await emitPromise;
+
+    expect(vi.mocked(logger.warn)).toHaveBeenCalledWith(
+      expect.objectContaining({ appId: "app-slow", event: "hook.timeout", durationMs: 5000 })
+    );
+    vi.useRealTimers();
+  });
+
+  it("hook.error: throwing handler logs structured error object", async () => {
+    const errorHandler = vi.fn().mockRejectedValue(new Error("boom"));
+    const ctx = { config: {}, db: {} as any, bot: {} as any, botUserId: "b1", guildId: "g1", platform: "discord" as const };
+    botAppHookRegistry.register("app-err", "onMessage", errorHandler, ctx);
+
+    await botAppHookRegistry.emit("onMessage", {} as any);
+
+    expect(vi.mocked(logger.error)).toHaveBeenCalledWith(
+      expect.objectContaining({ appId: "app-err", event: "hook.error", error: "boom" })
+    );
+  });
+
+  it("error boundary preserved after timeout: next handler still executes", async () => {
+    vi.useFakeTimers();
+    const slowHandler = vi.fn(() => new Promise<void>(() => {}));
+    const fastHandler = vi.fn().mockResolvedValue(undefined);
+    const ctx = { config: {}, db: {} as any, bot: {} as any, botUserId: "b1", guildId: "g1", platform: "discord" as const };
+    botAppHookRegistry.register("app-slow", "onMessage", slowHandler, ctx);
+    botAppHookRegistry.register("app-fast", "onMessage", fastHandler, ctx);
+
+    const emitPromise = botAppHookRegistry.emit("onMessage", {} as any);
+    vi.advanceTimersByTime(5001);
+    await emitPromise;
+
+    expect(fastHandler).toHaveBeenCalledOnce();
+    vi.useRealTimers();
   });
 });
 
