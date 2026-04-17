@@ -2,9 +2,10 @@ import type { AppSession } from "./auth";
 
 const moderatorRoles = ["moderator", "admin", "superadmin"] as const;
 
-export function isDevRoleSwitcherEnabled(event: Parameters<typeof useRuntimeConfig>[0]) {
-  const config = useRuntimeConfig(event);
-  return import.meta.dev || process.env.NODE_ENV === "development" || Boolean(config.public.enablePerformanceDebug);
+export function isDevRoleSwitcherEnabled(_event: Parameters<typeof useRuntimeConfig>[0]) {
+  // import.meta.dev is a Vite/Nitro build-time constant — always false in production builds.
+  // Do NOT add runtime fallbacks here (env-var checks, feature flags, etc.).
+  return import.meta.dev;
 }
 
 export function canUseDevRoleSwitcher(session: AppSession) {
