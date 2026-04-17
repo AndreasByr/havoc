@@ -94,4 +94,20 @@ describe("requireInternalToken", () => {
       expect(e.statusCode).toBe(401);
     }
   });
+
+  it("uses timing-safe comparison (equal-length wrong token still rejected)", async () => {
+    mocks.useRuntimeConfig.mockReturnValue({ mcpInternalToken: "secret-token-abc" });
+    mocks.getHeader.mockImplementation((_event: any, name: string) => {
+      if (name === "authorization") return "Bearer secret-token-xyz"; // same byte length
+      return undefined;
+    });
+    const { requireInternalToken } = await importInternalAuth();
+    const event = createMockEvent();
+    expect(() => requireInternalToken(event)).toThrow();
+    try {
+      requireInternalToken(event);
+    } catch (e: any) {
+      expect(e.statusCode).toBe(401);
+    }
+  });
 });
