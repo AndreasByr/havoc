@@ -37,9 +37,7 @@ export default defineNuxtConfig({
         path: "/",
         sameSite: "lax" as const,
         httpOnly: true,
-        secure: process.env.NUXT_SESSION_COOKIE_SECURE
-          ? process.env.NUXT_SESSION_COOKIE_SECURE !== "false"
-          : (process.env.NUXT_PUBLIC_HUB_URL || "").startsWith("https://"),
+        secure: process.env.NODE_ENV !== "development",
         domain: undefined as string | undefined,
       },
     },
