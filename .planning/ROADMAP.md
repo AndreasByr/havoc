@@ -36,7 +36,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] 01-01-PLAN.md — Audit-Doc-Skelett + ripgrep-Sanity + scratch-Dir (Wave 1)
 - [x] 01-02-PLAN.md — 5 ripgrep-Pattern-Scans (P-1..P-5) in scratch/grep-results.md (Wave 2, parallel zu Wave 3)
 - [x] 01-03-PLAN.md — Kopf-Review mit Andi: 8 Bereiche, 27 Fragen, 3-Bucket-Zuordnung (Wave 3, human-in-loop)
-- [ ] 01-04-PLAN.md — Finding-Consolidation: 15-25 F-Findings + Operational + Deferred in §§4-9 (Wave 4)
+- [x] 01-04-PLAN.md — Finding-Consolidation: 15-25 F-Findings + Operational + Deferred in §§4-9 (Wave 4)
 - [ ] 01-05-PLAN.md — Exec-Summary + Traceability + validation.sh + SEC-01 Done-Flip + git-Tag (Wave 5)
 
 ### Phase 2: Apps-Plugin-Sandbox
