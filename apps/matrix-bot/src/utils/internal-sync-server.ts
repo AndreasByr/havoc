@@ -65,18 +65,26 @@ export function startInternalSyncServer(config: ServerConfig) {
   ];
 
   const server = http.createServer(async (req, res) => {
-    // Auth check
-    if (token && token.length > 0) {
-      const authHeader = req.headers.authorization;
-      if (
-        !authHeader ||
-        !authHeader.startsWith("Bearer ") ||
-        !timingSafeEqualString(authHeader.slice("Bearer ".length), token)
-      ) {
-        res.writeHead(401, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "Unauthorized", errorCode: "UNAUTHORIZED" }));
-        return;
-      }
+    // Auth check — fail-loud when token not configured (mirrors Hub's requireInternalToken)
+    if (!token || token.length === 0) {
+      res.writeHead(503, { "Content-Type": "application/json" });
+      res.end(
+        JSON.stringify({
+          error: "Server misconfigured: internal token not set",
+          errorCode: "MISCONFIGURED"
+        })
+      );
+      return;
+    }
+    const authHeader = req.headers.authorization;
+    if (
+      !authHeader ||
+      !authHeader.startsWith("Bearer ") ||
+      !timingSafeEqualString(authHeader.slice("Bearer ".length), token)
+    ) {
+      res.writeHead(401, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Unauthorized", errorCode: "UNAUTHORIZED" }));
+      return;
     }
 
     const method = req.method || "GET";
