@@ -1,7 +1,7 @@
 # Security Audit — Guildora Platform
 
-**Audit-Datum:** 2026-04-16 (ursprüngliche Erstellung); letzte Aktualisierung: YYYY-MM-DD
-**Codebase-Stand:** git-rev `<fill-in-wave-5>` (aus `git rev-parse HEAD` zur Audit-Schlusszeit)
+**Audit-Datum:** 2026-04-16 (ursprüngliche Erstellung); letzte Aktualisierung: 2026-04-17
+**Codebase-Stand:** git-rev `540b7500a5aabc6ae3f5613ff7962578a414c666` (aus `git rev-parse HEAD` zur Audit-Schlusszeit)
 **Scope:** `platform/`-Stack (ohne marketplace/, guildai/, voice-rooms/, app-template/)
 **Methode:** Konsolidierung aus `.planning/codebase/CONCERNS.md` (2026-04-15) + strukturierte Kopf-Review-Session mit Andi + gezielte ripgrep-Scans für 5 Pattern-Klassen. KEIN frisches Full-Audit.
 **Zielgruppe:** Phase-2/3/4-Builder (Claude-Agents) + Andi im Planning-Modus.
@@ -10,13 +10,14 @@
 
 ## 1. Executive Summary
 
-> Wird in Wave 5 (Plan 05) ausgefüllt, sobald Finding-Anzahl pro Severity/Phase feststeht.
->
-> Erwartete Form (Platzhalter):
-> - **Gesamt-Findings:** N (davon X Critical, Y High, Z Medium, W Low + V Operational + U Deferred)
-> - **Phase-Aufteilung:** Phase 2 = N, Phase 3 = N, Phase 4 = N, v2 / Deferred = N
-> - **Sofort-Handlungsempfehlung:** {1 Satz}
-> - **Nicht abgedeckt (out-of-scope):** Infrastructure (Docker daemon, Cloudflare), Fremd-Repos.
+- **Gesamt-Findings:** 17 (davon 1 Critical, 3 High, 6 Medium, 7 Low + 4 Operational + 8 Deferred)
+- **Phase-Aufteilung:**
+  - Phase 2 (Apps-Plugin-Sandbox): 3 Findings (davon 1 Critical: F-01, F-06, F-08)
+  - Phase 3 (Auth- & Session-Härtung): 10 Findings (davon 3 High: F-02, F-03, F-04, F-07, F-09, F-10, F-13, F-14, F-15, F-17)
+  - Phase 4 (Supply-Chain & Secrets): 4 Findings (F-05, F-11, F-12, F-16)
+  - v2 / Deferred: 8 Deferred Items (D-01..D-08)
+- **Sofort-Handlungsempfehlung:** Phase 2 zuerst — F-01 (Unsandboxed Plugin-Code-Execution via `new Function()`) ist das einzige Critical und ermöglicht uneingeschränkte Server-Code-Execution durch jede installierte App; solange F-01 offen ist, sind alle anderen Mitigations nachrangig.
+- **Nicht abgedeckt (out-of-scope):** Infrastructure (Docker daemon, Cloudflare-Tunnel, Host-OS), Fremd-Repos (marketplace/, guildai/, voice-rooms/, app-template/).
 
 ## 2. Severity-Kriterien
 
@@ -354,14 +355,14 @@ Severity bewertet **Restrisiko** nach heutiger Mitigation (`Current Mitigation`-
 
 | SEC-Req | Beschreibung | Abgedeckt durch Finding(s) |
 |---------|--------------|----------------------------|
-| SEC-02  | Apps-Plugin Sandbox (CPU/Memory/Timeout + Whitelisted APIs) | _Wave 5 füllt_ |
-| SEC-03  | timingSafeEqual für interne Tokens | _Wave 5 füllt_ |
-| SEC-04  | Session-Middleware deny-by-default | _Wave 5 füllt_ |
-| SEC-05  | OAuth/Cookie/CSRF-Review | _Wave 5 füllt_ |
-| SEC-06  | Docker-Compose env-basiert (keine hartcoded DB-Credentials) | _Wave 5 füllt_ |
-| SEC-07  | pnpm.overrides-Review + pnpm audit | _Wave 5 füllt_ |
+| SEC-02  | Apps-Plugin Sandbox (CPU/Memory/Timeout + Whitelisted APIs) | F-01, F-06, F-08 |
+| SEC-03  | timingSafeEqual für interne Tokens | F-03, F-04 |
+| SEC-04  | Session-Middleware deny-by-default | F-02 |
+| SEC-05  | OAuth/Cookie/CSRF-Review | F-07, F-09, F-10, F-13, F-14, F-15, F-16, F-17 |
+| SEC-06  | Docker-Compose env-basiert (keine hartcoded DB-Credentials) | F-05, F-11 |
+| SEC-07  | pnpm.overrides-Review + pnpm audit | F-12, D-01 |
 
-**Unabgedeckt / offen:** _Wave 5 füllt (Liste der SEC-Requirements ohne Finding ODER leer, wenn alle gedeckt)._
+**Unabgedeckt / offen:** Keine — alle 6 SEC-Requirements (SEC-02..SEC-07) sind durch mindestens ein Finding gedeckt.
 
 ---
 
