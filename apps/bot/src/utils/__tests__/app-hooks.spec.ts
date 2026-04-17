@@ -151,7 +151,7 @@ describe("BotAppHookRegistry", () => {
     botAppHookRegistry.register("app-slow", "onMessage", slowHandler, ctx);
 
     const emitPromise = botAppHookRegistry.emit("onMessage", {} as any);
-    vi.advanceTimersByTime(5001);
+    await vi.advanceTimersByTimeAsync(5001);
     await emitPromise;
 
     expect(vi.mocked(logger.warn)).toHaveBeenCalledWith(
@@ -181,7 +181,7 @@ describe("BotAppHookRegistry", () => {
     botAppHookRegistry.register("app-fast", "onMessage", fastHandler, ctx);
 
     const emitPromise = botAppHookRegistry.emit("onMessage", {} as any);
-    vi.advanceTimersByTime(5001);
+    await vi.advanceTimersByTimeAsync(5001);
     await emitPromise;
 
     expect(fastHandler).toHaveBeenCalledOnce();

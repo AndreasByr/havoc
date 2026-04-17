@@ -7,6 +7,11 @@ import { createAppDb } from "./app-db";
 import { createBotClient } from "./bot-client";
 import { logger } from "./logger";
 
+// Configurable timeout for app hook execution.
+// NOTE: Promise.race() only interrupts async-yielding code. Tight synchronous
+// loops in app code will still block the event loop — accepted per D-01 threat model.
+const HOOK_TIMEOUT_MS = parseInt(process.env.APP_HOOK_TIMEOUT_MS ?? "5000", 10);
+
 async function loadAppConfig(appId: string): Promise<Record<string, unknown>> {
   try {
     const db = getDb();
@@ -76,16 +81,35 @@ class BotAppHookRegistry {
     }
 
     for (const [appId, { handler, ctx }] of scopedHandlers.entries()) {
+      // Refresh config from DB before each hook invocation so config
+      // changes (e.g. toggling read-only mode) take effect immediately
+      const freshConfig = await loadAppConfig(appId);
+      if (Object.keys(freshConfig).length > 0) {
+        ctx.config = freshConfig;
+      }
+
+      let timerId: ReturnType<typeof setTimeout>;
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        timerId = setTimeout(
+          () => reject(new Error("timeout")),
+          HOOK_TIMEOUT_MS
+        );
+      });
+
       try {
-        // Refresh config from DB before each hook invocation so config
-        // changes (e.g. toggling read-only mode) take effect immediately
-        const freshConfig = await loadAppConfig(appId);
-        if (Object.keys(freshConfig).length > 0) {
-          ctx.config = freshConfig;
-        }
-        await (handler as BotHookHandler<K>)(payload, ctx);
+        await Promise.race([
+          (handler as BotHookHandler<K>)(payload, ctx),
+          timeoutPromise
+        ]);
       } catch (error) {
-        logger.error("App hook failed", { appId, hookName: eventName, error });
+        const isTimeout = (error as Error).message === "timeout";
+        if (isTimeout) {
+          logger.warn({ appId, event: "hook.timeout", durationMs: HOOK_TIMEOUT_MS });
+        } else {
+          logger.error({ appId, event: "hook.error", error: (error as Error).message });
+        }
+      } finally {
+        clearTimeout(timerId!);
       }
     }
   }
