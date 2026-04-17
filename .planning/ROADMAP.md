@@ -37,7 +37,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] 01-02-PLAN.md — 5 ripgrep-Pattern-Scans (P-1..P-5) in scratch/grep-results.md (Wave 2, parallel zu Wave 3)
 - [x] 01-03-PLAN.md — Kopf-Review mit Andi: 8 Bereiche, 27 Fragen, 3-Bucket-Zuordnung (Wave 3, human-in-loop)
 - [x] 01-04-PLAN.md — Finding-Consolidation: 15-25 F-Findings + Operational + Deferred in §§4-9 (Wave 4)
-- [ ] 01-05-PLAN.md — Exec-Summary + Traceability + validation.sh + SEC-01 Done-Flip + git-Tag (Wave 5)
+- [x] 01-05-PLAN.md — Exec-Summary + Traceability + validation.sh + SEC-01 Done-Flip + git-Tag (Wave 5)
 
 ### Phase 2: Apps-Plugin-Sandbox
 **Goal**: Fremd-Code (sideloaded + marketplace Apps) läuft nicht mehr im Haupt-Prozess mit Vollzugriff, sondern in einer echten Sandbox mit harten Ressourcen-Limits. Die kritischste bekannte Lücke ist geschlossen.
