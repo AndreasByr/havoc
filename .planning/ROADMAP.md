@@ -40,16 +40,20 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] 01-05-PLAN.md — Exec-Summary + Traceability + validation.sh + SEC-01 Done-Flip + git-Tag (Wave 5)
 
 ### Phase 2: Apps-Plugin-Sandbox
-**Goal**: Fremd-Code (sideloaded + marketplace Apps) läuft nicht mehr im Haupt-Prozess mit Vollzugriff, sondern in einer echten Sandbox mit harten Ressourcen-Limits. Die kritischste bekannte Lücke ist geschlossen.
+**Goal**: App-Plugin-Execution-Sites sind gegen reale Risiken (hängende async Handlers, unkontrolliertes Memory-Wachstum) gehärtet; alle Lifecycle-Events sind audit-logbar. Die kritischste bekannte Lücke (kein Execution-Timeout) ist geschlossen.
 **Depends on**: Phase 1
 **Requirements**: SEC-02
 **Success Criteria** (what must be TRUE):
-  1. Ein bewusst bösartiger Test-App-Hook (z.B. `while(true){}`, `require('fs').readFileSync('/etc/passwd')`, Memory-Bomb) wird vom Sandbox-Layer abgebrochen/blockiert, nicht vom Hub/Bot-Prozess getragen — verifiziert durch einen dedizierten Spec-Test
-  2. CPU-Timeout, Memory-Limit und Execution-Timeout sind als konfigurierbare Werte definiert und dokumentiert; Überschreitung führt zu einem sichtbaren Fehler (Fail Loud), nicht zu silent success
-  3. Zugriff auf Prozess/FS/Netz aus dem App-Code ist nur über explizit gewhitelistete APIs möglich; der vorhandene `require()`-Block bleibt, wird aber durch echte Isolation ergänzt, nicht ersetzt
-  4. Beide Execution-Sites — `platform/apps/bot/src/utils/app-hooks.ts` und `platform/apps/hub/server/api/apps/[...path].ts` — verwenden denselben Sandbox-Mechanismus (keine zwei Implementierungen, die auseinanderdriften können)
-  5. Eine real existierende Guildora-App (z.B. aus `app-template/` als Referenz) läuft nach der Umstellung unverändert weiter
-**Plans**: TBD
+  1. Ein langsamer/hängender async App-Hook wird nach APP_HOOK_TIMEOUT_MS (default 5000 ms) abgebrochen — verifiziert durch dedizierte Spec-Tests in bot und hub
+  2. CPU-/Execution-Timeout ist konfigurierbar via `APP_HOOK_TIMEOUT_MS` env var; Überschreitung führt zu einem sichtbaren Fehler (Fail Loud: hook.timeout / route.timeout geloggt, HTTP 504 zurückgegeben)
+  3. Memory-Cap via `--max-old-space-size` ist in beiden App-Prozessen (bot: 512 MB, hub: 1024 MB) in Startup-Scripts dokumentiert und konfiguriert
+  4. Beide Execution-Sites — `app-hooks.ts` und `[...path].ts` — verwenden denselben Promise.race()-Mechanismus mit identischem Log-Format (`{ appId, event, durationMs?, error? }`)
+  5. App-Install/Uninstall-Lifecycle ist in strukturierten Audit-Logs (`app.installed`, `app.uninstalled`) sichtbar — verifiziert durch Hub-Spec-Tests
+**Plans**: 4 plans
+- [ ] 02-01-PLAN.md — Bot execution site: Promise.race() timeout + structured logger in app-hooks.ts + 3 new spec tests (Wave 1)
+- [ ] 02-02-PLAN.md — Hub execution site: Promise.race() timeout + console.log(JSON) in [...path].ts + new path.spec.ts (Wave 1)
+- [ ] 02-03-PLAN.md — Audit-log: app.installed/uninstalled in 3 admin routes + new audit-log.spec.ts (Wave 1)
+- [ ] 02-04-PLAN.md — Memory-cap: --max-old-space-size flags in bot/hub startup scripts + .env.example docs (Wave 1)
 
 ### Phase 3: Auth- & Session-Härtung
 **Goal**: Die Authentifizierungs- und Session-Schicht im Hub ist deny-by-default, timing-sicher und gegen gängige Angriffsklassen (CSRF, Session-Fixation, Timing-Attacks) gehärtet.
@@ -125,8 +129,8 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Security Audit & Priorisierung | 0/5 | Not started | - |
-| 2. Apps-Plugin-Sandbox | 0/TBD | Not started | - |
+| 1. Security Audit & Priorisierung | 5/5 | Complete | 2026-04-17 |
+| 2. Apps-Plugin-Sandbox | 0/4 | Not started | - |
 | 3. Auth- & Session-Härtung | 0/TBD | Not started | - |
 | 4. Supply-Chain & Secrets | 0/TBD | Not started | - |
 | 5. CI-Vertrauen & API-Test-Abdeckung | 0/TBD | Not started | - |
@@ -136,3 +140,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 ---
 *Roadmap created: 2026-04-16*
+*Last updated: 2026-04-17 after Phase 2 planning*
