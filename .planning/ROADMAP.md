@@ -50,10 +50,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. Beide Execution-Sites — `app-hooks.ts` und `[...path].ts` — verwenden denselben Promise.race()-Mechanismus mit identischem Log-Format (`{ appId, event, durationMs?, error? }`)
   5. App-Install/Uninstall-Lifecycle ist in strukturierten Audit-Logs (`app.installed`, `app.uninstalled`) sichtbar — verifiziert durch Hub-Spec-Tests
 **Plans**: 4 plans
-- [ ] 02-01-PLAN.md — Bot execution site: Promise.race() timeout + structured logger in app-hooks.ts + 3 new spec tests (Wave 1)
-- [ ] 02-02-PLAN.md — Hub execution site: Promise.race() timeout + console.log(JSON) in [...path].ts + new path.spec.ts (Wave 1)
-- [ ] 02-03-PLAN.md — Audit-log: app.installed/uninstalled in 3 admin routes + new audit-log.spec.ts (Wave 1)
-- [ ] 02-04-PLAN.md — Memory-cap: --max-old-space-size flags in bot/hub startup scripts + .env.example docs (Wave 1)
+- [x] 02-01-PLAN.md — Bot execution site: Promise.race() timeout + structured logger in app-hooks.ts + 3 new spec tests (Wave 1)
+- [x] 02-02-PLAN.md — Hub execution site: Promise.race() timeout + console.log(JSON) in [...path].ts + new path.spec.ts (Wave 1)
+- [x] 02-03-PLAN.md — Audit-log: app.installed/uninstalled in 3 admin routes + new audit-log.spec.ts (Wave 1)
+- [x] 02-04-PLAN.md — Memory-cap: --max-old-space-size flags in bot/hub startup scripts + .env.example docs (Wave 1)
 
 ### Phase 3: Auth- & Session-Härtung
 **Goal**: Die Authentifizierungs- und Session-Schicht im Hub ist deny-by-default, timing-sicher und gegen gängige Angriffsklassen (CSRF, Session-Fixation, Timing-Attacks) gehärtet.
