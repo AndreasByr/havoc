@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "nuxt dev -p 3003 --dotenv ../../.env.local",
     "build": "nuxt build --dotenv ../../.env",
-    "start": "node --env-file=../../.env .output/server/index.mjs",
+    "start": "node --max-old-space-size=1024 --env-file=../../.env .output/server/index.mjs",
     "prelint": "nuxt prepare",
     "lint": "eslint .",
     "typecheck": "nuxt typecheck",

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx src/index.ts",
     "build": "tsc -p tsconfig.json",
-    "start": "node dist/apps/bot/src/index.js",
+    "start": "NODE_OPTIONS=--max-old-space-size=512 node dist/apps/bot/src/index.js",
     "typecheck": "tsc --noEmit",
     "lint": "echo \"No lint configured for @guildora/bot\"",
     "format": "echo \"No format script configured for @guildora/bot\"",
