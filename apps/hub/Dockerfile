@@ -25,4 +25,4 @@ COPY --from=build /repo/packages/shared/drizzle/migrations ./.output/migrations
 RUN mkdir -p /app/.output/public/uploads/avatars && chown -R app:app /app/.output/public/uploads
 USER app
 EXPOSE 3003
-CMD ["node", ".output/server/index.mjs"]
+CMD ["node", "--max-old-space-size=1024", ".output/server/index.mjs"]
