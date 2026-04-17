@@ -13,7 +13,7 @@ let server: http.Server;
 let port: number;
 const TEST_TOKEN = "test-bot-token";
 
-function fetch(path: string, options?: { method?: string; body?: unknown; token?: string }): Promise<{ status: number; data: unknown }> {
+function fetchPort(targetPort: number, path: string, options?: { method?: string; body?: unknown; token?: string }): Promise<{ status: number; data: unknown }> {
   return new Promise((resolve, reject) => {
     const method = options?.method || "GET";
     const bodyStr = options?.body ? JSON.stringify(options.body) : undefined;
@@ -23,7 +23,7 @@ function fetch(path: string, options?: { method?: string; body?: unknown; token?
     };
 
     const req = http.request(
-      { hostname: "127.0.0.1", port, path, method, headers },
+      { hostname: "127.0.0.1", port: targetPort, path, method, headers },
       (res) => {
         const chunks: Buffer[] = [];
         res.on("data", (chunk: Buffer) => chunks.push(chunk));
@@ -37,6 +37,10 @@ function fetch(path: string, options?: { method?: string; body?: unknown; token?
     if (bodyStr) req.write(bodyStr);
     req.end();
   });
+}
+
+function fetch(path: string, options?: { method?: string; body?: unknown; token?: string }): Promise<{ status: number; data: unknown }> {
+  return fetchPort(port, path, options);
 }
 
 beforeAll(async () => {
@@ -63,6 +67,49 @@ beforeAll(async () => {
 
 afterAll(() => {
   server?.close();
+});
+
+describe("internal sync server — misconfigured (empty token)", () => {
+  let misconfiguredServer: http.Server;
+  let misconfiguredPort: number;
+
+  beforeAll(async () => {
+    const mockClient = createMockMatrixClient();
+    const { startInternalSyncServer } = await import("../utils/internal-sync-server.js");
+    misconfiguredServer = startInternalSyncServer({
+      client: mockClient as any,
+      spaceId: null,
+      port: 0,
+      token: "", // empty token — simulates BOT_INTERNAL_TOKEN not set
+    });
+
+    await new Promise<void>((resolve) => {
+      misconfiguredServer.once("listening", () => {
+        const addr = misconfiguredServer.address();
+        misconfiguredPort = typeof addr === "object" && addr ? addr.port : 0;
+        resolve();
+      });
+    });
+  });
+
+  afterAll(() => {
+    misconfiguredServer?.close();
+  });
+
+  it("returns 503 MISCONFIGURED when server token is not configured", async () => {
+    const res = await fetchPort(misconfiguredPort, "/internal/health", { token: "any-token" });
+    expect(res.status).toBe(503);
+    const data = res.data as { errorCode: string };
+    expect(data.errorCode).toBe("MISCONFIGURED");
+  });
+
+  it("returns 503 MISCONFIGURED even with no authorization header", async () => {
+    // No Authorization header at all — must still get 503, not 401
+    const res = await fetchPort(misconfiguredPort, "/internal/health", { token: "" });
+    expect(res.status).toBe(503);
+    const data = res.data as { errorCode: string };
+    expect(data.errorCode).toBe("MISCONFIGURED");
+  });
 });
 
 describe("internal sync server", () => {
