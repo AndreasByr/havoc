@@ -18,9 +18,6 @@ export default defineConfig({
     include: ["**/*.spec.ts", "**/*.test.ts"],
     exclude: ["**/node_modules/**", "**/.nuxt/**", "**/.output/**", "**/dist/**", "tests/**"]
   },
-  // Disable esbuild (deprecated in vite 8) — oxc handles TS transform by default.
-  // tsconfigRaw '{}' is no longer needed since .nuxt/tsconfig.json provides the config.
-  esbuild: false,
   resolve: {
     alias: {
       h3: resolveH3()
