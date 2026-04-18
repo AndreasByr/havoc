@@ -80,10 +80,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Jeder der aktuell 15 Einträge in `platform/package.json` `pnpm.overrides` ist in einem Review-Dokument begründet; neue Overrides für defu/lodash/vite wurden hinzugefügt; Overrides ohne aktuellen Bedarf sind dokumentiert
   4. Ein Bot/Hub-Start mit dem neuen env-basierten Compose-Setup funktioniert lokal — dokumentiert durch einen erfolgreichen Start-Log-Snippet im PR oder im Phase-Summary
 **Plans**: 4 plans
-- [ ] 04-01-PLAN.md — Docker Compose credentials env-var substitution + .env.example update (Wave 1)
-- [ ] 04-02-PLAN.md — pnpm audit: fix High/Critical CVEs + overrides documentation + accepted-risks doc (Wave 1)
-- [ ] 04-03-PLAN.md — Startup token checks: bot + matrix-bot (startup-checks utility + index.ts guards + tests) (Wave 1)
-- [ ] 04-04-PLAN.md — Startup token check: Hub Nitro plugin 00-b-token-check.ts + unit tests (Wave 1)
+- [x] 04-01-PLAN.md — Docker Compose credentials env-var substitution + .env.example update (Wave 1)
+- [x] 04-02-PLAN.md — pnpm audit: fix High/Critical CVEs + overrides documentation + accepted-risks doc (Wave 1)
+- [x] 04-03-PLAN.md — Startup token checks: bot + matrix-bot (startup-checks utility + index.ts guards + tests) (Wave 1)
+- [x] 04-04-PLAN.md — Startup token check: Hub Nitro plugin 00-b-token-check.ts + unit tests (Wave 1)
 
 ### Phase 5: CI-Vertrauen & API-Test-Abdeckung
 **Goal**: CI ist vertrauenswürdig genug, dass ein grüner Build etwas bedeutet: Typecheck grün, Lint blocking, Tests deterministisch — und die kritischsten API-Endpoints haben dedizierte Tests.
@@ -140,7 +140,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 1. Security Audit & Priorisierung | 5/5 | Complete | 2026-04-17 |
 | 2. Apps-Plugin-Sandbox | 0/4 | Not started | - |
 | 3. Auth- & Session-Härtung | 0/4 | Not started | - |
-| 4. Supply-Chain & Secrets | 0/4 | Not started | - |
+| 4. Supply-Chain & Secrets | 4/4 | Complete | 2026-04-18 |
 | 5. CI-Vertrauen & API-Test-Abdeckung | 0/TBD | Not started | - |
 | 6. Matrix-Bot-Parity | 0/TBD | Not started | - |
 | 7. Preview-Lifecycle & Tunnel-Resilienz | 0/TBD | Not started | - |
