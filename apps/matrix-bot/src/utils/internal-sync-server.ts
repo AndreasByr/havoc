@@ -35,6 +35,31 @@ class SyncServerError extends Error {
   }
 }
 
+type ApplicationEmbedBody = {
+  flowId?: string;
+  channelId?: string;
+  messageId?: string;
+  description?: string;
+  buttonLabel?: string;
+  color?: string;
+};
+
+type RolePickerRole = {
+  discordRoleId?: string;
+  emoji?: string | null;
+  roleName?: string;
+};
+
+type RolePickerEmbedBody = {
+  groupId?: string;
+  channelId?: string;
+  messageId?: string;
+  title?: string;
+  description?: string;
+  color?: string;
+  roles?: RolePickerRole[];
+};
+
 export function startInternalSyncServer(config: ServerConfig) {
   const { client, spaceId, port, token } = config;
 
@@ -154,6 +179,42 @@ export function startInternalSyncServer(config: ServerConfig) {
       paramNames: ["memberId"],
       handler: handleDm,
     },
+    {
+      method: "POST",
+      pattern: /^\/internal\/applications\/embed$/,
+      paramNames: [],
+      handler: handleApplicationEmbedPost,
+    },
+    {
+      method: "PATCH",
+      pattern: /^\/internal\/applications\/embed$/,
+      paramNames: [],
+      handler: handleApplicationEmbedPatch,
+    },
+    {
+      method: "DELETE",
+      pattern: /^\/internal\/applications\/embed$/,
+      paramNames: [],
+      handler: handleApplicationEmbedDelete,
+    },
+    {
+      method: "POST",
+      pattern: /^\/internal\/role-picker\/embed$/,
+      paramNames: [],
+      handler: handleRolePickerEmbedPost,
+    },
+    {
+      method: "PATCH",
+      pattern: /^\/internal\/role-picker\/embed$/,
+      paramNames: [],
+      handler: handleRolePickerEmbedPatch,
+    },
+    {
+      method: "DELETE",
+      pattern: /^\/internal\/role-picker\/embed$/,
+      paramNames: [],
+      handler: handleRolePickerEmbedDelete,
+    },
   ];
 
   const server = http.createServer(async (req, res) => {
@@ -196,9 +257,9 @@ export function startInternalSyncServer(config: ServerConfig) {
         params[name] = decodeURIComponent(match[i + 1]);
       });
 
-      // Parse body for POST/PATCH
+      // Parse body for POST/PATCH/PUT/DELETE
       let body: unknown = null;
-      if (method === "POST" || method === "PATCH" || method === "PUT") {
+      if (method === "POST" || method === "PATCH" || method === "PUT" || method === "DELETE") {
         body = await parseBody(req);
       }
 
@@ -726,6 +787,148 @@ async function handleDm(
   }
 }
 
+async function handleApplicationEmbedPost(
+  client: MatrixClient,
+  _spaceId: string | null,
+  _params: Record<string, string>,
+  body: unknown
+): Promise<unknown> {
+  const payload = body as ApplicationEmbedBody | null;
+  const channelId = requireNonEmptyString(payload?.channelId, "channelId", "MISSING_CHANNEL_ID");
+  const flowId = requireNonEmptyString(payload?.flowId, "flowId", "MISSING_FLOW_ID");
+
+  try {
+    const content = buildApplicationEmbedMessage(payload?.description, flowId, payload?.buttonLabel);
+    const eventId = await client.sendMessage(channelId, content);
+    return { ok: true, messageId: eventId };
+  } catch (error) {
+    throw new SyncServerError(
+      error instanceof Error ? error.message : "Failed to send application embed",
+      500,
+      "SYNC_FAILED"
+    );
+  }
+}
+
+async function handleApplicationEmbedPatch(
+  client: MatrixClient,
+  _spaceId: string | null,
+  _params: Record<string, string>,
+  body: unknown
+): Promise<unknown> {
+  const payload = body as ApplicationEmbedBody | null;
+  const channelId = requireNonEmptyString(payload?.channelId, "channelId", "MISSING_CHANNEL_ID");
+  requireNonEmptyString(payload?.messageId, "messageId", "MISSING_MESSAGE_ID");
+  const flowId = typeof payload?.flowId === "string" && payload.flowId.trim().length > 0
+    ? payload.flowId.trim()
+    : "unknown";
+
+  try {
+    const content = buildApplicationEmbedMessage(payload?.description, flowId, payload?.buttonLabel);
+    await client.sendMessage(channelId, content);
+    return { ok: true };
+  } catch (error) {
+    throw new SyncServerError(
+      error instanceof Error ? error.message : "Failed to update application embed",
+      500,
+      "SYNC_FAILED"
+    );
+  }
+}
+
+async function handleApplicationEmbedDelete(
+  client: MatrixClient,
+  _spaceId: string | null,
+  _params: Record<string, string>,
+  body: unknown
+): Promise<unknown> {
+  const payload = body as ApplicationEmbedBody | null;
+  const channelId = requireNonEmptyString(payload?.channelId, "channelId", "MISSING_CHANNEL_ID");
+  const messageId = requireNonEmptyString(payload?.messageId, "messageId", "MISSING_MESSAGE_ID");
+
+  try {
+    await client.redactEvent(channelId, messageId);
+    return { ok: true };
+  } catch (error) {
+    throw new SyncServerError(
+      error instanceof Error ? error.message : "Failed to delete application embed",
+      500,
+      "SYNC_FAILED"
+    );
+  }
+}
+
+async function handleRolePickerEmbedPost(
+  client: MatrixClient,
+  _spaceId: string | null,
+  _params: Record<string, string>,
+  body: unknown
+): Promise<unknown> {
+  const payload = body as RolePickerEmbedBody | null;
+  const channelId = requireNonEmptyString(payload?.channelId, "channelId", "MISSING_CHANNEL_ID");
+  requireNonEmptyString(payload?.groupId, "groupId", "MISSING_GROUP_ID");
+  const roles = requireRolePickerRoles(payload?.roles);
+
+  try {
+    const content = buildRolePickerEmbedMessage(payload?.title, payload?.description, roles);
+    const eventId = await client.sendMessage(channelId, content);
+    return { ok: true, messageId: eventId };
+  } catch (error) {
+    throw new SyncServerError(
+      error instanceof Error ? error.message : "Failed to send role picker embed",
+      500,
+      "SYNC_FAILED"
+    );
+  }
+}
+
+async function handleRolePickerEmbedPatch(
+  client: MatrixClient,
+  _spaceId: string | null,
+  _params: Record<string, string>,
+  body: unknown
+): Promise<unknown> {
+  const payload = body as RolePickerEmbedBody | null;
+  const channelId = requireNonEmptyString(payload?.channelId, "channelId", "MISSING_CHANNEL_ID");
+  requireNonEmptyString(payload?.messageId, "messageId", "MISSING_MESSAGE_ID");
+  requireNonEmptyString(payload?.groupId, "groupId", "MISSING_GROUP_ID");
+  const roles = requireRolePickerRoles(payload?.roles);
+
+  try {
+    const content = buildRolePickerEmbedMessage(payload?.title, payload?.description, roles);
+    await client.sendMessage(channelId, content);
+    return { ok: true };
+  } catch (error) {
+    throw new SyncServerError(
+      error instanceof Error ? error.message : "Failed to update role picker embed",
+      500,
+      "SYNC_FAILED"
+    );
+  }
+}
+
+async function handleRolePickerEmbedDelete(
+  client: MatrixClient,
+  _spaceId: string | null,
+  _params: Record<string, string>,
+  body: unknown
+): Promise<unknown> {
+  const payload = body as RolePickerEmbedBody | null;
+  const channelId = requireNonEmptyString(payload?.channelId, "channelId", "MISSING_CHANNEL_ID");
+  const messageId = requireNonEmptyString(payload?.messageId, "messageId", "MISSING_MESSAGE_ID");
+
+  try {
+    await client.redactEvent(channelId, messageId);
+    return { ok: true };
+  } catch (error) {
+    throw new SyncServerError(
+      error instanceof Error ? error.message : "Failed to delete role picker embed",
+      500,
+      "SYNC_FAILED"
+    );
+  }
+}
+
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function parseVirtualRoleLevel(roleId: string): number | null {
@@ -754,4 +957,94 @@ function parseBody(req: http.IncomingMessage): Promise<unknown> {
     });
     req.on("error", reject);
   });
+}
+
+function requireNonEmptyString(
+  value: string | undefined,
+  fieldName: string,
+  code: string
+): string {
+  const normalized = typeof value === "string" ? value.trim() : "";
+  if (!normalized) {
+    throw new SyncServerError(`Missing ${fieldName}`, 400, code);
+  }
+  return normalized;
+}
+
+function requireRolePickerRoles(roles: RolePickerRole[] | undefined): RolePickerRole[] {
+  if (!Array.isArray(roles) || roles.length === 0) {
+    throw new SyncServerError("Missing roles", 400, "INVALID_REQUEST");
+  }
+  return roles;
+}
+
+function buildApplicationEmbedMessage(
+  description: string | undefined,
+  flowId: string,
+  buttonLabel: string | undefined
+) {
+  const safeDescription = escapeHtml(description?.trim() || "Click the link below to apply.");
+  const safeFlowId = escapeHtml(flowId);
+  const safeButtonLabel = escapeHtml(buttonLabel?.trim() || "Apply");
+  const plainText = `${decodeHtmlEntities(safeDescription)}\nFlow ID: ${flowId}\nAction: ${decodeHtmlEntities(safeButtonLabel)}`;
+
+  return {
+    msgtype: "m.text",
+    body: plainText,
+    format: "org.matrix.custom.html",
+    formatted_body: `<p>${safeDescription}</p><p><strong>Flow ID:</strong> <code>${safeFlowId}</code></p><p>${safeButtonLabel}</p>`,
+  };
+}
+
+function buildRolePickerEmbedMessage(
+  title: string | undefined,
+  description: string | undefined,
+  roles: RolePickerRole[]
+) {
+  const safeTitle = escapeHtml(title?.trim() || "Role Selection");
+  const safeDescription = description?.trim() ? escapeHtml(description.trim()) : null;
+  const roleItems = roles.map((role) => {
+    const roleName = escapeHtml(role.roleName?.trim() || role.discordRoleId?.trim() || "Unknown role");
+    const emoji = role.emoji?.trim() ? `${escapeHtml(role.emoji.trim())} ` : "";
+    return `<li>${emoji}${roleName}</li>`;
+  });
+
+  const plainRoles = roles.map((role) => {
+    const roleName = role.roleName?.trim() || role.discordRoleId?.trim() || "Unknown role";
+    const emoji = role.emoji?.trim() ? `${role.emoji.trim()} ` : "";
+    return `- ${emoji}${roleName}`;
+  });
+
+  const plainSegments = [title?.trim() || "Role Selection"];
+  if (description?.trim()) plainSegments.push(description.trim());
+  plainSegments.push(...plainRoles);
+
+  const formattedSegments = [`<p><strong>${safeTitle}</strong></p>`];
+  if (safeDescription) formattedSegments.push(`<p>${safeDescription}</p>`);
+  formattedSegments.push(`<ul>${roleItems.join("")}</ul>`);
+
+  return {
+    msgtype: "m.text",
+    body: plainSegments.join("\n"),
+    format: "org.matrix.custom.html",
+    formatted_body: formattedSegments.join(""),
+  };
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function decodeHtmlEntities(value: string): string {
+  return value
+    .replaceAll("&quot;", '"')
+    .replaceAll("&#39;", "'")
+    .replaceAll("&gt;", ">")
+    .replaceAll("&lt;", "<")
+    .replaceAll("&amp;", "&");
 }
