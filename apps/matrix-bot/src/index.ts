@@ -41,7 +41,7 @@ async function main() {
     client,
     spaceId: SPACE_ID || null,
     port: BOT_INTERNAL_PORT,
-    token: BOT_INTERNAL_TOKEN,
+    token: BOT_INTERNAL_TOKEN!,
   });
 
   // Start syncing
