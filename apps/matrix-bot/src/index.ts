@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 import { MatrixClient, SimpleFsStorageProvider, AutojoinRoomsMixin } from "matrix-bot-sdk";
 import { startInternalSyncServer } from "./utils/internal-sync-server.js";
+import { isPlaceholderToken } from "./utils/startup-checks.js";
 import { registerRoomMessageHandler } from "./events/roomMessage.js";
 import { registerRoomMemberHandler } from "./events/roomMember.js";
 
@@ -10,10 +11,17 @@ const HOMESERVER_URL = process.env.MATRIX_HOMESERVER_URL;
 const ACCESS_TOKEN = process.env.MATRIX_ACCESS_TOKEN;
 const SPACE_ID = process.env.MATRIX_SPACE_ID;
 const BOT_INTERNAL_PORT = parseInt(process.env.BOT_INTERNAL_PORT || "3051", 10);
-const BOT_INTERNAL_TOKEN = process.env.BOT_INTERNAL_TOKEN || "";
+const BOT_INTERNAL_TOKEN = process.env.BOT_INTERNAL_TOKEN;
 
 if (!HOMESERVER_URL || !ACCESS_TOKEN) {
   console.error("MATRIX_HOMESERVER_URL and MATRIX_ACCESS_TOKEN are required.");
+  process.exit(1);
+}
+
+if (!BOT_INTERNAL_TOKEN || isPlaceholderToken(BOT_INTERNAL_TOKEN)) {
+  console.error(
+    "[matrix-bot] Startup aborted: BOT_INTERNAL_TOKEN is missing or contains a placeholder value. Set a real secret in your .env file."
+  );
   process.exit(1);
 }
 

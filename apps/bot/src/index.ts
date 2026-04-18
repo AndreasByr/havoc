@@ -21,12 +21,22 @@ import { loadInstalledAppHooks } from "./utils/app-hooks";
 import { ensureBaseRoles } from "./utils/community";
 import { loadAndDeployAppCommands, startInternalSyncServer } from "./utils/internal-sync-server";
 import { logger } from "./utils/logger";
+import { isPlaceholderToken } from "./utils/startup-checks";
 import { stopVoiceSessionReconcileLoop } from "./utils/voice-reconcile";
 
 const token = process.env.DISCORD_BOT_TOKEN;
 
 if (!token) {
   throw new Error("DISCORD_BOT_TOKEN is required.");
+}
+
+const botInternalToken = process.env.BOT_INTERNAL_TOKEN;
+
+if (!botInternalToken || isPlaceholderToken(botInternalToken)) {
+  logger.error(
+    "Startup aborted: BOT_INTERNAL_TOKEN is missing or contains a placeholder value. Set a real secret in your .env file."
+  );
+  process.exit(1);
 }
 
 const client = new Client({
