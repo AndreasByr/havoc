@@ -77,9 +77,13 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Success Criteria** (what must be TRUE):
   1. `platform/docker-compose.yml` enthält weder `POSTGRES_PASSWORD: postgres` noch `postgres:postgres` in Connection-Strings — alle DB-Credentials kommen aus env-Variablen, konsistent mit dem Umgang anderer Secrets im File; `platform/.env.example` dokumentiert die neuen Variablen
   2. `cd platform && pnpm audit --prod` meldet keine offenen High/Critical-Findings (oder: jedes verbleibende Finding ist in `.planning/research/` mit Begründung als akzeptiert dokumentiert)
-  3. Jeder der aktuell 12 Einträge in `platform/package.json` `pnpm.overrides` ist in einem Review-Dokument begründet; Overrides, deren Upstream inzwischen nachgezogen hat, sind entfernt
+  3. Jeder der aktuell 15 Einträge in `platform/package.json` `pnpm.overrides` ist in einem Review-Dokument begründet; neue Overrides für defu/lodash/vite wurden hinzugefügt; Overrides ohne aktuellen Bedarf sind dokumentiert
   4. Ein Bot/Hub-Start mit dem neuen env-basierten Compose-Setup funktioniert lokal — dokumentiert durch einen erfolgreichen Start-Log-Snippet im PR oder im Phase-Summary
-**Plans**: TBD
+**Plans**: 4 plans
+- [ ] 04-01-PLAN.md — Docker Compose credentials env-var substitution + .env.example update (Wave 1)
+- [ ] 04-02-PLAN.md — pnpm audit: fix High/Critical CVEs + overrides documentation + accepted-risks doc (Wave 1)
+- [ ] 04-03-PLAN.md — Startup token checks: bot + matrix-bot (startup-checks utility + index.ts guards + tests) (Wave 1)
+- [ ] 04-04-PLAN.md — Startup token check: Hub Nitro plugin 00-b-token-check.ts + unit tests (Wave 1)
 
 ### Phase 5: CI-Vertrauen & API-Test-Abdeckung
 **Goal**: CI ist vertrauenswürdig genug, dass ein grüner Build etwas bedeutet: Typecheck grün, Lint blocking, Tests deterministisch — und die kritischsten API-Endpoints haben dedizierte Tests.
@@ -136,7 +140,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 1. Security Audit & Priorisierung | 5/5 | Complete | 2026-04-17 |
 | 2. Apps-Plugin-Sandbox | 0/4 | Not started | - |
 | 3. Auth- & Session-Härtung | 0/4 | Not started | - |
-| 4. Supply-Chain & Secrets | 0/TBD | Not started | - |
+| 4. Supply-Chain & Secrets | 0/4 | Not started | - |
 | 5. CI-Vertrauen & API-Test-Abdeckung | 0/TBD | Not started | - |
 | 6. Matrix-Bot-Parity | 0/TBD | Not started | - |
 | 7. Preview-Lifecycle & Tunnel-Resilienz | 0/TBD | Not started | - |
@@ -144,4 +148,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 ---
 *Roadmap created: 2026-04-16*
-*Last updated: 2026-04-17 after Phase 3 planning*
+*Last updated: 2026-04-18 after Phase 4 planning*
