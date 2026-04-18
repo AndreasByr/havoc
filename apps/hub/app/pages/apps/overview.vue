@@ -242,7 +242,7 @@ const sourceLabel = (source: "marketplace" | "sideloaded") => {
                     :checked="app.autoUpdate"
                     :disabled="actionPending"
                     @change="toggleAutoUpdate(app.appId, app.autoUpdate)"
-                  />
+                  >
                   {{ $t("adminApps.autoUpdate") }}
                 </label>
               </div>

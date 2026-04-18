@@ -14,7 +14,7 @@ const variant = computed(() => String(props.config.layoutVariant || "default"));
       :src="String(content.backgroundImage)"
       alt=""
       class="absolute inset-0 h-full w-full object-cover opacity-20"
-    />
+    >
     <div class="absolute inset-0 pointer-events-none bg-gradient-to-br from-[var(--landing-accent)]/15 via-transparent to-transparent" />
     <div class="relative flex min-h-[60vh] flex-col items-center justify-center px-6 py-20 text-center md:py-32">
       <span

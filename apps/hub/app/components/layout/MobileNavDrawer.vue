@@ -175,7 +175,7 @@ onBeforeUnmount(() => {
           <div class="px-4 py-4">
             <div class="mb-3 flex items-center gap-3">
               <div class="size-9 shrink-0 overflow-hidden rounded-full bg-base-300">
-                <img v-if="currentUser?.avatarUrl" :src="currentUser.avatarUrl" alt="" class="size-full object-cover" />
+                <img v-if="currentUser?.avatarUrl" :src="currentUser.avatarUrl" alt="" class="size-full object-cover" >
                 <span v-else class="flex size-full items-center justify-center text-xs font-semibold uppercase text-base-content/50">{{ (currentUser?.profileName || "?").slice(0, 2) }}</span>
               </div>
               <div class="min-w-0">

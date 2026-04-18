@@ -91,7 +91,7 @@ function formatAnswerValue(field: { inputType: string; options?: Array<{ id: str
             :src="data.application.discordAvatarUrl"
             class="w-12 h-12 rounded-full"
             alt=""
-          />
+          >
           <div>
             <p class="text-lg font-semibold">{{ data.application.discordUsername }}</p>
             <p class="text-sm" style="color: var(--color-base-content-secondary)">
@@ -131,7 +131,7 @@ function formatAnswerValue(field: { inputType: string; options?: Array<{ id: str
                         :src="`/api/applications/${data.application.id}/files/${data.application.answersJson[field.nodeId]}`"
                         :alt="data.fileUploads[String(data.application.answersJson[field.nodeId])].originalFilename"
                         class="answer-row__image"
-                      />
+                      >
                       <a
                         :href="`/api/applications/${data.application.id}/files/${data.application.answersJson[field.nodeId]}`"
                         target="_blank"

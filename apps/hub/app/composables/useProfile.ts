@@ -1,7 +1,6 @@
 import type { DisplayNameField } from "@guildora/shared";
 import type { AppearancePreference } from "../../utils/appearance";
-import type { LocalePreference } from "../../utils/locale-preference";
-import type { LocaleResolutionSource } from "../../utils/locale-preference";
+import type { LocalePreference, LocaleResolutionSource  } from "../../utils/locale-preference";
 
 export interface EditableProfile {
   profileName: string;

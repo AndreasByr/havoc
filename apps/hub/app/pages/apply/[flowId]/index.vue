@@ -120,7 +120,7 @@ function onSubmitted(result: { applicationId: string; message: string }) {
             :src="accessResult.user.discordAvatarUrl"
             class="apply-user-bar__avatar"
             alt=""
-          />
+          >
           <div v-else class="apply-user-bar__avatar-fallback">
             {{ accessResult.user.discordUsername.slice(0, 2).toUpperCase() }}
           </div>

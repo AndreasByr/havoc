@@ -23,7 +23,7 @@ defineProps<{
           :src="String(item.url || item.image)"
           :alt="String(item.alt || '')"
           class="aspect-video w-full object-cover transition-transform duration-300 hover:scale-[1.03]"
-        />
+        >
       </div>
     </div>
   </section>

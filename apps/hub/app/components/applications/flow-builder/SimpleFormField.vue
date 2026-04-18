@@ -110,7 +110,7 @@ onUnmounted(() => document.removeEventListener("click", onClickOutsideRoles));
     <!-- Collapsed header -->
     <div class="simple-field__header" @click="toggleExpand">
       <div class="simple-field__handle">
-        <Icon name="proicons:re-order" />
+        <Icon name="proicons:grid-dots" />
       </div>
       <span class="simple-field__badge">{{ typeLabel }}</span>
       <span class="simple-field__label">{{ displayLabel }}</span>
@@ -138,18 +138,18 @@ onUnmounted(() => document.removeEventListener("click", onClickOutsideRoles));
         </div>
         <div class="field-row">
           <label class="field-label">{{ t("applications.flowBuilder.sidebar.label") }}</label>
-          <input v-model="(item.data as FlowInputNodeData).label" class="input input-sm w-full" @blur="commitChanges" />
+          <input v-model="(item.data as FlowInputNodeData).label" class="input input-sm w-full" @blur="commitChanges" >
         </div>
         <div class="field-row">
           <label class="field-label">{{ t("applications.flowBuilder.sidebar.description") }}</label>
-          <input v-model="(item.data as FlowInputNodeData).description" class="input input-sm w-full" @blur="commitChanges" />
+          <input v-model="(item.data as FlowInputNodeData).description" class="input input-sm w-full" @blur="commitChanges" >
         </div>
         <div class="field-row">
           <label class="field-label">{{ t("applications.flowBuilder.sidebar.placeholder") }}</label>
-          <input v-model="(item.data as FlowInputNodeData).placeholder" class="input input-sm w-full" @blur="commitChanges" />
+          <input v-model="(item.data as FlowInputNodeData).placeholder" class="input input-sm w-full" @blur="commitChanges" >
         </div>
         <label class="flex items-center gap-2 cursor-pointer field-row">
-          <input v-model="(item.data as FlowInputNodeData).required" type="checkbox" class="toggle toggle-sm" @change="commitChanges" />
+          <input v-model="(item.data as FlowInputNodeData).required" type="checkbox" class="toggle toggle-sm" @change="commitChanges" >
           <span class="text-sm">{{ t("applications.flowBuilder.sidebar.required") }}</span>
         </label>
 
@@ -159,7 +159,7 @@ onUnmounted(() => document.removeEventListener("click", onClickOutsideRoles));
             <label class="field-label">{{ t("applications.flowBuilder.sidebar.options") }}</label>
             <div class="space-y-1">
               <div v-for="(opt, i) in (item.data as FlowInputNodeData).options" :key="i" class="flex items-center gap-1">
-                <input v-model="opt.label" class="input input-sm flex-1" :placeholder="t('applications.flowBuilder.sidebar.optionLabel')" @blur="commitChanges" />
+                <input v-model="opt.label" class="input input-sm flex-1" :placeholder="t('applications.flowBuilder.sidebar.optionLabel')" @blur="commitChanges" >
                 <button class="btn btn-ghost btn-sm" @click="handleRemoveOption(i)">
                   <Icon name="proicons:cancel" class="text-sm" />
                 </button>
@@ -187,7 +187,7 @@ onUnmounted(() => document.removeEventListener("click", onClickOutsideRoles));
               </button>
               <div v-if="discordRoleDropdownOpen" class="role-multiselect__dropdown">
                 <label v-for="role in guildRoles" :key="role.id" class="role-multiselect__option">
-                  <input type="checkbox" :checked="((item.data as FlowInputNodeData).discordRoleOptions || []).some((r) => r.roleId === role.id)" @change="handleToggleDiscordRoleOption(role.id)" />
+                  <input type="checkbox" :checked="((item.data as FlowInputNodeData).discordRoleOptions || []).some((r) => r.roleId === role.id)" @change="handleToggleDiscordRoleOption(role.id)" >
                   <span class="role-color-dot" :style="{ backgroundColor: roleColorHex(role.color) }" />
                   {{ role.name }}
                 </label>
@@ -205,11 +205,11 @@ onUnmounted(() => document.removeEventListener("click", onClickOutsideRoles));
         </div>
         <div class="field-row">
           <label class="field-label">{{ t("applications.flowBuilder.sidebar.ctaButtonLabel") }}</label>
-          <input v-model="(item.data as FlowInfoNodeData).ctaLabel" class="input input-sm w-full" @blur="commitChanges" />
+          <input v-model="(item.data as FlowInfoNodeData).ctaLabel" class="input input-sm w-full" @blur="commitChanges" >
         </div>
         <div class="field-row">
           <label class="field-label">{{ t("applications.flowBuilder.sidebar.ctaButtonUrl") }}</label>
-          <input v-model="(item.data as FlowInfoNodeData).ctaUrl" class="input input-sm w-full" @blur="commitChanges" />
+          <input v-model="(item.data as FlowInfoNodeData).ctaUrl" class="input input-sm w-full" @blur="commitChanges" >
         </div>
       </template>
 
@@ -230,7 +230,7 @@ onUnmounted(() => document.removeEventListener("click", onClickOutsideRoles));
             </button>
             <div v-if="roleDropdownOpen" class="role-multiselect__dropdown">
               <label v-for="role in guildRoles" :key="role.id" class="role-multiselect__option">
-                <input type="checkbox" :checked="((item.data as FlowRoleAssignmentNodeData).roleIds || []).includes(role.id)" @change="handleToggleRole(role.id)" />
+                <input type="checkbox" :checked="((item.data as FlowRoleAssignmentNodeData).roleIds || []).includes(role.id)" @change="handleToggleRole(role.id)" >
                 {{ role.name }}
               </label>
               <div v-if="guildRoles.length === 0" class="text-xs p-2" style="color: var(--color-base-content-secondary)">

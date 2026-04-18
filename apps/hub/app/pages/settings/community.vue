@@ -930,7 +930,7 @@ async function removeEmbed(group: RoleGroup) {
               v-model="field.required"
               type="checkbox"
               class="toggle toggle-sm"
-            />
+            >
             <span class="text-sm">{{ $t("settings.displayNameTemplate.fieldRequired") }}</span>
           </label>
           <button
@@ -1137,7 +1137,7 @@ async function removeEmbed(group: RoleGroup) {
                   class="input input-sm w-16 text-center"
                   :placeholder="$t('roleGroups.emojiPlaceholder')"
                   maxlength="4"
-                />
+                >
                 <button class="btn btn-ghost btn-sm text-error" type="button" @click="removeRoleFromGroup(index)">
                   <Icon name="proicons:cancel" />
                 </button>

@@ -115,7 +115,7 @@ function onSubmitted(result: { applicationId: string; message: string }) {
             :src="validationData.user.discordAvatarUrl"
             class="apply-user-bar__avatar"
             alt=""
-          />
+          >
           <div v-else class="apply-user-bar__avatar-fallback">
             {{ validationData.user.discordUsername.slice(0, 2).toUpperCase() }}
           </div>

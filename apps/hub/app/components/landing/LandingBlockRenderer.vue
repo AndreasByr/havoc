@@ -20,8 +20,8 @@ const styleVariant = computed(() => {
 
 <template>
   <component
-    v-if="resolved"
     :is="resolved"
+    v-if="resolved"
     :content="section.content"
     :config="section.config"
     :data-style-variant="styleVariant"

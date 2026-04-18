@@ -43,7 +43,7 @@ const { data, pending, error } = await useFetch<{ applications: ArchiveItem[] }>
         type="text"
         class="input input-sm w-64"
         placeholder="Search by username..."
-      />
+      >
       <select v-model="statusFilter" class="select select-sm">
         <option value="">All</option>
         <option value="approved">{{ t("applications.status.approved") }}</option>
@@ -77,7 +77,7 @@ const { data, pending, error } = await useFetch<{ applications: ArchiveItem[] }>
             :src="app.discordAvatarUrl"
             class="w-8 h-8 rounded-full"
             alt=""
-          />
+          >
           <div class="flex-1 min-w-0">
             <p class="font-medium text-sm" style="color: var(--color-base-content)">{{ app.discordUsername }}</p>
             <p class="text-xs" style="color: var(--color-base-content-secondary)">

@@ -191,7 +191,7 @@ const save = async () => {
         <div class="space-y-4">
           <div>
             <label class="block text-sm font-medium mb-1">{{ t("applications.settings.name") }}</label>
-            <input v-model="flowName" type="text" class="input input-sm w-full" />
+            <input v-model="flowName" type="text" class="input input-sm w-full" >
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">{{ t("applications.settings.status") }}</label>
@@ -225,7 +225,7 @@ const save = async () => {
               </template>
             </select>
             <div v-else-if="channelsLoading" class="text-sm" style="color: var(--color-base-content-secondary)">{{ t("applications.settings.loadingChannels") }}</div>
-            <input v-else v-model="settings.embed.channelId" type="text" class="input input-sm w-full" placeholder="e.g. 123456789012345678" />
+            <input v-else v-model="settings.embed.channelId" type="text" class="input input-sm w-full" placeholder="e.g. 123456789012345678" >
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">{{ t("applications.settings.embedDescription") }}</label>
@@ -233,7 +233,7 @@ const save = async () => {
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">{{ t("applications.settings.buttonLabel") }}</label>
-            <input v-model="settings.embed.buttonLabel" type="text" class="input input-sm w-full" :placeholder="t('applications.settings.applyNow')" />
+            <input v-model="settings.embed.buttonLabel" type="text" class="input input-sm w-full" :placeholder="t('applications.settings.applyNow')" >
           </div>
         </div>
 
@@ -256,7 +256,7 @@ const save = async () => {
               </template>
             </select>
             <div v-else-if="channelsLoading" class="text-sm" style="color: var(--color-base-content-secondary)">{{ t("applications.settings.loadingChannels") }}</div>
-            <input v-else v-model="settings.welcome.channelId" type="text" class="input input-sm w-full" :placeholder="t('applications.settings.channelId')" />
+            <input v-else v-model="settings.welcome.channelId" type="text" class="input input-sm w-full" :placeholder="t('applications.settings.channelId')" >
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">{{ t("applications.settings.welcomeMessageTemplate") }}</label>
@@ -279,15 +279,15 @@ const save = async () => {
         <div class="space-y-4">
           <div>
             <label class="block text-sm font-medium mb-1">{{ t("applications.settings.ephemeralConfirmation") }}</label>
-            <input v-model="settings.messages.ephemeralConfirmation" type="text" class="input input-sm w-full" :placeholder="t('applications.settings.ephemeralConfirmationPlaceholder')" />
+            <input v-model="settings.messages.ephemeralConfirmation" type="text" class="input input-sm w-full" :placeholder="t('applications.settings.ephemeralConfirmationPlaceholder')" >
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">{{ t("applications.settings.ephemeralButtonLabel") }}</label>
-            <input v-model="settings.messages.ephemeralButtonLabel" type="text" class="input input-sm w-full" :placeholder="t('applications.settings.ephemeralButtonLabelPlaceholder')" />
+            <input v-model="settings.messages.ephemeralButtonLabel" type="text" class="input input-sm w-full" :placeholder="t('applications.settings.ephemeralButtonLabelPlaceholder')" >
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">{{ t("applications.settings.tokenExpiredMessage") }}</label>
-            <input v-model="settings.messages.tokenExpired" type="text" class="input input-sm w-full" :placeholder="t('applications.settings.tokenExpiredPlaceholder')" />
+            <input v-model="settings.messages.tokenExpired" type="text" class="input input-sm w-full" :placeholder="t('applications.settings.tokenExpiredPlaceholder')" >
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">{{ t("applications.settings.dmOnApproval") }}</label>
@@ -303,7 +303,7 @@ const save = async () => {
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">{{ t("applications.settings.submissionConfirmation") }}</label>
-            <input v-model="settings.messages.submissionConfirmation" type="text" class="input input-sm w-full" :placeholder="t('applications.settings.submissionConfirmationPlaceholder')" />
+            <input v-model="settings.messages.submissionConfirmation" type="text" class="input input-sm w-full" :placeholder="t('applications.settings.submissionConfirmationPlaceholder')" >
           </div>
         </div>
       </div>
@@ -335,7 +335,7 @@ const save = async () => {
                 </button>
                 <div v-if="openDropdown === 'submit-assign'" class="role-multiselect__dropdown">
                   <label v-for="role in guildRoles" :key="role.id" class="role-multiselect__option">
-                    <input type="checkbox" :checked="settings.roles.onSubmission.includes(role.id)" @change="settings.roles.onSubmission = toggleRoleIn(settings.roles.onSubmission, role.id)" />
+                    <input type="checkbox" :checked="settings.roles.onSubmission.includes(role.id)" @change="settings.roles.onSubmission = toggleRoleIn(settings.roles.onSubmission, role.id)" >
                     {{ role.name }}
                   </label>
                 </div>
@@ -358,7 +358,7 @@ const save = async () => {
                 </button>
                 <div v-if="openDropdown === 'submit-remove'" class="role-multiselect__dropdown">
                   <label v-for="role in guildRoles" :key="role.id" class="role-multiselect__option">
-                    <input type="checkbox" :checked="(settings.roles.removeOnSubmission ?? []).includes(role.id)" @change="settings.roles.removeOnSubmission = toggleRoleIn(settings.roles.removeOnSubmission ?? [], role.id)" />
+                    <input type="checkbox" :checked="(settings.roles.removeOnSubmission ?? []).includes(role.id)" @change="settings.roles.removeOnSubmission = toggleRoleIn(settings.roles.removeOnSubmission ?? [], role.id)" >
                     {{ role.name }}
                   </label>
                 </div>
@@ -385,7 +385,7 @@ const save = async () => {
                 </button>
                 <div v-if="openDropdown === 'approve-assign'" class="role-multiselect__dropdown">
                   <label v-for="role in guildRoles" :key="role.id" class="role-multiselect__option">
-                    <input type="checkbox" :checked="settings.roles.onApproval.includes(role.id)" @change="settings.roles.onApproval = toggleRoleIn(settings.roles.onApproval, role.id)" />
+                    <input type="checkbox" :checked="settings.roles.onApproval.includes(role.id)" @change="settings.roles.onApproval = toggleRoleIn(settings.roles.onApproval, role.id)" >
                     {{ role.name }}
                   </label>
                 </div>
@@ -408,7 +408,7 @@ const save = async () => {
                 </button>
                 <div v-if="openDropdown === 'approve-remove'" class="role-multiselect__dropdown">
                   <label v-for="role in guildRoles" :key="role.id" class="role-multiselect__option">
-                    <input type="checkbox" :checked="(settings.roles.removeOnApproval ?? []).includes(role.id)" @change="settings.roles.removeOnApproval = toggleRoleIn(settings.roles.removeOnApproval ?? [], role.id)" />
+                    <input type="checkbox" :checked="(settings.roles.removeOnApproval ?? []).includes(role.id)" @change="settings.roles.removeOnApproval = toggleRoleIn(settings.roles.removeOnApproval ?? [], role.id)" >
                     {{ role.name }}
                   </label>
                 </div>
@@ -426,7 +426,7 @@ const save = async () => {
         </p>
         <div class="space-y-4">
           <label class="flex items-center gap-3 cursor-pointer">
-            <input v-model="settings.ticket!.enabled" type="checkbox" class="toggle toggle-sm" />
+            <input v-model="settings.ticket!.enabled" type="checkbox" class="toggle toggle-sm" >
             <span class="text-sm">{{ t("applications.settings.ticketEnabled") }}</span>
           </label>
 
@@ -485,7 +485,7 @@ const save = async () => {
                 </button>
                 <div v-if="openDropdown === 'ticket-access'" class="role-multiselect__dropdown">
                   <label v-for="role in guildRoles" :key="role.id" class="role-multiselect__option">
-                    <input type="checkbox" :checked="settings.ticket!.accessRoleIds.includes(role.id)" @change="settings.ticket!.accessRoleIds = toggleRoleIn(settings.ticket!.accessRoleIds, role.id)" />
+                    <input type="checkbox" :checked="settings.ticket!.accessRoleIds.includes(role.id)" @change="settings.ticket!.accessRoleIds = toggleRoleIn(settings.ticket!.accessRoleIds, role.id)" >
                     {{ role.name }}
                   </label>
                 </div>
@@ -495,7 +495,7 @@ const save = async () => {
             <!-- Name Template -->
             <div>
               <label class="block text-sm font-medium mb-1">{{ t("applications.settings.ticketNameTemplate") }}</label>
-              <input v-model="settings.ticket!.nameTemplate" type="text" class="input input-sm w-full" :placeholder="t('applications.settings.ticketNameTemplatePlaceholder')" />
+              <input v-model="settings.ticket!.nameTemplate" type="text" class="input input-sm w-full" :placeholder="t('applications.settings.ticketNameTemplatePlaceholder')" >
               <p class="mt-1 text-xs" style="color: var(--color-base-content-secondary)">{{ t("applications.settings.ticketNameTemplateHint") }}</p>
             </div>
 
@@ -514,24 +514,24 @@ const save = async () => {
         <h2 class="settings-section__title">{{ t("applications.settings.behavior") }}</h2>
         <div class="space-y-4">
           <label class="flex items-center gap-3 cursor-pointer">
-            <input v-model="settings.concurrency.allowReapplyToSameFlow" type="checkbox" class="toggle toggle-sm" />
+            <input v-model="settings.concurrency.allowReapplyToSameFlow" type="checkbox" class="toggle toggle-sm" >
             <span class="text-sm">{{ t("applications.settings.allowReapply") }}</span>
           </label>
           <label class="flex items-center gap-3 cursor-pointer">
-            <input v-model="settings.concurrency.allowCrossFlowApplications" type="checkbox" class="toggle toggle-sm" />
+            <input v-model="settings.concurrency.allowCrossFlowApplications" type="checkbox" class="toggle toggle-sm" >
             <span class="text-sm">{{ t("applications.settings.allowCrossFlow") }}</span>
           </label>
           <label class="flex items-center gap-3 cursor-pointer">
-            <input v-model="settings.testMode" type="checkbox" class="toggle toggle-sm" />
+            <input v-model="settings.testMode" type="checkbox" class="toggle toggle-sm" >
             <span class="text-sm">{{ t("applications.settings.testMode") }}</span>
           </label>
           <div>
             <label class="block text-sm font-medium mb-1">{{ t("applications.settings.archiveRetention") }}</label>
-            <input v-model.number="settings.archiveRetentionDays" type="number" class="input input-sm w-32" min="0" />
+            <input v-model.number="settings.archiveRetentionDays" type="number" class="input input-sm w-32" min="0" >
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">{{ t("applications.settings.tokenExpiry") }}</label>
-            <input v-model.number="settings.tokenExpiryMinutes" type="number" class="input input-sm w-32" min="1" max="1440" />
+            <input v-model.number="settings.tokenExpiryMinutes" type="number" class="input input-sm w-32" min="1" max="1440" >
           </div>
         </div>
       </div>

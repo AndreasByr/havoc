@@ -16,7 +16,7 @@ defineProps<{
         :key="i"
         class="landing-card collapse collapse-arrow rounded-xl shadow-sm"
       >
-        <input type="radio" :name="'faq-accordion'" />
+        <input type="radio" :name="'faq-accordion'" >
         <div class="collapse-title font-semibold landing-section-title">{{ item.question }}</div>
         <div class="collapse-content text-sm leading-relaxed landing-text-muted">
           <p>{{ item.answer }}</p>
