@@ -94,8 +94,14 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Lint ist in CI wieder blocking (nicht `continue-on-error: true`); alle vorher bestehenden Lint-Fehler im `platform/`-Tree sind entweder gefixt oder per gezielter Disable-Kommentar mit Begründung unterdrückt
   3. `vue-tsc`-Typecheck läuft in CI und ist grün über mindestens 3 aufeinanderfolgende Haupt-Branch-Commits; Flaky-Tests haben entweder einen Fix oder ein `// TODO: flaky` mit Ticket-/Todo-Referenz
   4. Eine benannte, priorisierte Liste von Admin-/Moderation-/Auth-/Apps-API-Routen unter `platform/apps/hub/server/api/` ist in Phase-Planning festgelegt, und jede Route auf der Liste hat einen Spec-File unter `__tests__/` — die Liste selbst wird als abgeschlossen markiert (nicht Coverage-Prozent)
-**Plans**: TBD
-**UI hint**: yes
+**Plans**: 7 plans
+- [ ] 05-01-PLAN.md — CI Audit document: per-job status for all 4 workflows (Wave 1)
+- [ ] 05-02-PLAN.md — matrix-bot TS2322 fix: BOT_INTERNAL_TOKEN! non-null assertion (Wave 2)
+- [ ] 05-03-PLAN.md — Hub lint fix: all 257 errors fixed in source, pnpm lint exits 0 (Wave 3)
+- [ ] 05-04-PLAN.md — ESLint security plugins: eslint-plugin-security + no-unsanitized integrated in hub (Wave 4)
+- [ ] 05-05-PLAN.md — API spec files Wave A: auth-routes.spec.ts + mod-routes.spec.ts (Wave 4, parallel)
+- [ ] 05-06-PLAN.md — API spec files Wave B: admin-settings.spec.ts + community-settings.spec.ts (Wave 4, parallel)
+- [ ] 05-07-PLAN.md — CI hardening: remove continue-on-error from Lint step in ci.yml + release.yml (Wave 5)
 
 ### Phase 6: Matrix-Bot-Parity
 **Goal**: Der Matrix-Bot ist kein "halb da" mehr — er emittiert App-Hooks analog zum Discord-Bot und sein State liegt ordentlich, nicht als untrackte Datei im Working-Tree.
@@ -141,11 +147,11 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 2. Apps-Plugin-Sandbox | 0/4 | Not started | - |
 | 3. Auth- & Session-Härtung | 0/4 | Not started | - |
 | 4. Supply-Chain & Secrets | 4/4 | Complete | 2026-04-18 |
-| 5. CI-Vertrauen & API-Test-Abdeckung | 0/TBD | Not started | - |
+| 5. CI-Vertrauen & API-Test-Abdeckung | 0/7 | Not started | - |
 | 6. Matrix-Bot-Parity | 0/TBD | Not started | - |
 | 7. Preview-Lifecycle & Tunnel-Resilienz | 0/TBD | Not started | - |
 | 8. Dokumentations-Konsolidierung | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-04-16*
-*Last updated: 2026-04-18 after Phase 4 planning*
+*Last updated: 2026-04-18 after Phase 5 planning*
