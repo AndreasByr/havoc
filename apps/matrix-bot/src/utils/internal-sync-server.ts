@@ -104,6 +104,36 @@ export function startInternalSyncServer(config: ServerConfig) {
       paramNames: ["mxid"],
       handler: handleSyncCommunityRoles,
     },
+    {
+      method: "POST",
+      pattern: /^\/internal\/guild\/channels\/([^/]+)\/send$/,
+      paramNames: ["channelId"],
+      handler: handleChannelSend,
+    },
+    {
+      method: "DELETE",
+      pattern: /^\/internal\/guild\/channels\/([^/]+)\/messages\/([^/]+)$/,
+      paramNames: ["channelId", "messageId"],
+      handler: handleDeleteMessage,
+    },
+    {
+      method: "POST",
+      pattern: /^\/internal\/guild\/members\/([^/]+)\/kick$/,
+      paramNames: ["memberId"],
+      handler: handleKick,
+    },
+    {
+      method: "POST",
+      pattern: /^\/internal\/guild\/members\/([^/]+)\/ban$/,
+      paramNames: ["memberId"],
+      handler: handleBan,
+    },
+    {
+      method: "POST",
+      pattern: /^\/internal\/guild\/members\/([^/]+)\/dm$/,
+      paramNames: ["memberId"],
+      handler: handleDm,
+    },
   ];
 
   const server = http.createServer(async (req, res) => {
@@ -539,6 +569,77 @@ async function handleSyncCommunityRoles(
   const currentRoleIds = targetLevel > usersDefault ? [`pl_${targetLevel}`] : [];
 
   return { ok: true, addedRoleIds, removedRoleIds, currentRoleIds };
+}
+
+async function handleChannelSend(
+  client: MatrixClient,
+  _spaceId: string | null,
+  params: Record<string, string>,
+  body: unknown
+): Promise<unknown> {
+  const { channelId } = params;
+  const payload = body as { message?: string } | null;
+  if (!payload?.message) {
+    throw new SyncServerError("Missing message", 400, "INVALID_REQUEST");
+  }
+  await client.sendMessage(channelId, { msgtype: "m.text", body: payload.message });
+  return { ok: true };
+}
+
+async function handleDeleteMessage(
+  client: MatrixClient,
+  _spaceId: string | null,
+  params: Record<string, string>
+): Promise<unknown> {
+  const { channelId, messageId } = params;
+  await client.redactEvent(channelId, messageId);
+  return { ok: true };
+}
+
+async function handleKick(
+  client: MatrixClient,
+  spaceId: string | null,
+  params: Record<string, string>,
+  body: unknown
+): Promise<unknown> {
+  if (!spaceId) throw new SyncServerError("No space configured", 400, "SYNC_FAILED");
+  const { memberId } = params;
+  const payload = body as { reason?: string } | null;
+  await client.kickUser(memberId, spaceId, payload?.reason || "Kicked via hub");
+  return { ok: true };
+}
+
+async function handleBan(
+  client: MatrixClient,
+  spaceId: string | null,
+  params: Record<string, string>,
+  body: unknown
+): Promise<unknown> {
+  if (!spaceId) throw new SyncServerError("No space configured", 400, "SYNC_FAILED");
+  const { memberId } = params;
+  const payload = body as { reason?: string; deleteMessageSeconds?: number } | null;
+  await client.banUser(memberId, spaceId, payload?.reason || "Banned via hub");
+  return { ok: true };
+}
+
+async function handleDm(
+  client: MatrixClient,
+  _spaceId: string | null,
+  params: Record<string, string>,
+  body: unknown
+): Promise<unknown> {
+  const { memberId } = params;
+  const payload = body as { message?: string } | null;
+  if (!payload?.message) {
+    throw new SyncServerError("Missing message", 400, "INVALID_REQUEST");
+  }
+  try {
+    const dmRoomId = await client.dms.getOrCreateDm(memberId);
+    await client.sendMessage(dmRoomId, { msgtype: "m.text", body: payload.message });
+    return { ok: true };
+  } catch {
+    return { ok: false, reason: "dm_failed" };
+  }
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
