@@ -170,7 +170,7 @@ async function _mockModRightOk() {
 // ─── Setup ────────────────────────────────────────────────────────────────────
 
 beforeEach(() => {
-  mocks = stubNuxtAutoImports();
+  _mocks = stubNuxtAutoImports();
   vi.stubGlobal("getQuery", vi.fn().mockReturnValue({}));
   vi.stubGlobal("getRouterParam", vi.fn().mockReturnValue("test-id"));
   vi.stubGlobal("getRouterParams", vi.fn().mockReturnValue({ id: "1" }));
