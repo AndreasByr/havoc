@@ -8,7 +8,7 @@ import crypto from "node:crypto";
 import http from "node:http";
 import type { MatrixClient } from "matrix-bot-sdk";
 import { getSpaceHierarchy } from "./matrix-helpers.js";
-import { loadInstalledAppHooks } from "./app-hooks.js";
+import { loadInstalledAppHooks, botAppHookRegistry } from "./app-hooks.js";
 
 interface ServerConfig {
   client: MatrixClient;
@@ -77,6 +77,8 @@ export function startInternalSyncServer(config: ServerConfig) {
       res.writeHead(503, { "Content-Type": "application/json" });
       res.end(
         JSON.stringify({
+          "code": "MISCONFIGURED",
+          "message": "Server misconfigured: internal token not set",
           error: "Server misconfigured: internal token not set",
           errorCode: "MISCONFIGURED"
         })
@@ -90,7 +92,7 @@ export function startInternalSyncServer(config: ServerConfig) {
       !timingSafeEqualString(authHeader.slice("Bearer ".length), token)
     ) {
       res.writeHead(401, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: "Unauthorized", errorCode: "UNAUTHORIZED" }));
+      res.end(JSON.stringify({ code: "UNAUTHORIZED", message: "Unauthorized", error: "Unauthorized", errorCode: "UNAUTHORIZED" }));
       return;
     }
 
@@ -123,13 +125,13 @@ export function startInternalSyncServer(config: ServerConfig) {
         const message = err instanceof Error ? err.message : "Internal error";
         console.error(`[matrix-bot] ${method} ${pathname} error:`, message);
         res.writeHead(500, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: message, errorCode: "SYNC_FAILED" }));
+        res.end(JSON.stringify({ code: "SYNC_FAILED", message, error: message, errorCode: "SYNC_FAILED" }));
       }
       return;
     }
 
     res.writeHead(404, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: "Not found" }));
+    res.end(JSON.stringify({ code: "NOT_FOUND", message: "Not found", error: "Not found", errorCode: "NOT_FOUND" }));
   });
 
   server.listen(port, "0.0.0.0", () => {
@@ -269,10 +271,23 @@ async function handleSyncUser(
 
       const powerLevels = await client.getRoomStateEvent(spaceId, "m.room.power_levels", "");
       const users = (powerLevels.users as Record<string, number>) || {};
+      const previousLevel = users[mxid] ?? (powerLevels.users_default as number | undefined) ?? 0;
       users[mxid] = targetLevel;
       await client.sendStateEvent(spaceId, "m.room.power_levels", "", { ...powerLevels, users });
+
+      if (previousLevel !== targetLevel) {
+        const addedRoles = targetLevel > previousLevel ? [`pl_${targetLevel}`] : [];
+        const removedRoles = [`pl_${previousLevel}`];
+        botAppHookRegistry.emit("onRoleChange", {
+          guildId: spaceId,
+          memberId: mxid,
+          addedRoles,
+          removedRoles,
+          platform: "matrix"
+        });
+      }
     } catch {
-      // Power level update failed — may lack permissions
+      // Power level update failed — may lack permissions; onRoleChange is intentionally not emitted
     }
   }
 
