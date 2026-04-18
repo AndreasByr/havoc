@@ -9,7 +9,6 @@ definePageMeta({
 const route = useRoute();
 const applicationId = route.params.applicationId as string;
 const { t } = useI18n();
-const router = useRouter();
 
 type ApplicationDetail = {
   application: {
@@ -100,15 +99,6 @@ async function retryRoles() {
   }
 }
 
-function getAnswerLabel(nodeId: string): string {
-  if (!linearized.value) return nodeId;
-  for (const step of linearized.value.steps) {
-    const field = step.fields?.find((f) => f.nodeId === nodeId);
-    if (field) return field.label;
-  }
-  return nodeId;
-}
-
 function formatAnswerValue(field: { inputType: string; options?: Array<{ id: string; label: string }> }, rawValue: unknown): string {
   if (rawValue == null) return '—';
 
@@ -194,7 +184,7 @@ function formatAnswerValue(field: { inputType: string; options?: Array<{ id: str
             :src="data.application.discordAvatarUrl"
             class="w-12 h-12 rounded-full"
             alt=""
-          />
+          >
           <div>
             <p class="text-lg font-semibold">{{ data.application.discordUsername }}</p>
             <p class="text-sm" style="color: var(--color-base-content-secondary)">
@@ -247,7 +237,7 @@ function formatAnswerValue(field: { inputType: string; options?: Array<{ id: str
                         :src="`/api/applications/${data.application.id}/files/${data.application.answersJson[field.nodeId]}`"
                         :alt="data.fileUploads[String(data.application.answersJson[field.nodeId])].originalFilename"
                         class="answer-row__image"
-                      />
+                      >
                       <a
                         :href="`/api/applications/${data.application.id}/files/${data.application.answersJson[field.nodeId]}`"
                         target="_blank"

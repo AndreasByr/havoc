@@ -25,7 +25,7 @@ type NotificationItem = {
   enabled: boolean;
 };
 
-const { data, pending, error, refresh } = await useFetch<{ applications: ApplicationItem[] }>(
+const { data, pending, error } = await useFetch<{ applications: ApplicationItem[] }>(
   "/api/applications/open"
 );
 
@@ -76,7 +76,7 @@ async function toggleNotification(flowId: string, enabled: boolean) {
             :checked="item.enabled"
             :disabled="toggling === item.flowId"
             @change="toggleNotification(item.flowId, !item.enabled)"
-          />
+          >
           <span>{{ item.flowName }}</span>
         </label>
       </div>
@@ -109,7 +109,7 @@ async function toggleNotification(flowId: string, enabled: boolean) {
             :src="app.discordAvatarUrl"
             class="w-10 h-10 rounded-full"
             alt=""
-          />
+          >
           <div v-else class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold" style="background: var(--color-accent); color: var(--color-accent-content)">
             {{ app.discordUsername.slice(0, 2).toUpperCase() }}
           </div>

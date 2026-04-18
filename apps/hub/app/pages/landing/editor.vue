@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { TourStep } from "~/composables/useOnboardingTour";
-import { TEMPLATE_COLOR_DEFAULTS, LANDING_COLOR_KEYS, resolveLandingColors, isValidHexColor, migrateColorOverrides } from "@guildora/shared";
+import { resolveLandingColors, migrateColorOverrides } from "@guildora/shared";
 import type { LandingColorPalette, PerTemplateColorOverrides, LandingColorOverrides } from "@guildora/shared";
 
 definePageMeta({
@@ -14,7 +14,6 @@ const { t } = useI18n();
 const { user } = useAuth();
 const runtimeConfig = useRuntimeConfig();
 const isDev = runtimeConfig.public.isDev;
-const landingUrl = String(runtimeConfig.public.landingUrl || runtimeConfig.public.appUrl || "http://localhost:3000").replace(/\/+$/, ""); // kept for "View Live" link
 
 interface LandingSection {
   id: string;
@@ -277,8 +276,6 @@ async function resetToTemplate() {
   }
 }
 
-const hasDrafts = computed(() => sections.value.some((s) => s.status === "draft"));
-const draftCount = computed(() => sections.value.filter((s) => s.status === "draft").length);
 const isPagePublished = computed(() => !!pageConfig.value.publishedAt);
 const showPublishConfirm = ref(false);
 const showUnpublishConfirm = ref(false);
@@ -395,11 +392,6 @@ function blockName(type: string): string {
   return editLocale.value === "de" ? block.name.de : block.name.en;
 }
 
-function localeLabel(code: string): string {
-  const labels: Record<string, string> = { en: "English", de: "Deutsch", fr: "Fran\u00e7ais", es: "Espa\u00f1ol", it: "Italiano", pt: "Portugu\u00eas", nl: "Nederlands", pl: "Polski", ru: "\u0420\u0443\u0441\u0441\u043a\u0438\u0439", ja: "\u65e5\u672c\u8a9e", ko: "\ud55c\uad6d\uc5b4", zh: "\u4e2d\u6587", tr: "T\u00fcrk\u00e7e", ar: "\u0627\u0644\u0639\u0631\u0628\u064a\u0629" };
-  return labels[code] || code.toUpperCase();
-}
-
 function onDragStart(index: number) {
   draggedIndex.value = index;
 }
@@ -436,40 +428,9 @@ const activeTemplateOverrides = computed<LandingColorOverrides>(() =>
   pageConfig.value.colorOverrides[pageConfig.value.activeTemplate] ?? {}
 );
 
-const templateDefaults = computed<LandingColorPalette>(() =>
-  TEMPLATE_COLOR_DEFAULTS[pageConfig.value.activeTemplate] ?? TEMPLATE_COLOR_DEFAULTS.default
-);
-
 const resolvedColors = computed<LandingColorPalette>(() =>
   resolveLandingColors(pageConfig.value.activeTemplate, activeTemplateOverrides.value)
 );
-
-const hexColorRegex = /^#[0-9a-fA-F]{6}$/;
-
-function setColorOverride(key: string, value: string) {
-  if (!hexColorRegex.test(value)) return;
-  const tid = pageConfig.value.activeTemplate;
-  const current = pageConfig.value.colorOverrides[tid] ?? {};
-  pageConfig.value.colorOverrides = {
-    ...pageConfig.value.colorOverrides,
-    [tid]: { ...current, [key]: value.toLowerCase() }
-  };
-  markDirty();
-}
-
-function clearColorOverride(key: string) {
-  const tid = pageConfig.value.activeTemplate;
-  const current = { ...(pageConfig.value.colorOverrides[tid] ?? {}) };
-  delete current[key as keyof typeof current];
-  const next = { ...pageConfig.value.colorOverrides };
-  if (Object.keys(current).length > 0) {
-    next[tid] = current;
-  } else {
-    delete next[tid];
-  }
-  pageConfig.value.colorOverrides = next;
-  markDirty();
-}
 
 onMounted(async () => {
   await loadData();
@@ -632,7 +593,7 @@ onMounted(async () => {
           <div class="p-4">
             <div class="flex items-center gap-3">
               <!-- Drag handle -->
-              <div class="cursor-grab opacity-40 hover:opacity-70 select-none"><Icon name="proicons:re-order" class="h-4 w-4" /></div>
+              <div class="cursor-grab opacity-40 hover:opacity-70 select-none"><Icon name="proicons:grid-dots" class="h-4 w-4" /></div>
 
               <!-- Block info -->
               <div class="flex-1 min-w-0">

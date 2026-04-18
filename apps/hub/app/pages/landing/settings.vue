@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { TEMPLATE_COLOR_DEFAULTS, LANDING_COLOR_KEYS, resolveLandingColors, isValidHexColor, migrateColorOverrides } from "@guildora/shared";
+import { TEMPLATE_COLOR_DEFAULTS, LANDING_COLOR_KEYS, resolveLandingColors, migrateColorOverrides } from "@guildora/shared";
 import type { LandingColorPalette, PerTemplateColorOverrides, LandingColorOverrides } from "@guildora/shared";
 
 definePageMeta({
@@ -98,15 +98,13 @@ function setColorOverride(key: string, value: string) {
 
 function clearColorOverride(key: string) {
   const tid = pageConfig.value.activeTemplate;
-  const current = { ...(pageConfig.value.colorOverrides[tid] ?? {}) };
-  delete current[key as keyof typeof current];
-  const next = { ...pageConfig.value.colorOverrides };
+  const { [key]: _removed, ...current } = pageConfig.value.colorOverrides[tid] ?? {};
+  const { [tid]: _old, ...rest } = pageConfig.value.colorOverrides;
   if (Object.keys(current).length > 0) {
-    next[tid] = current;
+    pageConfig.value.colorOverrides = { ...rest, [tid]: current as typeof _old };
   } else {
-    delete next[tid];
+    pageConfig.value.colorOverrides = rest;
   }
-  pageConfig.value.colorOverrides = next;
 }
 
 /** True when the active template has any color override that differs from its defaults */
@@ -121,9 +119,8 @@ const hasColorOverrides = computed(() => {
 
 function restoreDefaultColors() {
   const tid = pageConfig.value.activeTemplate;
-  const next = { ...pageConfig.value.colorOverrides };
-  delete next[tid];
-  pageConfig.value.colorOverrides = next;
+  const { [tid]: _removed, ...rest } = pageConfig.value.colorOverrides;
+  pageConfig.value.colorOverrides = rest;
 }
 
 function selectTemplate(templateId: string) {
@@ -299,7 +296,7 @@ onMounted(() => loadData());
           >
             <div class="flex items-center gap-3">
               <div class="opacity-40 hover:opacity-70 select-none">
-                <Icon name="proicons:re-order" class="h-4 w-4" />
+                <Icon name="proicons:grid-dots" class="h-4 w-4" />
               </div>
               <span class="text-sm font-bold uppercase" style="min-width: 2rem">{{ loc }}</span>
               <span class="text-sm">{{ localeLabel(loc) }}</span>
@@ -375,7 +372,7 @@ onMounted(() => loadData());
                   class="h-8 w-10 rounded border-0 cursor-pointer"
                   style="background: var(--color-surface-3)"
                   @input="(e) => setColorOverride(colorKey, (e.target as HTMLInputElement).value)"
-                />
+                >
                 <span class="text-xs font-mono opacity-50">{{ resolvedColors[colorKey] }}</span>
                 <button
                   v-if="activeTemplateOverrides[colorKey]"

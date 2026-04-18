@@ -27,7 +27,7 @@ type FilesResponse = {
   listError?: string;
 };
 
-const { data, refresh, pending: fetchPending } = await useFetch<FilesResponse>("/api/settings/files", {
+const { data, refresh } = await useFetch<FilesResponse>("/api/settings/files", {
   key: "settings-files"
 });
 

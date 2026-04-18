@@ -450,8 +450,6 @@ watch(
 
 const intervalOptions = [6, 12, 24, 72, 168];
 
-const conditionTypes = ["orphan", "missingRole", "loginInactive", "voiceInactive"] as const;
-
 // Per-role cleanup config helpers
 const getRoleConfig = (roleName: string): RoleCleanupConfig => {
   let config = membershipForm.cleanupRoleConfigs.find((c) => c.permissionRoleName === roleName);

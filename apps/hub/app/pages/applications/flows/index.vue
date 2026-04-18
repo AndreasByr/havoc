@@ -72,8 +72,9 @@ const deleteFlow = async (flowId: string) => {
   try {
     await $fetch(`/api/applications/flows/${flowId}`, { method: "DELETE" });
     await refresh();
-  } catch (e: any) {
-    actionError.value = e?.data?.message || e?.statusMessage || t("common.error");
+  } catch (e: unknown) {
+    const err = e as { data?: { message?: string }; statusMessage?: string };
+    actionError.value = err?.data?.message || err?.statusMessage || t("common.error");
   } finally {
     actionPending.value = false;
   }
@@ -110,7 +111,7 @@ const deleteFlow = async (flowId: string) => {
         class="input input-sm flex-1"
         :placeholder="t('applications.newFlow')"
         @keyup.enter="createFlow"
-      />
+      >
       <button class="btn btn-primary btn-sm" :disabled="!newFlowName.trim() || actionPending" @click="createFlow">
         {{ t("applications.actions.create") }}
       </button>

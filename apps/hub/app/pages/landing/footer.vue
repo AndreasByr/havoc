@@ -263,7 +263,7 @@ onMounted(() => loadPages());
             >
               <div class="flex items-center gap-3">
                 <div class="opacity-40 hover:opacity-70 select-none">
-                  <Icon name="proicons:re-order" class="h-4 w-4" />
+                  <Icon name="proicons:grid-dots" class="h-4 w-4" />
                 </div>
                 <span class="text-sm font-medium">{{ page.title.en || page.title.de || page.slug }}</span>
                 <span class="text-xs opacity-40">/{{ page.slug }}</span>
