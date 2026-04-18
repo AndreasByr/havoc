@@ -20,7 +20,7 @@
     "consola": "^3.4.2",
     "discord.js": "^14.25.1",
     "dotenv": "^16.4.7",
-    "drizzle-orm": "^0.44.5",
+    "drizzle-orm": "^0.45.2",
     "esbuild": "^0.24.2"
   },
   "devDependencies": {

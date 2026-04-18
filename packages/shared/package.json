@@ -50,7 +50,7 @@
     "db:seed": "tsx src/db/seed.ts"
   },
   "dependencies": {
-    "drizzle-orm": "^0.44.5",
+    "drizzle-orm": "^0.45.2",
     "dotenv": "^16.4.7",
     "postgres": "^3.4.7",
     "zod": "^3.24.2"
