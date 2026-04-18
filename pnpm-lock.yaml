@@ -201,12 +201,18 @@ importers:
 
   apps/matrix-bot:
     dependencies:
+      '@guildora/app-sdk':
+        specifier: workspace:*
+        version: link:../../packages/app-sdk
       '@guildora/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       dotenv:
         specifier: ^16.4.5
         version: 16.6.1
+      drizzle-orm:
+        specifier: ^0.45.2
+        version: 0.45.2(@types/pg@8.10.2)(pg@8.16.3)(postgres@3.4.8)
       matrix-bot-sdk:
         specifier: ^0.7.1
         version: 0.7.1
