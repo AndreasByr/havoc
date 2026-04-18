@@ -19,7 +19,7 @@ import {
   cleanupAutoImportStubs
 } from "../../utils/__tests__/test-helpers";
 
-let mocks: ReturnType<typeof stubNuxtAutoImports>;
+let _mocks: ReturnType<typeof stubNuxtAutoImports>;
 
 // ─── Module mocks ─────────────────────────────────────────────────────────────
 
@@ -160,7 +160,7 @@ async function mockModRightReject403() {
   );
 }
 
-async function mockModRightOk() {
+async function _mockModRightOk() {
   const { requireModeratorRight } = await import("../../utils/moderation-rights");
   vi.mocked(requireModeratorRight).mockResolvedValue(
     buildSession("moderator") as ReturnType<typeof buildSession>

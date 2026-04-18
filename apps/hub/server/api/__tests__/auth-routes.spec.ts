@@ -11,12 +11,12 @@ import {
   cleanupAutoImportStubs,
 } from "../../utils/__tests__/test-helpers";
 
-let mocks: ReturnType<typeof stubNuxtAutoImports>;
+let _mocks: ReturnType<typeof stubNuxtAutoImports>;
 
 // ─── Setup ───────────────────────────────────────────────────────────────────
 
 beforeEach(() => {
-  mocks = stubNuxtAutoImports();
+  _mocks = stubNuxtAutoImports();
   vi.stubGlobal("clearUserSession", vi.fn().mockResolvedValue(undefined));
   vi.stubGlobal("getUserSession", vi.fn());
   vi.stubGlobal("generateCsrfToken", vi.fn().mockReturnValue("new-csrf-token-xyz"));
