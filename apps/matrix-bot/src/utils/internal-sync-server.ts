@@ -82,9 +82,23 @@ export function startInternalSyncServer(config: ServerConfig) {
     },
     {
       method: "POST",
+      // POST /internal/sync-commands
+      pattern: /^\/internal\/sync-commands$/,
+      paramNames: [],
+      handler: handleSyncCommands,
+    },
+    {
+      method: "POST",
       pattern: /^\/internal\/reload-hooks$/,
       paramNames: [],
       handler: handleReloadHooks,
+    },
+    {
+      method: "POST",
+      // POST /internal/guild/channels/create
+      pattern: /^\/internal\/guild\/channels\/create$/,
+      paramNames: [],
+      handler: handleCreateChannel,
     },
     {
       method: "POST",
@@ -109,6 +123,12 @@ export function startInternalSyncServer(config: ServerConfig) {
       pattern: /^\/internal\/guild\/channels\/([^/]+)\/send$/,
       paramNames: ["channelId"],
       handler: handleChannelSend,
+    },
+    {
+      method: "DELETE",
+      pattern: /^\/internal\/guild\/channels\/([^/]+)$/,
+      paramNames: ["channelId"],
+      handler: handleDeleteChannel,
     },
     {
       method: "DELETE",
@@ -362,9 +382,50 @@ async function handleSyncUser(
   return { ok: true, nicknameUpdated: false, nicknameReason: "not_requested" };
 }
 
+async function handleSyncCommands(): Promise<unknown> {
+  return { ok: true };
+}
+
 async function handleReloadHooks(client: MatrixClient): Promise<unknown> {
   await loadInstalledAppHooks(client);
   return { ok: true };
+}
+
+async function handleCreateChannel(
+  client: MatrixClient,
+  spaceId: string | null,
+  _params: Record<string, string>,
+  body: unknown
+): Promise<unknown> {
+  if (!spaceId) {
+    throw new SyncServerError("No space configured", 400, "INVALID_REQUEST");
+  }
+
+  const payload = body as { name?: string; type?: string; parentId?: string } | null;
+  const channelName = typeof payload?.name === "string" ? payload.name.trim() : "";
+  if (!channelName) {
+    throw new SyncServerError("Missing channel name", 400, "INVALID_REQUEST");
+  }
+
+  try {
+    const roomId = await client.createRoom({
+      preset: "private_chat",
+      visibility: "private",
+      name: channelName,
+    });
+    const userId = await client.getUserId();
+    const domain = userId.split(":")[1];
+    await client.sendStateEvent(spaceId, "m.space.child", roomId, {
+      via: domain ? [domain] : [],
+    });
+    return { ok: true, channelId: roomId, channelName };
+  } catch (error) {
+    throw new SyncServerError(
+      error instanceof Error ? error.message : "Failed to create channel",
+      500,
+      "SYNC_FAILED"
+    );
+  }
 }
 
 async function handleGetRoleMembers(
@@ -584,6 +645,29 @@ async function handleChannelSend(
   }
   await client.sendMessage(channelId, { msgtype: "m.text", body: payload.message });
   return { ok: true };
+}
+
+async function handleDeleteChannel(
+  client: MatrixClient,
+  spaceId: string | null,
+  params: Record<string, string>
+): Promise<unknown> {
+  if (!spaceId) {
+    throw new SyncServerError("No space configured", 400, "INVALID_REQUEST");
+  }
+
+  const { channelId } = params;
+  try {
+    await client.sendStateEvent(spaceId, "m.space.child", channelId, {});
+    await client.leaveRoom(channelId);
+    return { ok: true };
+  } catch (error) {
+    throw new SyncServerError(
+      error instanceof Error ? error.message : "Failed to delete channel",
+      500,
+      "SYNC_FAILED"
+    );
+  }
 }
 
 async function handleDeleteMessage(
