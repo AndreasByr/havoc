@@ -30,7 +30,7 @@
     "@vue-flow/node-resizer": "^1.5.1",
     "buffer": "^6.0.3",
     "chart.js": "^4.5.1",
-    "drizzle-orm": "^0.44.5",
+    "drizzle-orm": "^0.45.2",
     "esbuild": "^0.24.2",
     "isomorphic-dompurify": "^3.7.1",
     "nuxt": "^4.1.3",
