@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 1: Security Audit & Priorisierung** - Konsolidiertes Security-Audit des Platform-Stacks, nach Severity priorisiert, als Grundlage für alle weiteren SEC-Phasen
 - [ ] **Phase 2: Apps-Plugin-Sandbox** - Fremd-Code läuft in echter Sandbox mit CPU-/Memory-Limits und Timeouts; einzig kritischste Codepfad-Härtung
 - [ ] **Phase 3: Auth- & Session-Härtung** - Timing-sichere Token-Vergleiche, deny-by-default Session-Middleware, OAuth/Cookie/CSRF-Review
-- [ ] **Phase 4: Supply-Chain & Secrets** - `docker-compose.yml` env-basiert, `pnpm audit` sauber, `pnpm.overrides` reviewt
+- [x] **Phase 4: Supply-Chain & Secrets** - `docker-compose.yml` env-basiert, `pnpm audit` sauber, `pnpm.overrides` reviewt
 - [ ] **Phase 5: CI-Vertrauen & API-Test-Abdeckung** - CI-Ist-Zustand dokumentiert, Typecheck/Lint/Tests blocking und stabil, kritische API-Endpoints getestet
 - [ ] **Phase 6: Matrix-Bot-Parity** - Matrix-Bot emittiert App-Hooks analog zum Discord-Bot; State sauber behandelt
 - [ ] **Phase 7: Preview-Lifecycle & Tunnel-Resilienz** - Preview-Start/Stop/Restart als ein Skill; Cloudflare-Tunnel überlebt Restarts
