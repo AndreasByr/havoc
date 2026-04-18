@@ -24,6 +24,17 @@ type RouteHandler = (
   body: unknown
 ) => Promise<unknown>;
 
+class SyncServerError extends Error {
+  constructor(
+    message: string,
+    public readonly statusCode: number = 400,
+    public readonly code: string = "INVALID_REQUEST"
+  ) {
+    super(message);
+    this.name = "SyncServerError";
+  }
+}
+
 export function startInternalSyncServer(config: ServerConfig) {
   const { client, spaceId, port, token } = config;
 
@@ -38,6 +49,12 @@ export function startInternalSyncServer(config: ServerConfig) {
       pattern: /^\/internal\/health$/,
       paramNames: [],
       handler: handleHealth,
+    },
+    {
+      method: "GET",
+      pattern: /^\/internal\/guild\/roles\/([^/]+)\/members$/,
+      paramNames: ["roleId"],
+      handler: handleGetRoleMembers,
     },
     {
       method: "GET",
@@ -68,6 +85,24 @@ export function startInternalSyncServer(config: ServerConfig) {
       pattern: /^\/internal\/reload-hooks$/,
       paramNames: [],
       handler: handleReloadHooks,
+    },
+    {
+      method: "POST",
+      pattern: /^\/internal\/guild\/members\/([^/]+)\/add-roles$/,
+      paramNames: ["mxid"],
+      handler: handleAddRoles,
+    },
+    {
+      method: "POST",
+      pattern: /^\/internal\/guild\/members\/([^/]+)\/remove-roles$/,
+      paramNames: ["mxid"],
+      handler: handleRemoveRoles,
+    },
+    {
+      method: "POST",
+      pattern: /^\/internal\/guild\/members\/([^/]+)\/sync-community-roles$/,
+      paramNames: ["mxid"],
+      handler: handleSyncCommunityRoles,
     },
   ];
 
@@ -122,10 +157,13 @@ export function startInternalSyncServer(config: ServerConfig) {
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify(result));
       } catch (err) {
+        const isClientError = err instanceof SyncServerError;
+        const statusCode = isClientError ? err.statusCode : 500;
+        const code = isClientError ? err.code : "SYNC_FAILED";
         const message = err instanceof Error ? err.message : "Internal error";
         console.error(`[matrix-bot] ${method} ${pathname} error:`, message);
-        res.writeHead(500, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ code: "SYNC_FAILED", message, error: message, errorCode: "SYNC_FAILED" }));
+        res.writeHead(statusCode, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ code, message, error: message, errorCode: code }));
       }
       return;
     }
@@ -299,7 +337,217 @@ async function handleReloadHooks(client: MatrixClient): Promise<unknown> {
   return { ok: true };
 }
 
+async function handleGetRoleMembers(
+  client: MatrixClient,
+  spaceId: string | null,
+  params: Record<string, string>
+): Promise<unknown> {
+  if (!spaceId) return { members: [] };
+
+  const { roleId } = params;
+  const targetLevel = parseVirtualRoleLevel(roleId);
+  if (targetLevel === null) {
+    throw new SyncServerError(`Invalid virtual role ID: ${roleId}`, 400, "INVALID_ROLE_ID");
+  }
+
+  const powerLevels = await client.getRoomStateEvent(spaceId, "m.room.power_levels", "");
+  const users = (powerLevels.users as Record<string, number>) || {};
+  const usersDefault = (powerLevels.users_default as number | undefined) ?? 0;
+
+  const allMembers = await client.getJoinedRoomMembers(spaceId);
+
+  const members = allMembers
+    .map((mxid: string) => ({ mxid, level: users[mxid] ?? usersDefault }))
+    .filter(({ level }: { level: number }) => {
+      if (targetLevel === 100) return level === 100;
+      if (targetLevel === 50) return level >= 50 && level < 100;
+      if (targetLevel === 0) return level < 50;
+      return level === targetLevel;
+    })
+    .map(({ mxid }: { mxid: string }) => ({
+      platformUserId: mxid,
+      discordId: mxid,
+      displayName: mxid,
+      nickname: null,
+      avatarUrl: null,
+      roleIds: [roleId],
+    }));
+
+  return { members };
+}
+
+async function handleAddRoles(
+  client: MatrixClient,
+  spaceId: string | null,
+  params: Record<string, string>,
+  body: unknown
+): Promise<unknown> {
+  const payload = body as { roleIds?: unknown } | null;
+  const mxid = params.mxid;
+
+  if (!mxid) throw new SyncServerError("Missing mxid parameter", 400, "INVALID_REQUEST");
+  if (!spaceId) throw new SyncServerError("No space configured", 400, "INVALID_REQUEST");
+  if (!payload?.roleIds || !Array.isArray(payload.roleIds) || payload.roleIds.length === 0) {
+    throw new SyncServerError("Missing or empty roleIds", 400, "INVALID_REQUEST");
+  }
+
+  const roleIds = payload.roleIds as string[];
+  const levels = roleIds.map(parseVirtualRoleLevel);
+  if (levels.some((l) => l === null)) {
+    throw new SyncServerError(
+      `Invalid virtual role ID format in: ${roleIds.join(", ")}`,
+      400,
+      "INVALID_ROLE_ID"
+    );
+  }
+
+  const targetLevel = Math.max(...(levels as number[]));
+
+  const powerLevels = await client.getRoomStateEvent(spaceId, "m.room.power_levels", "");
+  const users = (powerLevels.users as Record<string, number>) || {};
+  const usersDefault = (powerLevels.users_default as number | undefined) ?? 0;
+  const previousLevel = users[mxid] ?? usersDefault;
+
+  const addedRoleIds: string[] = [];
+  if (targetLevel > previousLevel) {
+    users[mxid] = targetLevel;
+    await client.sendStateEvent(spaceId, "m.room.power_levels", "", { ...powerLevels, users });
+    addedRoleIds.push(`pl_${targetLevel}`);
+    botAppHookRegistry.emit("onRoleChange", {
+      guildId: spaceId,
+      memberId: mxid,
+      addedRoles: addedRoleIds,
+      removedRoles: previousLevel > usersDefault ? [`pl_${previousLevel}`] : [],
+      platform: "matrix",
+    });
+  }
+
+  return { ok: true, addedRoleIds };
+}
+
+async function handleRemoveRoles(
+  client: MatrixClient,
+  spaceId: string | null,
+  params: Record<string, string>,
+  body: unknown
+): Promise<unknown> {
+  const payload = body as { roleIds?: unknown; removeAllManageable?: boolean } | null;
+  const mxid = params.mxid;
+
+  if (!mxid) throw new SyncServerError("Missing mxid parameter", 400, "INVALID_REQUEST");
+  if (!spaceId) throw new SyncServerError("No space configured", 400, "INVALID_REQUEST");
+
+  const hasRoleIds = Array.isArray(payload?.roleIds) && (payload.roleIds as unknown[]).length > 0;
+  const hasRemoveAll = payload?.removeAllManageable === true;
+  if (!hasRoleIds && !hasRemoveAll) {
+    throw new SyncServerError(
+      "Missing roleIds or removeAllManageable",
+      400,
+      "INVALID_REQUEST"
+    );
+  }
+
+  const powerLevels = await client.getRoomStateEvent(spaceId, "m.room.power_levels", "");
+  const users = (powerLevels.users as Record<string, number>) || {};
+  const usersDefault = (powerLevels.users_default as number | undefined) ?? 0;
+  const previousLevel = users[mxid] ?? usersDefault;
+
+  const removedRoleIds: string[] = [];
+  if (previousLevel !== usersDefault) {
+    users[mxid] = usersDefault;
+    await client.sendStateEvent(spaceId, "m.room.power_levels", "", { ...powerLevels, users });
+    removedRoleIds.push(`pl_${previousLevel}`);
+    botAppHookRegistry.emit("onRoleChange", {
+      guildId: spaceId,
+      memberId: mxid,
+      addedRoles: [],
+      removedRoles: removedRoleIds,
+      platform: "matrix",
+    });
+  }
+
+  return { ok: true, removedRoleIds };
+}
+
+async function handleSyncCommunityRoles(
+  client: MatrixClient,
+  spaceId: string | null,
+  params: Record<string, string>,
+  body: unknown
+): Promise<unknown> {
+  const payload = body as { allowedRoleIds?: unknown; selectedRoleIds?: unknown } | null;
+  const mxid = params.mxid;
+
+  if (!mxid) throw new SyncServerError("Missing mxid parameter", 400, "INVALID_REQUEST");
+  if (!spaceId) throw new SyncServerError("No space configured", 400, "INVALID_REQUEST");
+
+  const allowedRoleIds = Array.isArray(payload?.allowedRoleIds)
+    ? (payload.allowedRoleIds as string[])
+    : [];
+  const selectedRoleIds = Array.isArray(payload?.selectedRoleIds)
+    ? (payload.selectedRoleIds as string[])
+    : [];
+
+  const notAllowed = selectedRoleIds.filter((id) => !allowedRoleIds.includes(id));
+  if (notAllowed.length > 0) {
+    throw new SyncServerError(
+      `selectedRoleIds contains roles not in allowedRoleIds: ${notAllowed.join(", ")}`,
+      400,
+      "INVALID_REQUEST"
+    );
+  }
+
+  for (const id of [...allowedRoleIds, ...selectedRoleIds]) {
+    if (parseVirtualRoleLevel(id) === null) {
+      throw new SyncServerError(`Invalid virtual role ID: ${id}`, 400, "INVALID_ROLE_ID");
+    }
+  }
+
+  const powerLevels = await client.getRoomStateEvent(spaceId, "m.room.power_levels", "");
+  const users = (powerLevels.users as Record<string, number>) || {};
+  const usersDefault = (powerLevels.users_default as number | undefined) ?? 0;
+  const previousLevel = users[mxid] ?? usersDefault;
+
+  let targetLevel = usersDefault;
+  if (selectedRoleIds.length > 0) {
+    targetLevel = Math.max(...selectedRoleIds.map((id) => parseVirtualRoleLevel(id) as number));
+  }
+
+  const addedRoleIds: string[] = [];
+  const removedRoleIds: string[] = [];
+
+  if (previousLevel !== targetLevel) {
+    users[mxid] = targetLevel;
+    await client.sendStateEvent(spaceId, "m.room.power_levels", "", { ...powerLevels, users });
+
+    if (targetLevel > previousLevel) {
+      addedRoleIds.push(`pl_${targetLevel}`);
+      if (previousLevel > usersDefault) removedRoleIds.push(`pl_${previousLevel}`);
+    } else {
+      removedRoleIds.push(`pl_${previousLevel}`);
+    }
+
+    botAppHookRegistry.emit("onRoleChange", {
+      guildId: spaceId,
+      memberId: mxid,
+      addedRoles: addedRoleIds,
+      removedRoles: removedRoleIds,
+      platform: "matrix",
+    });
+  }
+
+  const currentRoleIds = targetLevel > usersDefault ? [`pl_${targetLevel}`] : [];
+
+  return { ok: true, addedRoleIds, removedRoleIds, currentRoleIds };
+}
+
 // ─── Helpers ────────────────────────────────────────────────────────────────
+
+function parseVirtualRoleLevel(roleId: string): number | null {
+  const match = roleId.match(/^pl_(\d+)$/);
+  if (!match) return null;
+  return parseInt(match[1], 10);
+}
 
 function timingSafeEqualString(left: string, right: string): boolean {
   const leftBuffer = Buffer.from(left, "utf8");
