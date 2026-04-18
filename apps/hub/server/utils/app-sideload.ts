@@ -1,7 +1,6 @@
 import * as esbuild from "esbuild";
-import { posix } from "node:path";
+import { posix, join  } from "node:path";
 import { readFile, readdir } from "node:fs/promises";
-import { join } from "node:path";
 import { eq } from "drizzle-orm";
 import type { AppManifest } from "@guildora/shared";
 import { installedApps, safeParseAppManifest } from "@guildora/shared";

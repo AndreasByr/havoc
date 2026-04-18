@@ -7,7 +7,6 @@ import {
   users,
   userDiscordRoles,
   voiceSessions,
-  type CleanupCondition,
   type RoleCleanupConfig
 } from "@guildora/shared";
 import { fetchDiscordGuildMemberFromBot, removeDiscordRolesFromBot } from "./botSync";

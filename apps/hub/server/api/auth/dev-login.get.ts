@@ -1,4 +1,4 @@
-import { coerceProfileNameFromRaw, users } from "@guildora/shared";
+import { users } from "@guildora/shared";
 import { eq } from "drizzle-orm";
 import { replaceAuthSessionForUserId } from "../../utils/auth-session";
 import { ensureCommunityUser, ensureUserProfile, getUserByDiscordId } from "../../utils/community";

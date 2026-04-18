@@ -7,8 +7,8 @@ import {
   HeadBucketCommand
 } from "@aws-sdk/client-s3";
 import { getSignedUrl as s3GetSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { mkdir, writeFile, rm, readdir, stat, readFile } from "node:fs/promises";
-import { join, relative, extname } from "node:path";
+import { mkdir, writeFile, rm, readdir, stat } from "node:fs/promises";
+import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // --- Types ---

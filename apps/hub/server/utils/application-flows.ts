@@ -1,14 +1,15 @@
 import { eq, desc, and } from "drizzle-orm";
-import {
+import type {
+  ApplicationFlowGraph,
+  ApplicationFlowSettings,
+  ApplicationFlowStatus,
   applicationFlows,
   applicationFlowEmbeds,
   applications,
   type GuildoraDatabase
-} from "@guildora/shared";
-import type {
-  ApplicationFlowGraph,
-  ApplicationFlowSettings,
-  ApplicationFlowStatus
+
+
+
 } from "@guildora/shared";
 
 export async function getFlowById(db: GuildoraDatabase, flowId: string) {
@@ -104,7 +105,6 @@ export function validateFlowGraph(graph: ApplicationFlowGraph): string[] {
   }
 
   // Check for orphan nodes (no incoming or outgoing edges, excluding start/end)
-  const nodeIds = new Set(graph.nodes.map((n) => n.id));
   const connectedNodes = new Set<string>();
   for (const edge of graph.edges) {
     connectedNodes.add(edge.source);

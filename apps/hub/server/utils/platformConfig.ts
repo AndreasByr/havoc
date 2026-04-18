@@ -1,6 +1,5 @@
-import { eq } from "drizzle-orm";
 import { platformConnections } from "@guildora/shared";
-import type { PlatformCredentials, DiscordPlatformCredentials, MatrixPlatformCredentials } from "@guildora/shared";
+import type { DiscordPlatformCredentials, MatrixPlatformCredentials } from "@guildora/shared";
 import { getDb } from "./db";
 
 export type PlatformType = "discord" | "matrix";

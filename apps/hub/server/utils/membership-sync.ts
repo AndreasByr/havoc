@@ -3,7 +3,6 @@ import { membershipSettings } from "@guildora/shared";
 import { listActiveCommunityRoleMappings } from "./community";
 import { fetchDiscordGuildMembersByRoleFromBot, fetchDiscordGuildRolesFromBot } from "./botSync";
 import { upsertMirroredDiscordMember, wasUserExistingByDiscordId } from "./admin-mirror";
-import { coerceProfileNameFromRaw } from "@guildora/shared";
 import { MEMBERSHIP_SETTINGS_SINGLETON_ID } from "./membership-settings";
 import type { getDb } from "./db";
 

@@ -1,4 +1,4 @@
-import { and, eq, isNotNull } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { installedApps } from "@guildora/shared";
 import { getDb } from "../utils/db";
 import { installAppFromUrl } from "../utils/app-sideload";

@@ -1,6 +1,5 @@
 import { asc } from "drizzle-orm";
 import { communityTags } from "@guildora/shared";
-import { requireModeratorSession } from "../../../utils/auth";
 import { getDb } from "../../../utils/db";
 import { requireModeratorRight } from "../../../utils/moderation-rights";
 

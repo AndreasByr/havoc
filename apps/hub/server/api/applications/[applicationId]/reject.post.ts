@@ -4,8 +4,7 @@ import type { ApplicationFlowSettings } from "@guildora/shared";
 import { requireModeratorSession } from "../../../utils/auth";
 import { requireRouterParam } from "../../../utils/http";
 import { getDb } from "../../../utils/db";
-import { sendDiscordDm } from "../../../utils/botSync";
-import { removeDiscordRolesFromBot } from "../../../utils/botSync";
+import { sendDiscordDm, removeDiscordRolesFromBot  } from "../../../utils/botSync";
 
 export default defineEventHandler(async (event) => {
   const session = await requireModeratorSession(event);
