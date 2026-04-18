@@ -20,6 +20,12 @@ export function createMockMatrixClient() {
       "@bob:example.org",
       "@carol:example.org",
     ]),
+    redactEvent: vi.fn().mockResolvedValue(undefined),
+    kickUser: vi.fn().mockResolvedValue(undefined),
+    banUser: vi.fn().mockResolvedValue(undefined),
+    dms: {
+      getOrCreateDm: vi.fn().mockResolvedValue("!dm-room:example.org"),
+    },
     doRequest: vi.fn().mockImplementation((_method: string, path: string) => {
       if (path.includes("/hierarchy")) {
         return Promise.resolve({
