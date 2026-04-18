@@ -77,7 +77,7 @@ describe("POST /api/admin/apps/sideload audit log", () => {
     const session = buildSession("superadmin");
     mocks.requireUserSession.mockResolvedValue(session);
     mocks.useRuntimeConfig.mockReturnValue({ enableSideloading: true });
-    vi.mocked(globalThis.readBody as any).mockResolvedValue({
+    vi.mocked(globalThis.readBody as ReturnType<typeof vi.fn>).mockResolvedValue({
       githubUrl: "https://github.com/org/repo",
       activate: true
     });
@@ -101,7 +101,7 @@ describe("POST /api/admin/apps/local-sideload audit log", () => {
     const session = buildSession("superadmin");
     mocks.requireUserSession.mockResolvedValue(session);
     mocks.useRuntimeConfig.mockReturnValue({ enableSideloading: true });
-    vi.mocked(globalThis.readBody as any).mockResolvedValue({
+    vi.mocked(globalThis.readBody as ReturnType<typeof vi.fn>).mockResolvedValue({
       localPath: "/tmp/my-app",
       activate: true
     });
@@ -124,7 +124,7 @@ describe("DELETE /api/admin/apps/[id] audit log", () => {
   it("emits app.uninstalled with appId after successful delete", async () => {
     const session = buildSession("admin");
     mocks.requireUserSession.mockResolvedValue(session);
-    vi.mocked(globalThis.getRouterParam as any).mockReturnValue("42");
+    vi.mocked(globalThis.getRouterParam as ReturnType<typeof vi.fn>).mockReturnValue("42");
 
     const { getDb } = await import("../../../../utils/db");
     const mockDeleteChain = {
@@ -132,7 +132,7 @@ describe("DELETE /api/admin/apps/[id] audit log", () => {
       returning: vi.fn().mockResolvedValue([{ id: "42", appId: "app-xyz" }])
     };
     const mockDb = { delete: vi.fn().mockReturnValue(mockDeleteChain) };
-    vi.mocked(getDb).mockReturnValue(mockDb as any);
+    vi.mocked(getDb).mockReturnValue(mockDb as ReturnType<typeof getDb>);
 
     const handler = await importHandler();
     const event = createMockEvent({ method: "DELETE", path: "/api/admin/apps/42" });

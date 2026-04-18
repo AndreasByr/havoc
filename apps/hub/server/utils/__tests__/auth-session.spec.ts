@@ -81,7 +81,7 @@ describe("getSessionUserById", () => {
         avatarUrl: "https://example.com/avatar.png",
       }]),
     };
-    vi.mocked(getDb).mockReturnValue(mockDb as any);
+    vi.mocked(getDb).mockReturnValue(mockDb as ReturnType<typeof getDb>);
 
     const { getSessionUserById } = await importAuthSession();
     const result = await getSessionUserById("user-1");
@@ -101,7 +101,7 @@ describe("getSessionUserById", () => {
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
       limit: vi.fn().mockResolvedValue([{ id: "u1", discordId: "d1", displayName: "U", avatarUrl: null }]),
-    } as any);
+    } as ReturnType<typeof getDb>);
     vi.mocked(getUserRoles).mockResolvedValue(["admin", "moderator"]);
 
     const { getSessionUserById } = await importAuthSession();
@@ -118,7 +118,7 @@ describe("getSessionUserById", () => {
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
       limit: vi.fn().mockResolvedValue([{ id: "u1", discordId: "d1", displayName: "U", avatarUrl: null }]),
-    } as any);
+    } as ReturnType<typeof getDb>);
     vi.mocked(getCommunityRoleName).mockResolvedValue("Custom Role");
 
     const { getSessionUserById } = await importAuthSession();
@@ -135,7 +135,7 @@ describe("getSessionUserById", () => {
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
       limit: vi.fn().mockResolvedValue([{ id: "u1", discordId: "d1", displayName: "U", avatarUrl: null }]),
-    } as any);
+    } as ReturnType<typeof getDb>);
     vi.mocked(loadModerationRights).mockRejectedValue(new Error("DB fail"));
 
     const { getSessionUserById } = await importAuthSession();
@@ -239,7 +239,7 @@ describe("replaceAuthSessionForUserId", () => {
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
       limit: vi.fn().mockResolvedValue([]),
-    } as any);
+    } as ReturnType<typeof getDb>);
 
     const { replaceAuthSessionForUserId } = await importAuthSession();
     const event = createMockEvent();
@@ -255,7 +255,7 @@ describe("replaceAuthSessionForUserId", () => {
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
       limit: vi.fn().mockResolvedValue([{ id: "u1", discordId: "d1", displayName: "User", avatarUrl: null }]),
-    } as any);
+    } as ReturnType<typeof getDb>);
 
     const { replaceAuthSessionForUserId } = await importAuthSession();
     const event = createMockEvent();

@@ -55,8 +55,9 @@ describe("checkRateLimit", () => {
     expect(() => checkRateLimit("key-c", opts)).toThrow();
     try {
       checkRateLimit("key-c", opts);
-    } catch (e: any) {
-      expect(e.statusCode).toBe(429);
+    } catch (e: unknown) {
+      const err = e as { statusCode?: number; data?: { retryAfter?: number } };
+      expect(err.statusCode).toBe(429);
     }
   });
 
@@ -95,9 +96,10 @@ describe("checkRateLimit", () => {
 
     try {
       checkRateLimit("key-g", opts);
-    } catch (e: any) {
-      expect(e.statusCode).toBe(429);
-      expect(e.data?.retryAfter).toBeGreaterThan(0);
+    } catch (e: unknown) {
+      const err = e as { statusCode?: number; data?: { retryAfter?: number } };
+      expect(err.statusCode).toBe(429);
+      expect(err.data?.retryAfter).toBeGreaterThan(0);
     }
   });
 

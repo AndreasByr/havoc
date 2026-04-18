@@ -60,7 +60,7 @@ afterEach(() => {
 // ─── Helper: mock DB chain ──────────────────────────────────────────────────
 
 function mockDbChain(returnValue: unknown = []) {
-  const chain: Record<string, any> = {};
+  const chain: Record<string, unknown> = {};
   chain.select = vi.fn().mockReturnValue(chain);
   chain.from = vi.fn().mockReturnValue(chain);
   chain.where = vi.fn().mockReturnValue(chain);
@@ -71,7 +71,7 @@ function mockDbChain(returnValue: unknown = []) {
   chain.update = vi.fn().mockReturnValue(chain);
   chain.set = vi.fn().mockReturnValue(chain);
   chain.delete = vi.fn().mockReturnValue(chain);
-  chain.then = (resolve: Function) => resolve(returnValue);
+  chain.then = (resolve: (v: unknown) => unknown) => resolve(returnValue);
   return chain;
 }
 

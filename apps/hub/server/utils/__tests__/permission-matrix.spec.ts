@@ -114,7 +114,7 @@ describe("permission matrix — async session guards", () => {
       mocks.requireUserSession.mockResolvedValue(session);
 
       const { requireModeratorSession } = await importAuth();
-      const event = { method: "GET", path: "/api/test", context: {} } as any;
+      const event = { method: "GET", path: "/api/test", context: {} } as unknown as import("h3").H3Event;
 
       if (roleAccessMatrix.moderator[role]) {
         await expect(requireModeratorSession(event)).resolves.toBeDefined();
@@ -128,7 +128,7 @@ describe("permission matrix — async session guards", () => {
       mocks.requireUserSession.mockResolvedValue(session);
 
       const { requireAdminSession } = await importAuth();
-      const event = { method: "GET", path: "/api/test", context: {} } as any;
+      const event = { method: "GET", path: "/api/test", context: {} } as unknown as import("h3").H3Event;
 
       if (roleAccessMatrix.admin[role]) {
         await expect(requireAdminSession(event)).resolves.toBeDefined();
@@ -142,7 +142,7 @@ describe("permission matrix — async session guards", () => {
       mocks.requireUserSession.mockResolvedValue(session);
 
       const { requireSuperadminSession } = await importAuth();
-      const event = { method: "GET", path: "/api/test", context: {} } as any;
+      const event = { method: "GET", path: "/api/test", context: {} } as unknown as import("h3").H3Event;
 
       if (roleAccessMatrix.superadmin[role]) {
         await expect(requireSuperadminSession(event)).resolves.toBeDefined();
@@ -184,13 +184,13 @@ describe("permission matrix — edge cases", () => {
     mocks.requireUserSession.mockRejectedValue(new Error("No session"));
 
     const { requireAdminSession } = await importAuth();
-    const event = { method: "GET", path: "/api/test", context: {} } as any;
+    const event = { method: "GET", path: "/api/test", context: {} } as unknown as import("h3").H3Event;
 
     try {
       await requireAdminSession(event);
-    } catch (e: any) {
+    } catch (e: unknown) {
       // Should be 401, not 403 — auth failure happens before role check
-      expect(e.statusCode).toBe(401);
+      expect((e as { statusCode?: number }).statusCode).toBe(401);
     }
   });
 });

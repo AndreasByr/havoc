@@ -9,7 +9,6 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import {
   buildSession,
-  buildSessionUser,
   createMockEvent,
   stubNuxtAutoImports,
   cleanupAutoImportStubs,
@@ -34,11 +33,13 @@ vi.mock("../../utils/botSync", () => ({
 }));
 
 vi.mock("../../utils/http", () => ({
-  requireRouterParam: vi.fn((_event: any, _param: string, msg: string) => {
-    return _event._routerParams?.[_param] ?? (() => { throw new Error(msg); })();
+  requireRouterParam: vi.fn((_event: unknown, _param: string, msg: string) => {
+    const ev = _event as { _routerParams?: Record<string, string> };
+    return ev._routerParams?.[_param] ?? (() => { throw new Error(msg); })();
   }),
-  readBodyWithSchema: vi.fn(async (event: any, _schema: any) => {
-    return event._body ?? {};
+  readBodyWithSchema: vi.fn(async (event: unknown, _schema: unknown) => {
+    const ev = event as { _body?: unknown };
+    return ev._body ?? {};
   }),
 }));
 
@@ -69,7 +70,7 @@ afterEach(() => {
 
 // ─── Helper: Build mock DB chain ────────────────────────────────────────────
 
-function mockDbChain(returnValue: any) {
+function mockDbChain(returnValue: unknown) {
   return {
     select: vi.fn().mockReturnThis(),
     from: vi.fn().mockReturnThis(),
@@ -86,7 +87,7 @@ function mockDbChain(returnValue: any) {
         returning: vi.fn().mockResolvedValue([{ id: "app-1" }]),
       })),
     })),
-    transaction: vi.fn(async (fn: Function) => fn({
+    transaction: vi.fn(async (fn: (tx: unknown) => Promise<unknown>) => fn({
       select: vi.fn().mockReturnThis(),
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
@@ -109,11 +110,11 @@ describe("application approval", () => {
     mocks.requireUserSession.mockRejectedValue(new Error("No session"));
 
     const { getDb } = await import("../../utils/db");
-    vi.mocked(getDb).mockReturnValue(mockDbChain({}) as any);
+    vi.mocked(getDb).mockReturnValue(mockDbChain({}) as ReturnType<typeof getDb>);
 
     const handler = (await import("../applications/[applicationId]/approve.post")).default;
     const event = createMockEvent({ method: "POST", path: "/api/applications/app-1/approve" });
-    (event as any)._routerParams = { applicationId: "app-1" };
+    (event as unknown as { _routerParams: Record<string, string> })._routerParams = { applicationId: "app-1" };
 
     await expect(handler(event)).rejects.toThrow();
   });
@@ -148,11 +149,11 @@ describe("application approval", () => {
       callCount++;
       return callCount === 1 ? [mockApp] : [mockFlow];
     });
-    vi.mocked(getDb).mockReturnValue(db as any);
+    vi.mocked(getDb).mockReturnValue(db as ReturnType<typeof getDb>);
 
     const handler = (await import("../applications/[applicationId]/approve.post")).default;
     const event = createMockEvent({ method: "POST", path: "/api/applications/app-1/approve" });
-    (event as any)._routerParams = { applicationId: "app-1" };
+    (event as unknown as { _routerParams: Record<string, string> })._routerParams = { applicationId: "app-1" };
 
     const result = await handler(event);
     expect(result.success).toBe(true);
@@ -172,11 +173,11 @@ describe("application approval", () => {
       callCount++;
       return callCount === 1 ? [mockApp] : [mockFlow];
     });
-    vi.mocked(getDb).mockReturnValue(db as any);
+    vi.mocked(getDb).mockReturnValue(db as ReturnType<typeof getDb>);
 
     const handler = (await import("../applications/[applicationId]/approve.post")).default;
     const event = createMockEvent({ method: "POST" });
-    (event as any)._routerParams = { applicationId: "app-1" };
+    (event as unknown as { _routerParams: Record<string, string> })._routerParams = { applicationId: "app-1" };
 
     const result = await handler(event);
     expect(result.success).toBe(true);
@@ -187,11 +188,11 @@ describe("application approval", () => {
     mocks.requireUserSession.mockResolvedValue(session);
 
     const { getDb } = await import("../../utils/db");
-    vi.mocked(getDb).mockReturnValue(mockDbChain({}) as any);
+    vi.mocked(getDb).mockReturnValue(mockDbChain({}) as ReturnType<typeof getDb>);
 
     const handler = (await import("../applications/[applicationId]/approve.post")).default;
     const event = createMockEvent({ method: "POST" });
-    (event as any)._routerParams = { applicationId: "app-1" };
+    (event as unknown as { _routerParams: Record<string, string> })._routerParams = { applicationId: "app-1" };
 
     await expect(handler(event)).rejects.toThrow();
   });
@@ -203,11 +204,11 @@ describe("application approval", () => {
     const { getDb } = await import("../../utils/db");
     const db = mockDbChain(null);
     db.limit.mockResolvedValue([]);
-    vi.mocked(getDb).mockReturnValue(db as any);
+    vi.mocked(getDb).mockReturnValue(db as ReturnType<typeof getDb>);
 
     const handler = (await import("../applications/[applicationId]/approve.post")).default;
     const event = createMockEvent({ method: "POST" });
-    (event as any)._routerParams = { applicationId: "nonexistent" };
+    (event as unknown as { _routerParams: Record<string, string> })._routerParams = { applicationId: "nonexistent" };
 
     await expect(handler(event)).rejects.toThrow();
   });
@@ -219,11 +220,11 @@ describe("application approval", () => {
     const mockApp = { id: "app-1", flowId: "flow-1", discordId: "d1", status: "approved" };
     const { getDb } = await import("../../utils/db");
     const db = mockDbChain(mockApp);
-    vi.mocked(getDb).mockReturnValue(db as any);
+    vi.mocked(getDb).mockReturnValue(db as ReturnType<typeof getDb>);
 
     const handler = (await import("../applications/[applicationId]/approve.post")).default;
     const event = createMockEvent({ method: "POST" });
-    (event as any)._routerParams = { applicationId: "app-1" };
+    (event as unknown as { _routerParams: Record<string, string> })._routerParams = { applicationId: "app-1" };
 
     await expect(handler(event)).rejects.toThrow();
   });
@@ -235,11 +236,11 @@ describe("application approval", () => {
     const mockApp = { id: "app-1", flowId: "flow-1", discordId: "d1", status: "rejected" };
     const { getDb } = await import("../../utils/db");
     const db = mockDbChain(mockApp);
-    vi.mocked(getDb).mockReturnValue(db as any);
+    vi.mocked(getDb).mockReturnValue(db as ReturnType<typeof getDb>);
 
     const handler = (await import("../applications/[applicationId]/approve.post")).default;
     const event = createMockEvent({ method: "POST" });
-    (event as any)._routerParams = { applicationId: "app-1" };
+    (event as unknown as { _routerParams: Record<string, string> })._routerParams = { applicationId: "app-1" };
 
     await expect(handler(event)).rejects.toThrow();
   });
@@ -265,13 +266,13 @@ describe("application approval", () => {
       callCount++;
       return callCount === 1 ? [mockApp] : [mockFlow];
     });
-    vi.mocked(getDb).mockReturnValue(db as any);
+    vi.mocked(getDb).mockReturnValue(db as ReturnType<typeof getDb>);
 
     const { addDiscordRolesToMember } = await import("../../utils/botSync");
 
     const handler = (await import("../applications/[applicationId]/approve.post")).default;
     const event = createMockEvent({ method: "POST" });
-    (event as any)._routerParams = { applicationId: "app-1" };
+    (event as unknown as { _routerParams: Record<string, string> })._routerParams = { applicationId: "app-1" };
 
     await handler(event);
     expect(addDiscordRolesToMember).toHaveBeenCalledWith("discord-123", ["role-a", "role-b"]);
@@ -298,13 +299,13 @@ describe("application approval", () => {
       callCount++;
       return callCount === 1 ? [mockApp] : [mockFlow];
     });
-    vi.mocked(getDb).mockReturnValue(db as any);
+    vi.mocked(getDb).mockReturnValue(db as ReturnType<typeof getDb>);
 
     const { sendDiscordDm } = await import("../../utils/botSync");
 
     const handler = (await import("../applications/[applicationId]/approve.post")).default;
     const event = createMockEvent({ method: "POST" });
-    (event as any)._routerParams = { applicationId: "app-1" };
+    (event as unknown as { _routerParams: Record<string, string> })._routerParams = { applicationId: "app-1" };
 
     await handler(event);
     expect(sendDiscordDm).toHaveBeenCalledWith("discord-123", "Welcome to the community!");
@@ -318,11 +319,11 @@ describe("application rejection", () => {
     mocks.requireUserSession.mockRejectedValue(new Error("No session"));
 
     const { getDb } = await import("../../utils/db");
-    vi.mocked(getDb).mockReturnValue(mockDbChain({}) as any);
+    vi.mocked(getDb).mockReturnValue(mockDbChain({}) as ReturnType<typeof getDb>);
 
     const handler = (await import("../applications/[applicationId]/reject.post")).default;
     const event = createMockEvent({ method: "POST" });
-    (event as any)._routerParams = { applicationId: "app-1" };
+    (event as unknown as { _routerParams: Record<string, string> })._routerParams = { applicationId: "app-1" };
 
     await expect(handler(event)).rejects.toThrow();
   });
@@ -341,11 +342,11 @@ describe("application rejection", () => {
       callCount++;
       return callCount === 1 ? [mockApp] : [mockFlow];
     });
-    vi.mocked(getDb).mockReturnValue(db as any);
+    vi.mocked(getDb).mockReturnValue(db as ReturnType<typeof getDb>);
 
     const handler = (await import("../applications/[applicationId]/reject.post")).default;
     const event = createMockEvent({ method: "POST" });
-    (event as any)._routerParams = { applicationId: "app-1" };
+    (event as unknown as { _routerParams: Record<string, string> })._routerParams = { applicationId: "app-1" };
 
     const result = await handler(event);
     expect(result.success).toBe(true);
@@ -365,13 +366,13 @@ describe("application rejection", () => {
       callCount++;
       return callCount === 1 ? [mockApp] : [mockFlow];
     });
-    vi.mocked(getDb).mockReturnValue(db as any);
+    vi.mocked(getDb).mockReturnValue(db as ReturnType<typeof getDb>);
 
     const { removeDiscordRolesFromBot } = await import("../../utils/botSync");
 
     const handler = (await import("../applications/[applicationId]/reject.post")).default;
     const event = createMockEvent({ method: "POST" });
-    (event as any)._routerParams = { applicationId: "app-1" };
+    (event as unknown as { _routerParams: Record<string, string> })._routerParams = { applicationId: "app-1" };
 
     await handler(event);
     expect(removeDiscordRolesFromBot).toHaveBeenCalledWith("discord-456", { roleIds: ["role-x", "role-y"] });
@@ -391,13 +392,13 @@ describe("application rejection", () => {
       callCount++;
       return callCount === 1 ? [mockApp] : [mockFlow];
     });
-    vi.mocked(getDb).mockReturnValue(db as any);
+    vi.mocked(getDb).mockReturnValue(db as ReturnType<typeof getDb>);
 
     const { sendDiscordDm } = await import("../../utils/botSync");
 
     const handler = (await import("../applications/[applicationId]/reject.post")).default;
     const event = createMockEvent({ method: "POST" });
-    (event as any)._routerParams = { applicationId: "app-1" };
+    (event as unknown as { _routerParams: Record<string, string> })._routerParams = { applicationId: "app-1" };
 
     await handler(event);
     expect(sendDiscordDm).toHaveBeenCalledWith("discord-789", "Sorry, try again later.");

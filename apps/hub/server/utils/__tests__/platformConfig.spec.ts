@@ -38,10 +38,10 @@ afterEach(() => {
 });
 
 function mockDbWithRows(rows: unknown[]) {
-  const chain: Record<string, any> = {};
+  const chain: Record<string, unknown> = {};
   chain.select = vi.fn().mockReturnValue(chain);
   chain.from = vi.fn().mockReturnValue(chain);
-  chain.then = (resolve: Function) => resolve(rows);
+  chain.then = (resolve: (v: unknown) => unknown) => resolve(rows);
   return chain;
 }
 

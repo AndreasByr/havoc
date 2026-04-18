@@ -286,7 +286,7 @@ test.describe("Landing SEO (/landing/seo)", () => {
 
     // Look for SEO section in the editor
     const seoSection = page.locator(".landing-seo-section, [class*=seo], h3:has-text('SEO'), h4:has-text('SEO')").first();
-    const seoVisible = await seoSection.isVisible().catch(() => false);
+    const _seoVisible = await seoSection.isVisible().catch(() => false);
 
     // Scroll to bottom to find SEO section if needed
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));

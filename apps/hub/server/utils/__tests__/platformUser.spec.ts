@@ -8,7 +8,7 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { stubNuxtAutoImports, cleanupAutoImportStubs } from "./test-helpers";
 
-let mocks: ReturnType<typeof stubNuxtAutoImports>;
+let _mocks: ReturnType<typeof stubNuxtAutoImports>;
 
 vi.mock("../db", () => ({
   getDb: vi.fn(),
@@ -26,7 +26,7 @@ vi.mock("drizzle-orm", () => ({
 }));
 
 beforeEach(() => {
-  mocks = stubNuxtAutoImports();
+  _mocks = stubNuxtAutoImports();
 });
 
 afterEach(() => {
@@ -37,7 +37,7 @@ afterEach(() => {
 
 function mockDbMultiQuery(responses: unknown[][]) {
   let callIndex = 0;
-  const chain: Record<string, any> = {};
+  const chain: Record<string, unknown> = {};
   chain.select = vi.fn().mockReturnValue(chain);
   chain.from = vi.fn().mockReturnValue(chain);
   chain.where = vi.fn().mockReturnValue(chain);
@@ -48,7 +48,7 @@ function mockDbMultiQuery(responses: unknown[][]) {
   chain.returning = vi.fn().mockReturnValue(chain);
   chain.update = vi.fn().mockReturnValue(chain);
   chain.set = vi.fn().mockReturnValue(chain);
-  chain.then = (resolve: Function) => {
+  chain.then = (resolve: (v: unknown) => unknown) => {
     const result = responses[callIndex] ?? [];
     callIndex++;
     return resolve(result);
@@ -157,7 +157,7 @@ describe("ensurePlatformUser", () => {
       [], // insert profiles
       [], // insert userPlatformAccounts
     ];
-    const chain: Record<string, any> = {};
+    const chain: Record<string, unknown> = {};
     chain.select = vi.fn().mockReturnValue(chain);
     chain.from = vi.fn().mockReturnValue(chain);
     chain.where = vi.fn().mockReturnValue(chain);
@@ -168,7 +168,7 @@ describe("ensurePlatformUser", () => {
     chain.returning = vi.fn().mockReturnValue(chain);
     chain.update = vi.fn().mockReturnValue(chain);
     chain.set = vi.fn().mockReturnValue(chain);
-    chain.then = (resolve: Function) => {
+    chain.then = (resolve: (v: unknown) => unknown) => {
       const result = responses[callIndex] ?? [];
       callIndex++;
       return resolve(result);

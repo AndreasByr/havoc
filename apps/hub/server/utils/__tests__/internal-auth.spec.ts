@@ -30,8 +30,9 @@ describe("requireInternalToken", () => {
     expect(() => requireInternalToken(event)).toThrow();
     try {
       requireInternalToken(event);
-    } catch (e: any) {
-      expect(e.statusCode).toBe(503);
+    } catch (e: unknown) {
+      const err = e as { statusCode?: number };
+      expect(err.statusCode).toBe(503);
     }
   });
 
@@ -45,14 +46,15 @@ describe("requireInternalToken", () => {
     expect(() => requireInternalToken(event)).toThrow();
     try {
       requireInternalToken(event);
-    } catch (e: any) {
-      expect(e.statusCode).toBe(401);
+    } catch (e: unknown) {
+      const err = e as { statusCode?: number };
+      expect(err.statusCode).toBe(401);
     }
   });
 
   it("succeeds with valid Bearer token in Authorization header", async () => {
     mocks.useRuntimeConfig.mockReturnValue({ mcpInternalToken: "secret-token" });
-    mocks.getHeader.mockImplementation((_event: any, name: string) => {
+    mocks.getHeader.mockImplementation((_event: unknown, name: string) => {
       if (name === "authorization") return "Bearer secret-token";
       return undefined;
     });
@@ -65,7 +67,7 @@ describe("requireInternalToken", () => {
 
   it("succeeds with valid x-internal-token header", async () => {
     mocks.useRuntimeConfig.mockReturnValue({ mcpInternalToken: "secret-token" });
-    mocks.getHeader.mockImplementation((_event: any, name: string) => {
+    mocks.getHeader.mockImplementation((_event: unknown, name: string) => {
       if (name === "authorization") return "";
       if (name === "x-internal-token") return "secret-token";
       return undefined;
@@ -79,7 +81,7 @@ describe("requireInternalToken", () => {
 
   it("throws 401 when token does not match", async () => {
     mocks.useRuntimeConfig.mockReturnValue({ mcpInternalToken: "secret-token" });
-    mocks.getHeader.mockImplementation((_event: any, name: string) => {
+    mocks.getHeader.mockImplementation((_event: unknown, name: string) => {
       if (name === "authorization") return "Bearer wrong-token";
       return undefined;
     });
@@ -90,14 +92,15 @@ describe("requireInternalToken", () => {
     expect(() => requireInternalToken(event)).toThrow();
     try {
       requireInternalToken(event);
-    } catch (e: any) {
-      expect(e.statusCode).toBe(401);
+    } catch (e: unknown) {
+      const err = e as { statusCode?: number };
+      expect(err.statusCode).toBe(401);
     }
   });
 
   it("uses timing-safe comparison (equal-length wrong token still rejected)", async () => {
     mocks.useRuntimeConfig.mockReturnValue({ mcpInternalToken: "secret-token-abc" });
-    mocks.getHeader.mockImplementation((_event: any, name: string) => {
+    mocks.getHeader.mockImplementation((_event: unknown, name: string) => {
       if (name === "authorization") return "Bearer secret-token-xyz"; // same byte length
       return undefined;
     });
@@ -106,8 +109,9 @@ describe("requireInternalToken", () => {
     expect(() => requireInternalToken(event)).toThrow();
     try {
       requireInternalToken(event);
-    } catch (e: any) {
-      expect(e.statusCode).toBe(401);
+    } catch (e: unknown) {
+      const err = e as { statusCode?: number };
+      expect(err.statusCode).toBe(401);
     }
   });
 });

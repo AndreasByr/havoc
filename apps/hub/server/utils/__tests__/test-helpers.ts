@@ -118,7 +118,7 @@ export function stubNuxtAutoImports() {
       err.statusMessage = opts.statusMessage;
       return err;
     }),
-    defineEventHandler: vi.fn((handler: Function) => handler),
+    defineEventHandler: vi.fn((handler: (...args: unknown[]) => unknown) => handler),
     getMethod: vi.fn((event: H3Event) => event.method ?? "GET"),
     getHeader: vi.fn(
       (event: H3Event, name: string) =>
@@ -131,7 +131,7 @@ export function stubNuxtAutoImports() {
 
     // Nuxt auto-imports
     useRuntimeConfig: vi.fn(() => ({})),
-    defineNitroPlugin: vi.fn((handler: Function) => handler),
+    defineNitroPlugin: vi.fn((handler: (...args: unknown[]) => unknown) => handler),
 
     // Re-exported from csrf.ts (used in middleware)
     validateCsrfToken: vi.fn(),

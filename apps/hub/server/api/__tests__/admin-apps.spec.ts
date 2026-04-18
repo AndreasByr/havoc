@@ -59,7 +59,7 @@ describe("POST /api/admin/apps/sideload", () => {
   it("rejects unauthenticated requests", async () => {
     mocks.requireUserSession.mockRejectedValue(new Error("No session"));
     mocks.useRuntimeConfig.mockReturnValue({ enableSideloading: true });
-    vi.mocked(globalThis.readBody as any).mockResolvedValue({
+    vi.mocked(globalThis.readBody as ReturnType<typeof vi.fn>).mockResolvedValue({
       githubUrl: "https://github.com/org/repo",
     });
 
@@ -72,7 +72,7 @@ describe("POST /api/admin/apps/sideload", () => {
     const session = buildSession("admin");
     mocks.requireUserSession.mockResolvedValue(session);
     mocks.useRuntimeConfig.mockReturnValue({ enableSideloading: true });
-    vi.mocked(globalThis.readBody as any).mockResolvedValue({
+    vi.mocked(globalThis.readBody as ReturnType<typeof vi.fn>).mockResolvedValue({
       githubUrl: "https://github.com/org/repo",
     });
 
@@ -85,7 +85,7 @@ describe("POST /api/admin/apps/sideload", () => {
     const session = buildSession("superadmin");
     mocks.requireUserSession.mockResolvedValue(session);
     mocks.useRuntimeConfig.mockReturnValue({ enableSideloading: false });
-    vi.mocked(globalThis.readBody as any).mockResolvedValue({
+    vi.mocked(globalThis.readBody as ReturnType<typeof vi.fn>).mockResolvedValue({
       githubUrl: "https://github.com/org/repo",
     });
 
@@ -98,7 +98,7 @@ describe("POST /api/admin/apps/sideload", () => {
     const session = buildSession("superadmin");
     mocks.requireUserSession.mockResolvedValue(session);
     mocks.useRuntimeConfig.mockReturnValue({ enableSideloading: true });
-    vi.mocked(globalThis.readBody as any).mockResolvedValue({});
+    vi.mocked(globalThis.readBody as ReturnType<typeof vi.fn>).mockResolvedValue({});
 
     const handler = await importHandler();
     const event = createMockEvent({ method: "POST", path: "/api/admin/apps/sideload" });
@@ -109,7 +109,7 @@ describe("POST /api/admin/apps/sideload", () => {
     const session = buildSession("superadmin");
     mocks.requireUserSession.mockResolvedValue(session);
     mocks.useRuntimeConfig.mockReturnValue({ enableSideloading: true });
-    vi.mocked(globalThis.readBody as any).mockResolvedValue({
+    vi.mocked(globalThis.readBody as ReturnType<typeof vi.fn>).mockResolvedValue({
       githubUrl: "https://github.com/org/repo",
       activate: true,
     });
@@ -132,7 +132,7 @@ describe("POST /api/admin/apps/local-sideload", () => {
     const session = buildSession("admin");
     mocks.requireUserSession.mockResolvedValue(session);
     mocks.useRuntimeConfig.mockReturnValue({ enableSideloading: true });
-    vi.mocked(globalThis.readBody as any).mockResolvedValue({ localPath: "/tmp/app" });
+    vi.mocked(globalThis.readBody as ReturnType<typeof vi.fn>).mockResolvedValue({ localPath: "/tmp/app" });
 
     const handler = await importHandler();
     const event = createMockEvent({ method: "POST", path: "/api/admin/apps/local-sideload" });
@@ -143,7 +143,7 @@ describe("POST /api/admin/apps/local-sideload", () => {
     const session = buildSession("superadmin");
     mocks.requireUserSession.mockResolvedValue(session);
     mocks.useRuntimeConfig.mockReturnValue({ enableSideloading: false });
-    vi.mocked(globalThis.readBody as any).mockResolvedValue({ localPath: "/tmp/app" });
+    vi.mocked(globalThis.readBody as ReturnType<typeof vi.fn>).mockResolvedValue({ localPath: "/tmp/app" });
 
     const handler = await importHandler();
     const event = createMockEvent({ method: "POST", path: "/api/admin/apps/local-sideload" });
@@ -154,7 +154,7 @@ describe("POST /api/admin/apps/local-sideload", () => {
     const session = buildSession("superadmin");
     mocks.requireUserSession.mockResolvedValue(session);
     mocks.useRuntimeConfig.mockReturnValue({ enableSideloading: true });
-    vi.mocked(globalThis.readBody as any).mockResolvedValue({ localPath: "" });
+    vi.mocked(globalThis.readBody as ReturnType<typeof vi.fn>).mockResolvedValue({ localPath: "" });
 
     const handler = await importHandler();
     const event = createMockEvent({ method: "POST", path: "/api/admin/apps/local-sideload" });
@@ -165,7 +165,7 @@ describe("POST /api/admin/apps/local-sideload", () => {
     const session = buildSession("superadmin");
     mocks.requireUserSession.mockResolvedValue(session);
     mocks.useRuntimeConfig.mockReturnValue({ enableSideloading: true });
-    vi.mocked(globalThis.readBody as any).mockResolvedValue({
+    vi.mocked(globalThis.readBody as ReturnType<typeof vi.fn>).mockResolvedValue({
       localPath: "/tmp/my-app",
       activate: true,
     });
@@ -185,7 +185,7 @@ describe("PUT /api/admin/apps/[appId]/config", () => {
   }
 
   function mockDb() {
-    const chain: any = {};
+    const chain: Record<string, unknown> = {};
     chain.update = vi.fn().mockReturnValue(chain);
     chain.set = vi.fn().mockReturnValue(chain);
     chain.where = vi.fn().mockResolvedValue(undefined);
@@ -195,8 +195,8 @@ describe("PUT /api/admin/apps/[appId]/config", () => {
   it("rejects non-admin users", async () => {
     const session = buildSession("user");
     mocks.requireUserSession.mockResolvedValue(session);
-    vi.mocked(globalThis.readBody as any).mockResolvedValue({ config: {} });
-    vi.mocked(globalThis.getRouterParam as any).mockReturnValue("app-1");
+    vi.mocked(globalThis.readBody as ReturnType<typeof vi.fn>).mockResolvedValue({ config: {} });
+    vi.mocked(globalThis.getRouterParam as ReturnType<typeof vi.fn>).mockReturnValue("app-1");
 
     const handler = await importHandler();
     const event = createMockEvent({ method: "PUT", path: "/api/admin/apps/app-1/config" });
@@ -206,8 +206,8 @@ describe("PUT /api/admin/apps/[appId]/config", () => {
   it("rejects missing appId param", async () => {
     const session = buildSession("admin");
     mocks.requireUserSession.mockResolvedValue(session);
-    vi.mocked(globalThis.readBody as any).mockResolvedValue({ config: {} });
-    vi.mocked(globalThis.getRouterParam as any).mockReturnValue(undefined);
+    vi.mocked(globalThis.readBody as ReturnType<typeof vi.fn>).mockResolvedValue({ config: {} });
+    vi.mocked(globalThis.getRouterParam as ReturnType<typeof vi.fn>).mockReturnValue(undefined);
 
     const handler = await importHandler();
     const event = createMockEvent({ method: "PUT", path: "/api/admin/apps//config" });
@@ -217,8 +217,8 @@ describe("PUT /api/admin/apps/[appId]/config", () => {
   it("rejects invalid body (missing config key)", async () => {
     const session = buildSession("admin");
     mocks.requireUserSession.mockResolvedValue(session);
-    vi.mocked(globalThis.readBody as any).mockResolvedValue({});
-    vi.mocked(globalThis.getRouterParam as any).mockReturnValue("app-1");
+    vi.mocked(globalThis.readBody as ReturnType<typeof vi.fn>).mockResolvedValue({});
+    vi.mocked(globalThis.getRouterParam as ReturnType<typeof vi.fn>).mockReturnValue("app-1");
 
     const handler = await importHandler();
     const event = createMockEvent({ method: "PUT", path: "/api/admin/apps/app-1/config" });
@@ -228,11 +228,11 @@ describe("PUT /api/admin/apps/[appId]/config", () => {
   it("succeeds for admin with valid payload", async () => {
     const session = buildSession("admin");
     mocks.requireUserSession.mockResolvedValue(session);
-    vi.mocked(globalThis.readBody as any).mockResolvedValue({ config: { key: "val" } });
-    vi.mocked(globalThis.getRouterParam as any).mockReturnValue("app-1");
+    vi.mocked(globalThis.readBody as ReturnType<typeof vi.fn>).mockResolvedValue({ config: { key: "val" } });
+    vi.mocked(globalThis.getRouterParam as ReturnType<typeof vi.fn>).mockReturnValue("app-1");
 
     const { getDb } = await import("../../utils/db");
-    vi.mocked(getDb).mockReturnValue(mockDb() as any);
+    vi.mocked(getDb).mockReturnValue(mockDb() as ReturnType<typeof getDb>);
 
     const handler = await importHandler();
     const event = createMockEvent({ method: "PUT", path: "/api/admin/apps/app-1/config" });
@@ -251,8 +251,8 @@ describe("PUT /api/admin/apps/[appId]/status", () => {
   it("rejects non-admin users", async () => {
     const session = buildSession("moderator");
     mocks.requireUserSession.mockResolvedValue(session);
-    vi.mocked(globalThis.readBody as any).mockResolvedValue({ status: "active" });
-    vi.mocked(globalThis.getRouterParam as any).mockReturnValue("app-1");
+    vi.mocked(globalThis.readBody as ReturnType<typeof vi.fn>).mockResolvedValue({ status: "active" });
+    vi.mocked(globalThis.getRouterParam as ReturnType<typeof vi.fn>).mockReturnValue("app-1");
 
     const handler = await importHandler();
     const event = createMockEvent({ method: "PUT", path: "/api/admin/apps/app-1/status" });
@@ -262,8 +262,8 @@ describe("PUT /api/admin/apps/[appId]/status", () => {
   it("rejects invalid status value", async () => {
     const session = buildSession("admin");
     mocks.requireUserSession.mockResolvedValue(session);
-    vi.mocked(globalThis.readBody as any).mockResolvedValue({ status: "deleted" });
-    vi.mocked(globalThis.getRouterParam as any).mockReturnValue("app-1");
+    vi.mocked(globalThis.readBody as ReturnType<typeof vi.fn>).mockResolvedValue({ status: "deleted" });
+    vi.mocked(globalThis.getRouterParam as ReturnType<typeof vi.fn>).mockReturnValue("app-1");
 
     const handler = await importHandler();
     const event = createMockEvent({ method: "PUT", path: "/api/admin/apps/app-1/status" });
@@ -273,8 +273,8 @@ describe("PUT /api/admin/apps/[appId]/status", () => {
   it("rejects missing appId param", async () => {
     const session = buildSession("admin");
     mocks.requireUserSession.mockResolvedValue(session);
-    vi.mocked(globalThis.readBody as any).mockResolvedValue({ status: "active" });
-    vi.mocked(globalThis.getRouterParam as any).mockReturnValue(undefined);
+    vi.mocked(globalThis.readBody as ReturnType<typeof vi.fn>).mockResolvedValue({ status: "active" });
+    vi.mocked(globalThis.getRouterParam as ReturnType<typeof vi.fn>).mockReturnValue(undefined);
 
     const handler = await importHandler();
     const event = createMockEvent({ method: "PUT", path: "/api/admin/apps//status" });
@@ -284,8 +284,8 @@ describe("PUT /api/admin/apps/[appId]/status", () => {
   it("succeeds for admin with valid status toggle", async () => {
     const session = buildSession("admin");
     mocks.requireUserSession.mockResolvedValue(session);
-    vi.mocked(globalThis.readBody as any).mockResolvedValue({ status: "inactive" });
-    vi.mocked(globalThis.getRouterParam as any).mockReturnValue("app-1");
+    vi.mocked(globalThis.readBody as ReturnType<typeof vi.fn>).mockResolvedValue({ status: "inactive" });
+    vi.mocked(globalThis.getRouterParam as ReturnType<typeof vi.fn>).mockReturnValue("app-1");
 
     const handler = await importHandler();
     const event = createMockEvent({ method: "PUT", path: "/api/admin/apps/app-1/status" });
@@ -296,8 +296,8 @@ describe("PUT /api/admin/apps/[appId]/status", () => {
   it("succeeds for superadmin as well", async () => {
     const session = buildSession("superadmin");
     mocks.requireUserSession.mockResolvedValue(session);
-    vi.mocked(globalThis.readBody as any).mockResolvedValue({ status: "active" });
-    vi.mocked(globalThis.getRouterParam as any).mockReturnValue("app-2");
+    vi.mocked(globalThis.readBody as ReturnType<typeof vi.fn>).mockResolvedValue({ status: "active" });
+    vi.mocked(globalThis.getRouterParam as ReturnType<typeof vi.fn>).mockReturnValue("app-2");
 
     const handler = await importHandler();
     const event = createMockEvent({ method: "PUT", path: "/api/admin/apps/app-2/status" });

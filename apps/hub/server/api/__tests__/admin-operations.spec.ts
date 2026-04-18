@@ -6,7 +6,6 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import {
   buildSession,
-  buildSessionUser,
   createMockEvent,
   stubNuxtAutoImports,
   cleanupAutoImportStubs,
@@ -22,7 +21,7 @@ vi.mock("../../utils/db", () => ({
 
 vi.mock("../../utils/http", () => ({
   parsePaginationQuery: vi.fn(() => ({ page: 1, limit: 20 })),
-  paginateArray: vi.fn((items: any[], page: number, limit: number) => ({
+  paginateArray: vi.fn((items: unknown[], page: number, limit: number) => ({
     items: items.slice(0, limit),
     pagination: { page, limit, total: items.length, totalPages: Math.ceil(items.length / limit) },
   })),
@@ -47,10 +46,10 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-function mockDbForUserList(userRows: any[]) {
+function mockDbForUserList(userRows: unknown[]) {
   // The admin/users.get handler awaits the query builder directly via Promise.all,
   // so the chain must be thenable (resolve to userRows when awaited).
-  const chain: any = {};
+  const chain: Record<string, unknown> = {};
   chain.select = vi.fn().mockReturnValue(chain);
   chain.from = vi.fn().mockReturnValue(chain);
   chain.where = vi.fn().mockReturnValue(chain);
@@ -58,7 +57,7 @@ function mockDbForUserList(userRows: any[]) {
   chain.offset = vi.fn().mockReturnValue(chain);
   chain.orderBy = vi.fn().mockReturnValue(chain);
   chain.innerJoin = vi.fn().mockReturnValue(chain);
-  chain.then = (resolve: Function) => resolve(userRows);
+  chain.then = (resolve: (v: unknown) => unknown) => resolve(userRows);
   return chain;
 }
 
@@ -69,7 +68,7 @@ describe("admin user listing (GET /api/admin/users)", () => {
     mocks.requireUserSession.mockRejectedValue(new Error("No session"));
 
     const { getDb } = await import("../../utils/db");
-    vi.mocked(getDb).mockReturnValue(mockDbForUserList([]) as any);
+    vi.mocked(getDb).mockReturnValue(mockDbForUserList([]) as ReturnType<typeof getDb>);
 
     const handler = (await import("../admin/users.get")).default;
     const event = createMockEvent({ method: "GET", path: "/api/admin/users" });
@@ -82,7 +81,7 @@ describe("admin user listing (GET /api/admin/users)", () => {
     mocks.requireUserSession.mockResolvedValue(session);
 
     const { getDb } = await import("../../utils/db");
-    vi.mocked(getDb).mockReturnValue(mockDbForUserList([]) as any);
+    vi.mocked(getDb).mockReturnValue(mockDbForUserList([]) as ReturnType<typeof getDb>);
 
     const handler = (await import("../admin/users.get")).default;
     const event = createMockEvent({ method: "GET", path: "/api/admin/users" });
@@ -95,7 +94,7 @@ describe("admin user listing (GET /api/admin/users)", () => {
     mocks.requireUserSession.mockResolvedValue(session);
 
     const { getDb } = await import("../../utils/db");
-    vi.mocked(getDb).mockReturnValue(mockDbForUserList([]) as any);
+    vi.mocked(getDb).mockReturnValue(mockDbForUserList([]) as ReturnType<typeof getDb>);
 
     const handler = (await import("../admin/users.get")).default;
     const event = createMockEvent({ method: "GET", path: "/api/admin/users" });
@@ -114,7 +113,7 @@ describe("admin user listing (GET /api/admin/users)", () => {
 
     const { getDb } = await import("../../utils/db");
     const db = mockDbForUserList(testUsers);
-    vi.mocked(getDb).mockReturnValue(db as any);
+    vi.mocked(getDb).mockReturnValue(db as ReturnType<typeof getDb>);
 
     // Mock getQuery to return empty search
     vi.stubGlobal("getQuery", vi.fn(() => ({})));
@@ -136,7 +135,7 @@ describe("admin user listing (GET /api/admin/users)", () => {
 
     const { getDb } = await import("../../utils/db");
     const db = mockDbForUserList([]);
-    vi.mocked(getDb).mockReturnValue(db as any);
+    vi.mocked(getDb).mockReturnValue(db as ReturnType<typeof getDb>);
 
     vi.stubGlobal("getQuery", vi.fn(() => ({})));
 
@@ -157,11 +156,11 @@ describe("admin user listing (GET /api/admin/users)", () => {
     const testUsers = [{ id: "u1", discordId: "d1", displayName: "Admin User", avatarUrl: null }];
 
     const { getDb } = await import("../../utils/db");
-    vi.mocked(getDb).mockReturnValue(mockDbForUserList(testUsers) as any);
+    vi.mocked(getDb).mockReturnValue(mockDbForUserList(testUsers) as ReturnType<typeof getDb>);
 
     const { loadUserPermissionRolesMap } = await import("../../utils/user-directory");
     const permMap = new Map([["u1", ["admin"]]]);
-    vi.mocked(loadUserPermissionRolesMap).mockResolvedValue(permMap as any);
+    vi.mocked(loadUserPermissionRolesMap).mockResolvedValue(permMap as unknown as Map<string, string[]>);
 
     vi.stubGlobal("getQuery", vi.fn(() => ({})));
 
@@ -182,11 +181,11 @@ describe("admin user listing (GET /api/admin/users)", () => {
     const testUsers = [{ id: "u1", discordId: "d1", displayName: "Mod User", avatarUrl: null }];
 
     const { getDb } = await import("../../utils/db");
-    vi.mocked(getDb).mockReturnValue(mockDbForUserList(testUsers) as any);
+    vi.mocked(getDb).mockReturnValue(mockDbForUserList(testUsers) as ReturnType<typeof getDb>);
 
     const { loadUserCommunityRolesMap } = await import("../../utils/user-directory");
     const commMap = new Map([["u1", { name: "Moderator", id: "cr-1" }]]);
-    vi.mocked(loadUserCommunityRolesMap).mockResolvedValue(commMap as any);
+    vi.mocked(loadUserCommunityRolesMap).mockResolvedValue(commMap as unknown as Map<string, { name: string; id: string }>);
 
     vi.stubGlobal("getQuery", vi.fn(() => ({})));
 

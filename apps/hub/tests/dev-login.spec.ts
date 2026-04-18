@@ -39,7 +39,7 @@ test.describe("Dev Login Bypass", () => {
 
     // Now access another protected page
     await page.goto("/members");
-    const response = await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("networkidle");
     // Should not be redirected to login
     expect(page.url()).not.toContain("/login");
   });

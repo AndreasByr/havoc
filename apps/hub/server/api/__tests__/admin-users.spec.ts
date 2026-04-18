@@ -61,14 +61,14 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-function mockDbWithUserRows(userRows: any[]) {
-  const chain: any = {};
+function mockDbWithUserRows(userRows: unknown[]) {
+  const chain: Record<string, unknown> = {};
   chain.select = vi.fn().mockReturnValue(chain);
   chain.from = vi.fn().mockReturnValue(chain);
   chain.where = vi.fn().mockReturnValue(chain);
   chain.limit = vi.fn().mockReturnValue(chain);
   chain.innerJoin = vi.fn().mockReturnValue(chain);
-  chain.then = (resolve: Function) => resolve(userRows);
+  chain.then = (resolve: (v: unknown) => unknown) => resolve(userRows);
   return chain;
 }
 
@@ -82,8 +82,8 @@ describe("DELETE /api/admin/users/[id]", () => {
   it("rejects non-admin users", async () => {
     const session = buildSession("user");
     mocks.requireUserSession.mockResolvedValue(session);
-    vi.mocked(globalThis.readBody as any).mockResolvedValue({});
-    vi.mocked(globalThis.getRouterParam as any).mockReturnValue("target-user-1");
+    vi.mocked(globalThis.readBody as ReturnType<typeof vi.fn>).mockResolvedValue({});
+    vi.mocked(globalThis.getRouterParam as ReturnType<typeof vi.fn>).mockReturnValue("target-user-1");
 
     const handler = await importHandler();
     const event = createMockEvent({ method: "DELETE", path: "/api/admin/users/target-user-1" });
@@ -93,8 +93,8 @@ describe("DELETE /api/admin/users/[id]", () => {
   it("prevents self-deletion", async () => {
     const session = buildSession("admin", { userOverrides: { id: "admin-user-1" } });
     mocks.requireUserSession.mockResolvedValue(session);
-    vi.mocked(globalThis.readBody as any).mockResolvedValue({});
-    vi.mocked(globalThis.getRouterParam as any).mockReturnValue("admin-user-1");
+    vi.mocked(globalThis.readBody as ReturnType<typeof vi.fn>).mockResolvedValue({});
+    vi.mocked(globalThis.getRouterParam as ReturnType<typeof vi.fn>).mockReturnValue("admin-user-1");
 
     const handler = await importHandler();
     const event = createMockEvent({ method: "DELETE", path: "/api/admin/users/admin-user-1" });
@@ -104,11 +104,11 @@ describe("DELETE /api/admin/users/[id]", () => {
   it("returns 404 when target user does not exist", async () => {
     const session = buildSession("admin");
     mocks.requireUserSession.mockResolvedValue(session);
-    vi.mocked(globalThis.readBody as any).mockResolvedValue({});
-    vi.mocked(globalThis.getRouterParam as any).mockReturnValue("nonexistent");
+    vi.mocked(globalThis.readBody as ReturnType<typeof vi.fn>).mockResolvedValue({});
+    vi.mocked(globalThis.getRouterParam as ReturnType<typeof vi.fn>).mockReturnValue("nonexistent");
 
     const { getDb } = await import("../../utils/db");
-    vi.mocked(getDb).mockReturnValue(mockDbWithUserRows([]) as any);
+    vi.mocked(getDb).mockReturnValue(mockDbWithUserRows([]) as ReturnType<typeof getDb>);
 
     const handler = await importHandler();
     const event = createMockEvent({ method: "DELETE", path: "/api/admin/users/nonexistent" });
@@ -118,12 +118,12 @@ describe("DELETE /api/admin/users/[id]", () => {
   it("prevents non-superadmin from deleting a superadmin user", async () => {
     const session = buildSession("admin");
     mocks.requireUserSession.mockResolvedValue(session);
-    vi.mocked(globalThis.readBody as any).mockResolvedValue({});
-    vi.mocked(globalThis.getRouterParam as any).mockReturnValue("sa-user");
+    vi.mocked(globalThis.readBody as ReturnType<typeof vi.fn>).mockResolvedValue({});
+    vi.mocked(globalThis.getRouterParam as ReturnType<typeof vi.fn>).mockReturnValue("sa-user");
 
     const { getDb } = await import("../../utils/db");
     vi.mocked(getDb).mockReturnValue(
-      mockDbWithUserRows([{ id: "sa-user", discordId: "d-sa" }]) as any
+      mockDbWithUserRows([{ id: "sa-user", discordId: "d-sa" }]) as ReturnType<typeof getDb>
     );
 
     const { isSuperadminUser } = await import("../../utils/admin-mirror");
@@ -139,13 +139,13 @@ describe("DELETE /api/admin/users/[id]", () => {
   it("succeeds for admin deleting a regular user", async () => {
     const session = buildSession("admin");
     mocks.requireUserSession.mockResolvedValue(session);
-    vi.mocked(globalThis.readBody as any).mockResolvedValue({});
-    vi.mocked(globalThis.getRouterParam as any).mockReturnValue("regular-user");
+    vi.mocked(globalThis.readBody as ReturnType<typeof vi.fn>).mockResolvedValue({});
+    vi.mocked(globalThis.getRouterParam as ReturnType<typeof vi.fn>).mockReturnValue("regular-user");
     mocks.useRuntimeConfig.mockReturnValue({});
 
     const { getDb } = await import("../../utils/db");
     vi.mocked(getDb).mockReturnValue(
-      mockDbWithUserRows([{ id: "regular-user", discordId: "d-reg" }]) as any
+      mockDbWithUserRows([{ id: "regular-user", discordId: "d-reg" }]) as ReturnType<typeof getDb>
     );
 
     const handler = await importHandler();
@@ -165,7 +165,7 @@ describe("POST /api/admin/users/batch-delete", () => {
   it("rejects non-admin users", async () => {
     const session = buildSession("moderator");
     mocks.requireUserSession.mockResolvedValue(session);
-    vi.mocked(globalThis.readBody as any).mockResolvedValue({
+    vi.mocked(globalThis.readBody as ReturnType<typeof vi.fn>).mockResolvedValue({
       userIds: ["00000000-0000-0000-0000-000000000001"],
     });
 
@@ -177,7 +177,7 @@ describe("POST /api/admin/users/batch-delete", () => {
   it("rejects invalid payload (empty userIds array)", async () => {
     const session = buildSession("admin");
     mocks.requireUserSession.mockResolvedValue(session);
-    vi.mocked(globalThis.readBody as any).mockResolvedValue({ userIds: [] });
+    vi.mocked(globalThis.readBody as ReturnType<typeof vi.fn>).mockResolvedValue({ userIds: [] });
 
     const handler = await importHandler();
     const event = createMockEvent({ method: "POST", path: "/api/admin/users/batch-delete" });
@@ -187,7 +187,7 @@ describe("POST /api/admin/users/batch-delete", () => {
   it("rejects invalid payload (non-uuid userIds)", async () => {
     const session = buildSession("admin");
     mocks.requireUserSession.mockResolvedValue(session);
-    vi.mocked(globalThis.readBody as any).mockResolvedValue({ userIds: ["not-a-uuid"] });
+    vi.mocked(globalThis.readBody as ReturnType<typeof vi.fn>).mockResolvedValue({ userIds: ["not-a-uuid"] });
 
     const handler = await importHandler();
     const event = createMockEvent({ method: "POST", path: "/api/admin/users/batch-delete" });
@@ -200,12 +200,12 @@ describe("POST /api/admin/users/batch-delete", () => {
     mocks.requireUserSession.mockResolvedValue(session);
     mocks.useRuntimeConfig.mockReturnValue({});
 
-    vi.mocked(globalThis.readBody as any).mockResolvedValue({
+    vi.mocked(globalThis.readBody as ReturnType<typeof vi.fn>).mockResolvedValue({
       userIds: [selfId],
     });
 
     const { getDb } = await import("../../utils/db");
-    vi.mocked(getDb).mockReturnValue(mockDbWithUserRows([]) as any);
+    vi.mocked(getDb).mockReturnValue(mockDbWithUserRows([]) as ReturnType<typeof getDb>);
 
     const handler = await importHandler();
     const event = createMockEvent({ method: "POST", path: "/api/admin/users/batch-delete" });
@@ -225,7 +225,7 @@ describe("POST /api/admin/users/delete-orphaned", () => {
   it("rejects non-admin users", async () => {
     const session = buildSession("user");
     mocks.requireUserSession.mockResolvedValue(session);
-    vi.mocked(globalThis.readBody as any).mockResolvedValue({
+    vi.mocked(globalThis.readBody as ReturnType<typeof vi.fn>).mockResolvedValue({
       userIds: ["00000000-0000-0000-0000-000000000001"],
     });
 
@@ -237,7 +237,7 @@ describe("POST /api/admin/users/delete-orphaned", () => {
   it("rejects invalid payload (missing userIds)", async () => {
     const session = buildSession("admin");
     mocks.requireUserSession.mockResolvedValue(session);
-    vi.mocked(globalThis.readBody as any).mockResolvedValue({});
+    vi.mocked(globalThis.readBody as ReturnType<typeof vi.fn>).mockResolvedValue({});
 
     const handler = await importHandler();
     const event = createMockEvent({ method: "POST", path: "/api/admin/users/delete-orphaned" });
@@ -247,7 +247,7 @@ describe("POST /api/admin/users/delete-orphaned", () => {
   it("returns zero deletions when no candidates match", async () => {
     const session = buildSession("admin");
     mocks.requireUserSession.mockResolvedValue(session);
-    vi.mocked(globalThis.readBody as any).mockResolvedValue({
+    vi.mocked(globalThis.readBody as ReturnType<typeof vi.fn>).mockResolvedValue({
       userIds: ["00000000-0000-0000-0000-000000000001"],
     });
 
@@ -266,21 +266,21 @@ describe("POST /api/admin/users/delete-orphaned", () => {
     mocks.requireUserSession.mockResolvedValue(session);
 
     const targetId = "00000000-0000-0000-0000-000000000001";
-    vi.mocked(globalThis.readBody as any).mockResolvedValue({
+    vi.mocked(globalThis.readBody as ReturnType<typeof vi.fn>).mockResolvedValue({
       userIds: [targetId],
     });
 
     const { listOrphanedCandidates, deleteUsersByIds } = await import("../../utils/admin-mirror");
-    vi.mocked(listOrphanedCandidates).mockResolvedValue([{ userId: targetId }] as any);
+    vi.mocked(listOrphanedCandidates).mockResolvedValue([{ userId: targetId }] as Awaited<ReturnType<typeof listOrphanedCandidates>>);
     vi.mocked(deleteUsersByIds).mockResolvedValue(1);
 
     const { getDb } = await import("../../utils/db");
-    const dbChain: any = {};
+    const dbChain: Record<string, unknown> = {};
     dbChain.select = vi.fn().mockReturnValue(dbChain);
     dbChain.from = vi.fn().mockReturnValue(dbChain);
     dbChain.where = vi.fn().mockReturnValue(dbChain);
-    dbChain.then = (resolve: Function) => resolve([{ id: targetId }]);
-    vi.mocked(getDb).mockReturnValue(dbChain as any);
+    dbChain.then = (resolve: (v: unknown) => unknown) => resolve([{ id: targetId }]);
+    vi.mocked(getDb).mockReturnValue(dbChain as ReturnType<typeof getDb>);
 
     const handler = await importHandler();
     const event = createMockEvent({ method: "POST", path: "/api/admin/users/delete-orphaned" });
@@ -325,7 +325,7 @@ describe("POST /api/admin/users/import", () => {
 
     const { listActiveCommunityRoleMappings } = await import("../../utils/community");
     vi.mocked(listActiveCommunityRoleMappings).mockResolvedValue([
-      { id: 1, discordRoleId: "role-1" } as any,
+      { id: 1, discordRoleId: "role-1" } as Awaited<ReturnType<typeof listActiveCommunityRoleMappings>>[number],
     ]);
 
     const { fetchDiscordGuildMembersByRoleFromBot, fetchDiscordGuildRolesFromBot } = await import(

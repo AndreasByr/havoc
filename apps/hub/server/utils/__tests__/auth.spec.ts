@@ -1,10 +1,9 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import type { AppSession, AppSessionUser } from "../auth";
+import type { AppSessionUser } from "../auth";
 import {
   buildSessionUser,
   buildSession,
   createMockEvent,
-  createAuthenticatedEvent,
   stubNuxtAutoImports,
   cleanupAutoImportStubs,
 } from "./test-helpers";
@@ -46,8 +45,9 @@ describe("requireRole", () => {
     expect(() => requireRole(user, ["admin"])).toThrow();
     try {
       requireRole(user, ["admin"]);
-    } catch (e: any) {
-      expect(e.statusCode).toBe(403);
+    } catch (e: unknown) {
+      const err = e as { statusCode?: number };
+      expect(err.statusCode).toBe(403);
     }
   });
 
@@ -109,8 +109,9 @@ describe("requireSession", () => {
     await expect(requireSession(event)).rejects.toThrow();
     try {
       await requireSession(event);
-    } catch (e: any) {
-      expect(e.statusCode).toBe(401);
+    } catch (e: unknown) {
+      const err = e as { statusCode?: number };
+      expect(err.statusCode).toBe(401);
     }
   });
 
@@ -123,8 +124,9 @@ describe("requireSession", () => {
     await expect(requireSession(event)).rejects.toThrow();
     try {
       await requireSession(event);
-    } catch (e: any) {
-      expect(e.statusCode).toBe(401);
+    } catch (e: unknown) {
+      const err = e as { statusCode?: number };
+      expect(err.statusCode).toBe(401);
     }
   });
 
@@ -182,8 +184,9 @@ describe("requireAdminSession", () => {
     await expect(requireAdminSession(createMockEvent())).rejects.toThrow();
     try {
       await requireAdminSession(createMockEvent());
-    } catch (e: any) {
-      expect(e.statusCode).toBe(401);
+    } catch (e: unknown) {
+      const err = e as { statusCode?: number };
+      expect(err.statusCode).toBe(401);
     }
   });
 });

@@ -104,7 +104,7 @@ describe("Session rotation (F-09 structural verification)", () => {
         modAccessApps: false,
         modAccessDiscordRoles: false
       }
-    } as any;
+    } as unknown as import("../auth").AppSessionUser;
 
     await replaceAuthSession(event, newUser);
 
@@ -139,7 +139,7 @@ describe("Session rotation (F-09 structural verification)", () => {
         modAccessApps: false,
         modAccessDiscordRoles: false
       }
-    } as any;
+    } as unknown as import("../auth").AppSessionUser;
 
     await replaceAuthSession(event, newUser);
 

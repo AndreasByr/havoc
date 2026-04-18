@@ -7,7 +7,6 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import {
   buildSession,
-  buildSessionUser,
   createMockEvent,
   stubNuxtAutoImports,
   cleanupAutoImportStubs,
@@ -22,7 +21,7 @@ vi.mock("../../utils/db", () => ({
 }));
 
 vi.mock("../../utils/jsonResponse", () => ({
-  jsonResponse: vi.fn((body: any) => body),
+  jsonResponse: vi.fn((body: unknown) => body),
 }));
 
 vi.mock("../../utils/appearance", () => ({
@@ -30,7 +29,7 @@ vi.mock("../../utils/appearance", () => ({
 }));
 
 vi.mock("../../utils/locale-preference", () => ({
-  normalizeUserLocalePreference: vi.fn((pref: any) => pref ?? null),
+  normalizeUserLocalePreference: vi.fn((pref: unknown) => pref ?? null),
   readLegacyLocalePreferenceFromCustomFields: vi.fn(() => null),
   resolveEffectiveLocale: vi.fn(() => ({ locale: "en", source: "default" })),
 }));
@@ -72,7 +71,7 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-function mockDbForProfile(userRows: any[], voiceSessions: any[] = []) {
+function mockDbForProfile(userRows: unknown[], _voiceSessions: unknown[] = []) {
   return {
     select: vi.fn().mockReturnThis(),
     from: vi.fn().mockReturnThis(),
@@ -88,7 +87,7 @@ describe("own profile access (GET /api/profile)", () => {
     mocks.requireUserSession.mockRejectedValue(new Error("No session"));
 
     const { getDb } = await import("../../utils/db");
-    vi.mocked(getDb).mockReturnValue(mockDbForProfile([]) as any);
+    vi.mocked(getDb).mockReturnValue(mockDbForProfile([]) as ReturnType<typeof getDb>);
 
     const handler = (await import("../profile/index.get")).default;
     const event = createMockEvent({ method: "GET", path: "/api/profile" });
@@ -109,7 +108,7 @@ describe("own profile access (GET /api/profile)", () => {
     };
 
     const { getDb } = await import("../../utils/db");
-    vi.mocked(getDb).mockReturnValue(mockDbForProfile([userRow]) as any);
+    vi.mocked(getDb).mockReturnValue(mockDbForProfile([userRow]) as ReturnType<typeof getDb>);
     vi.stubGlobal("getQuery", vi.fn(() => ({})));
 
     const handler = (await import("../profile/index.get")).default;
@@ -129,7 +128,7 @@ describe("own profile access (GET /api/profile)", () => {
 
     const userRow = { id: "temp-1", discordId: "d-temp", displayName: "Temp User", avatarUrl: null, avatarSource: null };
     const { getDb } = await import("../../utils/db");
-    vi.mocked(getDb).mockReturnValue(mockDbForProfile([userRow]) as any);
+    vi.mocked(getDb).mockReturnValue(mockDbForProfile([userRow]) as ReturnType<typeof getDb>);
     vi.stubGlobal("getQuery", vi.fn(() => ({})));
 
     const handler = (await import("../profile/index.get")).default;
@@ -151,7 +150,7 @@ describe("other-profile access (GET /api/profile?id=other)", () => {
     mocks.requireUserSession.mockResolvedValue(session);
 
     const { getDb } = await import("../../utils/db");
-    vi.mocked(getDb).mockReturnValue(mockDbForProfile([]) as any);
+    vi.mocked(getDb).mockReturnValue(mockDbForProfile([]) as ReturnType<typeof getDb>);
     vi.stubGlobal("getQuery", vi.fn(() => ({ id: "other-user-2" })));
 
     const handler = (await import("../profile/index.get")).default;
@@ -170,7 +169,7 @@ describe("other-profile access (GET /api/profile?id=other)", () => {
 
     const otherUser = { id: "other-2", discordId: "d-other", displayName: "Other User", avatarUrl: null, avatarSource: null };
     const { getDb } = await import("../../utils/db");
-    vi.mocked(getDb).mockReturnValue(mockDbForProfile([otherUser]) as any);
+    vi.mocked(getDb).mockReturnValue(mockDbForProfile([otherUser]) as ReturnType<typeof getDb>);
     vi.stubGlobal("getQuery", vi.fn(() => ({ id: "other-2" })));
 
     const handler = (await import("../profile/index.get")).default;
@@ -190,7 +189,7 @@ describe("other-profile access (GET /api/profile?id=other)", () => {
 
     const otherUser = { id: "other-3", discordId: "d-other3", displayName: "Third User", avatarUrl: null, avatarSource: null };
     const { getDb } = await import("../../utils/db");
-    vi.mocked(getDb).mockReturnValue(mockDbForProfile([otherUser]) as any);
+    vi.mocked(getDb).mockReturnValue(mockDbForProfile([otherUser]) as ReturnType<typeof getDb>);
     vi.stubGlobal("getQuery", vi.fn(() => ({ id: "other-3" })));
 
     const handler = (await import("../profile/index.get")).default;
@@ -209,7 +208,7 @@ describe("other-profile access (GET /api/profile?id=other)", () => {
 
     const otherUser = { id: "other-4", discordId: "d-o4", displayName: "Fourth User", avatarUrl: null, avatarSource: null };
     const { getDb } = await import("../../utils/db");
-    vi.mocked(getDb).mockReturnValue(mockDbForProfile([otherUser]) as any);
+    vi.mocked(getDb).mockReturnValue(mockDbForProfile([otherUser]) as ReturnType<typeof getDb>);
     vi.stubGlobal("getQuery", vi.fn(() => ({ id: "other-4" })));
 
     const handler = (await import("../profile/index.get")).default;
@@ -227,7 +226,7 @@ describe("other-profile access (GET /api/profile?id=other)", () => {
     mocks.requireUserSession.mockResolvedValue(session);
 
     const { getDb } = await import("../../utils/db");
-    vi.mocked(getDb).mockReturnValue(mockDbForProfile([]) as any);
+    vi.mocked(getDb).mockReturnValue(mockDbForProfile([]) as ReturnType<typeof getDb>);
     vi.stubGlobal("getQuery", vi.fn(() => ({ id: "nonexistent" })));
 
     const handler = (await import("../profile/index.get")).default;
@@ -256,10 +255,10 @@ describe("profile response shape", () => {
     };
 
     const { getDb } = await import("../../utils/db");
-    vi.mocked(getDb).mockReturnValue(mockDbForProfile([userRow]) as any);
+    vi.mocked(getDb).mockReturnValue(mockDbForProfile([userRow]) as ReturnType<typeof getDb>);
 
     const { loadUserPermissionRolesMap } = await import("../../utils/user-directory");
-    vi.mocked(loadUserPermissionRolesMap).mockResolvedValue(new Map([["user-1", ["admin"]]]) as any);
+    vi.mocked(loadUserPermissionRolesMap).mockResolvedValue(new Map([["user-1", ["admin"]]]) as unknown as Awaited<ReturnType<typeof loadUserPermissionRolesMap>>);
 
     vi.stubGlobal("getQuery", vi.fn(() => ({})));
 
