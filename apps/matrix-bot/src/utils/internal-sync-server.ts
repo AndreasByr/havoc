@@ -151,12 +151,6 @@ export function startInternalSyncServer(config: ServerConfig) {
     },
     {
       method: "DELETE",
-      pattern: /^\/internal\/guild\/channels\/([^/]+)$/,
-      paramNames: ["channelId"],
-      handler: handleDeleteChannel,
-    },
-    {
-      method: "DELETE",
       pattern: /^\/internal\/guild\/channels\/([^/]+)\/messages\/([^/]+)$/,
       paramNames: ["channelId", "messageId"],
       handler: handleDeleteMessage,
@@ -214,6 +208,12 @@ export function startInternalSyncServer(config: ServerConfig) {
       pattern: /^\/internal\/role-picker\/embed$/,
       paramNames: [],
       handler: handleRolePickerEmbedDelete,
+    },
+    {
+      method: "DELETE",
+      pattern: /^\/internal\/guild\/channels\/([^/]+)$/,
+      paramNames: ["channelId"],
+      handler: handleDeleteChannel,
     },
   ];
 
