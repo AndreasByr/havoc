@@ -7,6 +7,8 @@ export function createMockMatrixClient() {
     getUserId: vi.fn().mockResolvedValue("@bot:example.org"),
     getUserProfile: vi.fn().mockResolvedValue({ displayname: "Test User", avatar_url: null }),
     joinRoom: vi.fn().mockResolvedValue("!room:example.org"),
+    createRoom: vi.fn().mockResolvedValue("!newroom:example.org"),
+    leaveRoom: vi.fn().mockResolvedValue(undefined),
     sendMessage: vi.fn().mockResolvedValue("$event1"),
     sendStateEvent: vi.fn().mockResolvedValue("$event2"),
     getRoomStateEvent: vi.fn().mockResolvedValue({ users: {}, users_default: 0, events_default: 0 }),
