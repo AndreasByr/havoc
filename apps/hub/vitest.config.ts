@@ -7,7 +7,7 @@ function resolveH3(): string {
   const pnpmDir = resolve(__dirname, "../../node_modules/.pnpm");
   const h3Dir = readdirSync(pnpmDir).find((d) => d.startsWith("h3@1"));
   if (h3Dir) {
-    return resolve(pnpmDir, h3Dir, "node_modules/h3/dist/index.mjs");
+    return resolve(pnpmDir, h3Dir, "node_modules/h3/dist/index.cjs");
   }
   return "h3";
 }
@@ -17,9 +17,6 @@ export default defineConfig({
     environment: "node",
     include: ["**/*.spec.ts", "**/*.test.ts"],
     exclude: ["**/node_modules/**", "**/.nuxt/**", "**/.output/**", "**/dist/**", "tests/**"]
-  },
-  esbuild: {
-    tsconfigRaw: '{}'
   },
   resolve: {
     alias: {
