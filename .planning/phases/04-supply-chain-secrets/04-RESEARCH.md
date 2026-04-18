@@ -510,17 +510,19 @@ if (!expectedToken) {
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Vite dev-server CVEs in production builds**
    - What we know: All vite paths in the audit go through `@nuxt/devtools` which is listed as a dependency (not devDependency) of nuxt itself; vite is included in the build output
    - What's unclear: Does the Nitro production server actually start the Vite HMR/dev-server, or is Vite only used at build time and not at runtime in production?
    - Recommendation: Add override `"vite": ">=7.3.2"` as the safe conservative fix; if nuxt 4.4.2 upgrade is straightforward, upgrade nuxt instead and verify it pulls vite >=7.3.2
+   - RESOLVED: vite override `"vite": ">=7.3.2"` is added in 04-02-PLAN.md (Task 1) as part of the overrides audit and CVE remediation.
 
 2. **Is `BOT_INTERNAL_TOKEN` required or optional for matrix-bot?**
    - What we know: The existing code uses `|| ""` fallback suggesting it was optional; but the sync server is started regardless
    - What's unclear: Can the matrix-bot operate without the internal sync server? Should the startup check be conditional on some `MATRIX_SYNC_ENABLED` flag?
    - Recommendation: Make the check the same as the Discord bot's `logger.warn("...disabled for security")` if token is missing — only fail-loud if token is set but is a placeholder
+   - RESOLVED: 04-03-PLAN.md implements this pattern — matrix-bot startup check only fail-louds when token is set but is a known placeholder string (D-09); missing token is treated as "sync disabled" with a warning (not a hard fail).
 
 ---
 
