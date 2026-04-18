@@ -131,6 +131,7 @@ export function stubNuxtAutoImports() {
 
     // Nuxt auto-imports
     useRuntimeConfig: vi.fn(() => ({})),
+    defineNitroPlugin: vi.fn((handler: Function) => handler),
 
     // Re-exported from csrf.ts (used in middleware)
     validateCsrfToken: vi.fn(),
