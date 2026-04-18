@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const props = defineProps<{
+defineProps<{
   content: Record<string, unknown>;
   config: Record<string, unknown>;
 }>();

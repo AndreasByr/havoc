@@ -25,8 +25,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (event: "close"): void;
-  (event: "saved"): void;
+  (event: "close" | "saved"): void;
 }>();
 
 const closeButtonRef = ref<HTMLButtonElement | null>(null);

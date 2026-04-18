@@ -17,11 +17,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: "update:sections", sections: SimpleFormSection[]): void;
-  (e: "change"): void;
-  (e: "undo"): void;
-  (e: "redo"): void;
-  (e: "publish"): void;
-  (e: "discard"): void;
+  (e: "change" | "undo" | "redo" | "publish" | "discard"): void;
 }>();
 
 const confirmDiscard = ref(false);

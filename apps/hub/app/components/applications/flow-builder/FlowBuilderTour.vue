@@ -8,8 +8,7 @@ defineProps<{
 }>();
 
 defineEmits<{
-  (e: "next"): void;
-  (e: "skip"): void;
+  (e: "next" | "skip"): void;
 }>();
 </script>
 

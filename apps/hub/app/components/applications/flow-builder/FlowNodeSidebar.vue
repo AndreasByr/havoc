@@ -73,8 +73,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: "update-node-data", nodeId: string, data: Record<string, unknown>): void;
-  (e: "delete-node", nodeId: string): void;
-  (e: "ungroup-node", nodeId: string): void;
+  (e: "delete-node" | "ungroup-node", nodeId: string): void;
   (e: "close"): void;
 }>();
 
@@ -225,7 +224,7 @@ function onSourceNodeChange(newSourceNodeId: string) {
             v-model="(localData as FlowInputNodeData).label"
             class="input input-sm w-full"
             @blur="commitChanges"
-          />
+          >
         </div>
         <div class="sidebar-field">
           <label class="sidebar-label">{{ t("applications.flowBuilder.sidebar.description") }}</label>
@@ -233,7 +232,7 @@ function onSourceNodeChange(newSourceNodeId: string) {
             v-model="(localData as FlowInputNodeData).description"
             class="input input-sm w-full"
             @blur="commitChanges"
-          />
+          >
         </div>
         <div class="sidebar-field">
           <label class="sidebar-label">{{ t("applications.flowBuilder.sidebar.placeholder") }}</label>
@@ -241,7 +240,7 @@ function onSourceNodeChange(newSourceNodeId: string) {
             v-model="(localData as FlowInputNodeData).placeholder"
             class="input input-sm w-full"
             @blur="commitChanges"
-          />
+          >
         </div>
         <label class="flex items-center gap-2 cursor-pointer sidebar-field">
           <input
@@ -249,7 +248,7 @@ function onSourceNodeChange(newSourceNodeId: string) {
             type="checkbox"
             class="toggle toggle-sm"
             @change="commitChanges"
-          />
+          >
           <span class="text-sm">{{ t("applications.flowBuilder.sidebar.required") }}</span>
         </label>
 
@@ -270,7 +269,7 @@ function onSourceNodeChange(newSourceNodeId: string) {
                   class="input input-sm flex-1"
                   :placeholder="t('applications.flowBuilder.sidebar.optionLabel')"
                   @blur="commitChanges"
-                />
+                >
                 <button class="btn btn-ghost btn-sm" @click="removeOption(i); commitChanges()">
                   <Icon name="proicons:cancel" class="text-sm" />
                 </button>
@@ -304,7 +303,7 @@ function onSourceNodeChange(newSourceNodeId: string) {
               </button>
               <div v-if="discordRoleInputDropdownOpen" class="role-multiselect__dropdown">
                 <label v-for="role in guildRoles" :key="role.id" class="role-multiselect__option">
-                  <input type="checkbox" :checked="((localData as FlowInputNodeData).discordRoleOptions || []).some((r) => r.roleId === role.id)" @change="handleToggleDiscordRoleOption(role.id)" />
+                  <input type="checkbox" :checked="((localData as FlowInputNodeData).discordRoleOptions || []).some((r) => r.roleId === role.id)" @change="handleToggleDiscordRoleOption(role.id)" >
                   <span class="role-color-dot" :style="{ backgroundColor: roleColorHex(role.color) }" />
                   <span v-if="role.unicodeEmoji">{{ role.unicodeEmoji }}</span>
                   {{ role.name }}
@@ -335,7 +334,7 @@ function onSourceNodeChange(newSourceNodeId: string) {
             v-model="(localData as FlowInfoNodeData).ctaLabel"
             class="input input-sm w-full"
             @blur="commitChanges"
-          />
+          >
         </div>
         <div class="sidebar-field">
           <label class="sidebar-label">{{ t("applications.flowBuilder.sidebar.ctaButtonUrl") }}</label>
@@ -343,7 +342,7 @@ function onSourceNodeChange(newSourceNodeId: string) {
             v-model="(localData as FlowInfoNodeData).ctaUrl"
             class="input input-sm w-full"
             @blur="commitChanges"
-          />
+          >
         </div>
       </template>
 
@@ -378,7 +377,7 @@ function onSourceNodeChange(newSourceNodeId: string) {
             </button>
             <div v-if="roleDropdownOpen" class="role-multiselect__dropdown">
               <label v-for="role in guildRoles" :key="role.id" class="role-multiselect__option">
-                <input type="checkbox" :checked="((localData as FlowRoleAssignmentNodeData).roleIds || []).includes(role.id)" @change="handleToggleRole(role.id)" />
+                <input type="checkbox" :checked="((localData as FlowRoleAssignmentNodeData).roleIds || []).includes(role.id)" @change="handleToggleRole(role.id)" >
                 {{ role.name }}
               </label>
               <div v-if="guildRoles.length === 0" class="text-xs p-2" style="color: var(--color-base-content-secondary)">
@@ -396,7 +395,7 @@ function onSourceNodeChange(newSourceNodeId: string) {
             v-model="(localData as FlowStepGroupNodeData).title"
             class="input input-sm w-full"
             @blur="commitChanges"
-          />
+          >
         </div>
         <div class="sidebar-field">
           <label class="sidebar-label">{{ t("applications.flowBuilder.sidebar.description2") }}</label>
@@ -404,7 +403,7 @@ function onSourceNodeChange(newSourceNodeId: string) {
             v-model="(localData as FlowStepGroupNodeData).description"
             class="input input-sm w-full"
             @blur="commitChanges"
-          />
+          >
         </div>
       </template>
 

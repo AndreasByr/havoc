@@ -20,10 +20,6 @@ const value = computed({
   set: (v) => emit("update:modelValue", v)
 });
 
-const hasOptions = computed(() =>
-  ["single_select_radio", "single_select_dropdown", "multi_select", "yes_no"].includes(props.field.inputType)
-);
-
 const yesNoOptions = computed(() => [
   { id: "yes", label: t("applications.form.yes") },
   { id: "no", label: t("applications.form.no") }
@@ -108,7 +104,7 @@ onMounted(() => {
       class="input w-full"
       :placeholder="field.placeholder"
       :required="field.required"
-    />
+    >
 
     <!-- Long Text -->
     <textarea
@@ -130,7 +126,7 @@ onMounted(() => {
       :required="field.required"
       :min="field.validation?.minValue"
       :max="field.validation?.maxValue"
-    />
+    >
 
     <!-- Date -->
     <input
@@ -139,7 +135,7 @@ onMounted(() => {
       type="date"
       class="input w-full"
       :required="field.required"
-    />
+    >
 
     <!-- Single Select Radio / Yes-No -->
     <div
@@ -158,7 +154,7 @@ onMounted(() => {
           :checked="value === opt.id"
           class="radio"
           @change="value = opt.id"
-        />
+        >
         <span>{{ opt.label }}</span>
       </label>
     </div>
@@ -191,7 +187,7 @@ onMounted(() => {
           :checked="isChecked(opt.id)"
           class="checkbox"
           @change="toggleOption(opt.id)"
-        />
+        >
         <span>{{ opt.label }}</span>
       </label>
     </div>
@@ -213,7 +209,7 @@ onMounted(() => {
           :checked="value === opt.roleId"
           class="radio"
           @change="value = opt.roleId"
-        />
+        >
         <span class="role-color-dot" :style="{ backgroundColor: roleColorHex(opt.color) }" />
         <span v-if="opt.unicodeEmoji">{{ opt.unicodeEmoji }}</span>
         <span>{{ opt.name }}</span>
@@ -235,7 +231,7 @@ onMounted(() => {
           :checked="isChecked(opt.roleId)"
           class="checkbox"
           @change="toggleOption(opt.roleId)"
-        />
+        >
         <span class="role-color-dot" :style="{ backgroundColor: roleColorHex(opt.color) }" />
         <span v-if="opt.unicodeEmoji">{{ opt.unicodeEmoji }}</span>
         <span>{{ opt.name }}</span>
@@ -249,7 +245,7 @@ onMounted(() => {
         class="file-input w-full"
         accept=".jpg,.jpeg,.png,.pdf"
         @change="handleFileUpload"
-      />
+      >
       <p v-if="uploading" class="text-sm mt-1" style="color: var(--color-base-content-secondary)">
         {{ t("applications.form.uploading") }}
       </p>

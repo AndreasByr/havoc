@@ -9,8 +9,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: "next"): void;
-  (e: "skip"): void;
+  (e: "next" | "skip"): void;
 }>();
 
 const TOOLTIP_GAP = 12;

@@ -10,10 +10,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: "undo"): void;
-  (e: "redo"): void;
-  (e: "publish"): void;
-  (e: "discard"): void;
+  (e: "undo" | "redo" | "publish" | "discard"): void;
 }>();
 
 type NodePaletteItem = {

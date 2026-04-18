@@ -2,7 +2,7 @@
 const { t } = useI18n();
 const route = useRoute();
 const localePath = useLocalePath();
-const { loggedIn, user, logout, hasRole } = useAuth();
+const { loggedIn, logout, hasRole } = useAuth();
 
 const mobileMenuOpen = ref(false);
 

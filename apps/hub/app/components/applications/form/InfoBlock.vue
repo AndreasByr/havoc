@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { FlowInfoNodeData } from "@guildora/shared";
 
-const props = defineProps<{
+defineProps<{
   data: FlowInfoNodeData;
 }>();
 </script>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ApplicationFlowGraph, LinearizedStep } from "@guildora/shared";
+import type { ApplicationFlowGraph } from "@guildora/shared";
 import { linearizeFlowGraph } from "@guildora/shared";
 
 const props = defineProps<{

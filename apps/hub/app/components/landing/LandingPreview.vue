@@ -71,7 +71,7 @@ const colorStyle = computed(() => {
       />
     </template>
 
-    <component v-if="customCss" :is="'style'" v-text="customCss" />
+    <style v-if="customCss" v-text="customCss" />
   </div>
 </template>
 

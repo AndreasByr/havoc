@@ -13,22 +13,25 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: "update-title", title: string): void;
   (e: "update-items", items: SimpleFormItem[]): void;
-  (e: "delete"): void;
-  (e: "change"): void;
+  (e: "delete" | "change"): void;
 }>();
 
 // Inline title editing
 const editingTitle = ref(false);
 const titleInput = ref<HTMLInputElement>();
+const localTitle = ref(props.section.title);
+
+watch(() => props.section.title, (v) => { localTitle.value = v; });
 
 function startEditTitle() {
+  localTitle.value = props.section.title;
   editingTitle.value = true;
   nextTick(() => titleInput.value?.focus());
 }
 
 function commitTitle() {
   editingTitle.value = false;
-  emit("update-title", props.section.title);
+  emit("update-title", localTitle.value);
   emit("change");
 }
 
@@ -103,12 +106,12 @@ function doDelete() {
         <input
           v-if="editingTitle"
           ref="titleInput"
-          :value="section.title"
+          :value="localTitle"
           class="simple-section__title-input"
-          @input="section.title = ($event.target as HTMLInputElement).value"
+          @input="localTitle = ($event.target as HTMLInputElement).value"
           @blur="commitTitle"
           @keydown.enter="commitTitle"
-        />
+        >
         <h3 v-else class="simple-section__title" @click="startEditTitle">
           {{ section.title || t("applications.flowBuilder.simpleMode.untitledSection") }}
           <Icon name="proicons:edit" class="simple-section__edit-icon" />
