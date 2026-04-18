@@ -292,8 +292,22 @@ export function startInternalSyncServer(config: ServerConfig) {
 
 // ─── Route Handlers ─────────────────────────────────────────────────────────
 
-async function handleHealth(): Promise<unknown> {
-  return { ok: true, status: "connected", platform: "matrix" };
+async function handleHealth(client: MatrixClient): Promise<unknown> {
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    setTimeout(() => reject(new Error("Health check timed out after 5s")), 5000);
+  });
+
+  try {
+    const userId = await Promise.race([client.getUserId(), timeoutPromise]);
+    if (typeof userId !== "string" || userId.trim().length === 0) {
+      throw new Error("Health check returned an invalid Matrix user ID");
+    }
+
+    return { ok: true, status: "connected", platform: "matrix" };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Health check failed";
+    return { ok: false, status: "error", platform: "matrix", message };
+  }
 }
 
 async function handleGetRoles(
