@@ -1,5 +1,6 @@
 import type { MatrixClient } from "matrix-bot-sdk";
 import { getSpaceHierarchy } from "../utils/matrix-helpers.js";
+import { botAppHookRegistry } from "../utils/app-hooks.js";
 
 /**
  * Register a handler for room membership events.
@@ -33,14 +34,12 @@ export function registerRoomMemberHandler(client: MatrixClient, spaceId: string 
       }
     }
 
-    // TODO: Emit onMemberJoin app hook with payload:
-    // {
-    //   guildId: spaceId,
-    //   memberId: event.state_key,
-    //   username: content.displayname || event.state_key,
-    //   joinedAt: new Date().toISOString(),
-    //   platform: "matrix"
-    // }
-    console.log(`[matrix-bot] Member joined ${roomId}: ${event.state_key as string}`);
+    botAppHookRegistry.emit("onMemberJoin", {
+      guildId: spaceId || "",
+      memberId: event.state_key as string,
+      username: content.displayname || (event.state_key as string),
+      joinedAt: new Date().toISOString(),
+      platform: "matrix"
+    });
   });
 }

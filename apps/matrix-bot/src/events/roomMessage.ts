@@ -1,5 +1,6 @@
 import type { MatrixClient } from "matrix-bot-sdk";
 import { getSpaceHierarchy } from "../utils/matrix-helpers.js";
+import { botAppHookRegistry } from "../utils/app-hooks.js";
 
 /**
  * Register a handler for room message events.
@@ -25,16 +26,14 @@ export function registerRoomMessageHandler(client: MatrixClient, spaceId: string
     const content = event.content as { body?: string; msgtype?: string } | undefined;
     if (!content?.body || content.msgtype !== "m.text") return;
 
-    // TODO: Emit onMessage app hook with payload:
-    // {
-    //   guildId: spaceId,
-    //   channelId: roomId,
-    //   messageId: event.event_id,
-    //   memberId: event.sender,
-    //   content: content.body,
-    //   occurredAt: new Date().toISOString(),
-    //   platform: "matrix"
-    // }
-    console.log(`[matrix-bot] Message in ${roomId} from ${event.sender as string}: ${content.body.substring(0, 50)}`);
+    botAppHookRegistry.emit("onMessage", {
+      guildId: spaceId || "",
+      channelId: roomId,
+      messageId: event.event_id as string,
+      memberId: event.sender as string,
+      content: content.body,
+      occurredAt: new Date().toISOString(),
+      platform: "matrix"
+    });
   });
 }

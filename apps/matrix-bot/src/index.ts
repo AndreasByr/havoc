@@ -4,6 +4,7 @@ import { startInternalSyncServer } from "./utils/internal-sync-server.js";
 import { isPlaceholderToken } from "./utils/startup-checks.js";
 import { registerRoomMessageHandler } from "./events/roomMessage.js";
 import { registerRoomMemberHandler } from "./events/roomMember.js";
+import { loadInstalledAppHooks } from "./utils/app-hooks.js";
 
 dotenv.config();
 
@@ -48,6 +49,7 @@ async function main() {
   await client.start();
 
   const userId = await client.getUserId();
+  await loadInstalledAppHooks(client);
   console.log(`[matrix-bot] Connected as ${userId}`);
   console.log(`[matrix-bot] Internal sync server on port ${BOT_INTERNAL_PORT}`);
   if (SPACE_ID) {

@@ -8,6 +8,7 @@ import crypto from "node:crypto";
 import http from "node:http";
 import type { MatrixClient } from "matrix-bot-sdk";
 import { getSpaceHierarchy } from "./matrix-helpers.js";
+import { loadInstalledAppHooks } from "./app-hooks.js";
 
 interface ServerConfig {
   client: MatrixClient;
@@ -61,6 +62,12 @@ export function startInternalSyncServer(config: ServerConfig) {
       pattern: /^\/internal\/sync-user$/,
       paramNames: [],
       handler: handleSyncUser,
+    },
+    {
+      method: "POST",
+      pattern: /^\/internal\/reload-hooks$/,
+      paramNames: [],
+      handler: handleReloadHooks,
     },
   ];
 
@@ -270,6 +277,11 @@ async function handleSyncUser(
   }
 
   return { ok: true, nicknameUpdated: false, nicknameReason: "not_requested" };
+}
+
+async function handleReloadHooks(client: MatrixClient): Promise<unknown> {
+  await loadInstalledAppHooks(client);
+  return { ok: true };
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
