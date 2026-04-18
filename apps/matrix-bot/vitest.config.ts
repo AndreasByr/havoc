@@ -1,5 +1,5 @@
 import { defineConfig } from "vitest/config";
-import path from "path";
+import { resolve } from "node:path";
 
 export default defineConfig({
   test: {
@@ -8,8 +8,9 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@guildora/shared": path.resolve(__dirname, "../../packages/shared/src"),
-      "@guildora/app-sdk": path.resolve(__dirname, "../../packages/app-sdk/src"),
+      "@guildora/shared/db/client": resolve(__dirname, "../../packages/shared/src/db/client.ts"),
+      "@guildora/shared": resolve(__dirname, "../../packages/shared/src/index.ts"),
+      "@guildora/app-sdk": resolve(__dirname, "../../packages/app-sdk/src/index.ts"),
     },
   },
 });
