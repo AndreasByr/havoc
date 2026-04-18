@@ -1201,7 +1201,10 @@
       "matrix": {
         "homeserverUrl": "Homeserver URL",
         "accessToken": "Bot Access Token",
-        "spaceId": "Space ID"
+        "spaceId": "Space ID",
+        "experimentalWarning": "Matrix integration is experimental. Some features available on Discord are not yet supported.",
+        "experimentalCaveats": "Missing features: native embeds, button interactions, rich role management. Messages use plain text with HTML formatting.",
+        "experimentalAck": "I understand that Matrix integration is experimental and has limited features compared to Discord."
       }
     }
   },

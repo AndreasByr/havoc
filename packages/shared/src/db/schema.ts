@@ -430,6 +430,7 @@ export interface MatrixPlatformCredentials {
   homeserverUrl: string;
   accessToken: string;
   spaceId: string;
+  experimentalAck?: boolean;
 }
 
 export type PlatformCredentials = DiscordPlatformCredentials | MatrixPlatformCredentials;

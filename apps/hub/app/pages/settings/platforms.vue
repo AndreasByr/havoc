@@ -49,6 +49,7 @@ const matrixAccessToken = ref("");
 const matrixSpaceId = ref("");
 const matrixBotUrl = ref("");
 const matrixBotTokenField = ref("");
+const matrixExperimentalAck = ref(false);
 
 const resetAddForm = () => {
   addError.value = "";
@@ -63,6 +64,7 @@ const resetAddForm = () => {
   matrixSpaceId.value = "";
   matrixBotUrl.value = "";
   matrixBotTokenField.value = "";
+  matrixExperimentalAck.value = false;
 };
 
 const openAddDialog = (platform: "discord" | "matrix") => {
@@ -92,6 +94,7 @@ const submitAddPlatform = async () => {
         homeserverUrl: matrixHomeserverUrl.value,
         accessToken: matrixAccessToken.value,
         spaceId: matrixSpaceId.value,
+        experimentalAck: true,
       };
       body.botInternalUrl = matrixBotUrl.value || undefined;
       body.botInternalToken = matrixBotTokenField.value || undefined;
@@ -271,6 +274,22 @@ const platformLabel = (platform: string) => {
 
           <!-- Matrix Form -->
           <template v-if="addPlatformType === 'matrix'">
+            <div class="rounded-lg border border-warning/30 bg-warning/10 px-4 py-3">
+              <div class="flex items-start gap-2 text-sm text-warning">
+                <svg class="mt-0.5 h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4M12 17h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <div class="space-y-1">
+                  <p class="font-medium">{{ t('settings.platforms.matrix.experimentalWarning') }}</p>
+                  <p class="text-xs text-warning/90">{{ t('settings.platforms.matrix.experimentalCaveats') }}</p>
+                </div>
+              </div>
+            </div>
+            <UiCheckbox
+              v-model="matrixExperimentalAck"
+              :label="t('settings.platforms.matrix.experimentalAck')"
+              bare
+            />
             <UiInput v-model="matrixHomeserverUrl" :label="t('settings.platforms.matrix.homeserverUrl')" placeholder="https://matrix.example.org" />
             <UiInput v-model="matrixAccessToken" :label="t('settings.platforms.matrix.accessToken')" type="password" />
             <UiInput v-model="matrixSpaceId" :label="t('settings.platforms.matrix.spaceId')" placeholder="!abc:matrix.example.org" />
@@ -284,7 +303,13 @@ const platformLabel = (platform: string) => {
 
           <div class="flex gap-3 justify-end">
             <UiButton variant="ghost" @click="showAddDialog = false">{{ t("common.cancel") }}</UiButton>
-            <UiButton :loading="addPending" @click="submitAddPlatform">{{ t("settings.platforms.connect") }}</UiButton>
+            <UiButton
+              :loading="addPending"
+              :disabled="addPending || (addPlatformType === 'matrix' && !matrixExperimentalAck)"
+              @click="submitAddPlatform"
+            >
+              {{ t("settings.platforms.connect") }}
+            </UiButton>
           </div>
         </div>
       </div>

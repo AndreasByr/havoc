@@ -1373,7 +1373,10 @@
       "matrix": {
         "homeserverUrl": "Homeserver-URL",
         "accessToken": "Access-Token",
-        "spaceId": "Space-ID"
+        "spaceId": "Space-ID",
+        "experimentalWarning": "Die Matrix-Integration ist experimentell. Einige Funktionen, die auf Discord verfügbar sind, werden noch nicht unterstützt.",
+        "experimentalCaveats": "Fehlende Funktionen: Native Embeds, Button-Interaktionen, erweiterte Rollenverwaltung. Nachrichten verwenden Klartext mit HTML-Formatierung.",
+        "experimentalAck": "Ich verstehe, dass die Matrix-Integration experimentell ist und im Vergleich zu Discord eingeschränkte Funktionen bietet."
       }
     },
     "admin": {
