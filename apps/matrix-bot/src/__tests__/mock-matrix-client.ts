@@ -15,6 +15,11 @@ export function createMockMatrixClient() {
       { room_id: "!room2:example.org", name: "Random", room_type: undefined },
     ]),
     getJoinedRooms: vi.fn().mockResolvedValue(["!room1:example.org", "!room2:example.org"]),
+    getJoinedRoomMembers: vi.fn().mockResolvedValue([
+      "@alice:example.org",
+      "@bob:example.org",
+      "@carol:example.org",
+    ]),
     doRequest: vi.fn().mockImplementation((_method: string, path: string) => {
       if (path.includes("/hierarchy")) {
         return Promise.resolve({
