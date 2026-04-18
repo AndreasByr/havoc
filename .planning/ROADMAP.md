@@ -95,13 +95,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. `vue-tsc`-Typecheck läuft in CI und ist grün über mindestens 3 aufeinanderfolgende Haupt-Branch-Commits; Flaky-Tests haben entweder einen Fix oder ein `// TODO: flaky` mit Ticket-/Todo-Referenz
   4. Eine benannte, priorisierte Liste von Admin-/Moderation-/Auth-/Apps-API-Routen unter `platform/apps/hub/server/api/` ist in Phase-Planning festgelegt, und jede Route auf der Liste hat einen Spec-File unter `__tests__/` — die Liste selbst wird als abgeschlossen markiert (nicht Coverage-Prozent)
 **Plans**: 7 plans
-- [ ] 05-01-PLAN.md — CI Audit document: per-job status for all 4 workflows (Wave 1)
-- [ ] 05-02-PLAN.md — matrix-bot TS2322 fix: BOT_INTERNAL_TOKEN! non-null assertion (Wave 2)
-- [ ] 05-03-PLAN.md — Hub lint fix: all 257 errors fixed in source, pnpm lint exits 0 (Wave 3)
-- [ ] 05-04-PLAN.md — ESLint security plugins: eslint-plugin-security + no-unsanitized integrated in hub (Wave 4)
-- [ ] 05-05-PLAN.md — API spec files Wave A: auth-routes.spec.ts + mod-routes.spec.ts (Wave 4, parallel)
-- [ ] 05-06-PLAN.md — API spec files Wave B: admin-settings.spec.ts + community-settings.spec.ts (Wave 4, parallel)
-- [ ] 05-07-PLAN.md — CI hardening: remove continue-on-error from Lint step in ci.yml + release.yml (Wave 5)
+- [x] 05-01-PLAN.md — CI Audit document: per-job status for all 4 workflows (Wave 1)
+- [x] 05-02-PLAN.md — matrix-bot TS2322 fix: BOT_INTERNAL_TOKEN! non-null assertion (Wave 2)
+- [x] 05-03-PLAN.md — Hub lint fix: all 257 errors fixed in source, pnpm lint exits 0 (Wave 3)
+- [x] 05-04-PLAN.md — ESLint security plugins: eslint-plugin-security + no-unsanitized integrated in hub (Wave 4)
+- [x] 05-05-PLAN.md — API spec files Wave A: auth-routes.spec.ts + mod-routes.spec.ts (Wave 4, parallel)
+- [x] 05-06-PLAN.md — API spec files Wave B: admin-settings.spec.ts + community-settings.spec.ts (Wave 4, parallel)
+- [x] 05-07-PLAN.md — CI hardening: remove continue-on-error from Lint step in ci.yml + release.yml (Wave 5)
 
 ### Phase 6: Matrix-Bot-Parity
 **Goal**: Der Matrix-Bot ist kein "halb da" mehr — er emittiert App-Hooks analog zum Discord-Bot und sein State liegt ordentlich, nicht als untrackte Datei im Working-Tree.
