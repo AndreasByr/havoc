@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { createError } from "h3";
 import { eq, and } from "drizzle-orm";
 import { applicationModeratorNotifications } from "@guildora/shared";
 import { requireModeratorSession } from "../../utils/auth";
@@ -37,7 +38,12 @@ export default defineEventHandler(async (event) => {
         )
       );
   } else {
+    try {
     await db.insert(applicationModeratorNotifications).values({
+    } catch (error) {
+      if (error && (error as any).statusCode) throw error;
+      throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
+    }
       flowId: body.flowId,
       userId: session.user.id,
       enabled: body.enabled

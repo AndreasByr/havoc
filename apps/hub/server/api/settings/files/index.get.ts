@@ -1,7 +1,9 @@
 import { requireSuperadminSession } from "../../../utils/auth";
+import { createError } from "h3";
 import { getMediaService, type MediaFile } from "../../../utils/media";
 
 export default defineEventHandler(async (event) => {
+try {
   await requireSuperadminSession(event);
 
   const query = getQuery(event);
@@ -62,4 +64,8 @@ export default defineEventHandler(async (event) => {
     totalSize,
     totalCount: result.files.length
   };
+} catch (error) {
+  if (error && (error as any).statusCode) throw error;
+  throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
+}
 });

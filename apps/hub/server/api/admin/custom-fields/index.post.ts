@@ -1,10 +1,12 @@
 import { communityCustomFields } from "@guildora/shared";
+import { createError } from "h3";
 import { requireAdminSession } from "../../../utils/auth";
 import { createCustomFieldSchema, enforceViewEditConsistency } from "../../../utils/custom-fields";
 import { getDb } from "../../../utils/db";
 import { readBodyWithSchema } from "../../../utils/http";
 
 export default defineEventHandler(async (event) => {
+try {
   await requireAdminSession(event);
   const body = await readBodyWithSchema(event, createCustomFieldSchema, "Invalid custom field payload.");
   const data = enforceViewEditConsistency(body);
@@ -32,4 +34,8 @@ export default defineEventHandler(async (event) => {
     .returning();
 
   return { field: created };
+} catch (error) {
+  if (error && (error as any).statusCode) throw error;
+  throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
+}
 });

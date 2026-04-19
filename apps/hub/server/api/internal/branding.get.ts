@@ -1,4 +1,5 @@
 import { desc, eq } from "drizzle-orm";
+import { createError } from "h3";
 import { communitySettings, themeSettings } from "@guildora/shared";
 import { requireSession } from "../../utils/auth";
 import { getDb } from "../../utils/db";
@@ -8,7 +9,12 @@ const COMMUNITY_SETTINGS_SINGLETON_ID = 1;
 export default defineEventHandler(async (event) => {
   await requireSession(event);
   const db = getDb();
+  try {
   const [storedTheme] = await db.select().from(themeSettings).orderBy(desc(themeSettings.updatedAt)).limit(1);
+  } catch (error) {
+    if (error && (error as any).statusCode) throw error;
+    throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
+  }
   const [storedCommunity] = await db
     .select()
     .from(communitySettings)

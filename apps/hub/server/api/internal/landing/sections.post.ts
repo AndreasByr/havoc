@@ -1,4 +1,5 @@
 import { landingSections } from "@guildora/shared";
+import { createError } from "h3";
 import { z } from "zod";
 import { requireInternalToken } from "../../../utils/internal-auth";
 import { getDb } from "../../../utils/db";
@@ -17,7 +18,12 @@ export default defineEventHandler(async (event) => {
   const body = await readBodyWithSchema(event, createSectionSchema, "Invalid section payload.");
 
   const db = getDb();
+  try {
   const [section] = await db.insert(landingSections).values({
+  } catch (error) {
+    if (error && (error as any).statusCode) throw error;
+    throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
+  }
     blockType: body.blockType,
     sortOrder: body.sortOrder,
     visible: body.visible,

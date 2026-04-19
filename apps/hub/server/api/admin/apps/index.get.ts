@@ -1,4 +1,5 @@
 import { desc } from "drizzle-orm";
+import { createError } from "h3";
 import { installedApps, safeParseAppManifest } from "@guildora/shared";
 import { requireAdminSession } from "../../../utils/auth";
 import { getDb } from "../../../utils/db";
@@ -7,7 +8,13 @@ export default defineEventHandler(async (event) => {
   await requireAdminSession(event);
   const db = getDb();
 
-  const appsRows = await db.select().from(installedApps).orderBy(desc(installedApps.updatedAt));
+  let appsRows;
+  try {
+    appsRows = await db.select().from(installedApps).orderBy(desc(installedApps.updatedAt));
+  } catch (error) {
+    if (error && (error as any).statusCode) throw error;
+    throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
+  }
 
   const apps = appsRows.map((row) => ({
     ...row,

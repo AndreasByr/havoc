@@ -1,4 +1,5 @@
 import { asc, eq } from "drizzle-orm";
+import { createError } from "h3";
 import { landingPages, landingSections, landingPageVersions } from "@guildora/shared";
 import { requireAdminSession } from "../../../utils/auth";
 import { getDb } from "../../../utils/db";
@@ -8,11 +9,26 @@ export default defineEventHandler(async (event) => {
   const db = getDb();
 
   // Snapshot current published state before publishing new changes
+  try {
   const currentSections = await db.select().from(landingSections).orderBy(asc(landingSections.sortOrder));
+  } catch (error) {
+    if (error && (error as any).statusCode) throw error;
+    throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
+  }
+  try {
   const [currentPage] = await db.select().from(landingPages).limit(1);
+  } catch (error) {
+    if (error && (error as any).statusCode) throw error;
+    throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
+  }
 
   if (currentSections.length > 0) {
+    try {
     await db.insert(landingPageVersions).values({
+    } catch (error) {
+      if (error && (error as any).statusCode) throw error;
+      throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
+    }
       snapshot: { sections: currentSections, pageConfig: currentPage ?? null },
       label: "Published",
       createdBy: session.user.id

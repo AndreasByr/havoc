@@ -1,4 +1,5 @@
 import { desc, eq } from "drizzle-orm";
+import { createError } from "h3";
 import { moderationSettings } from "@guildora/shared";
 import { z } from "zod";
 import { requireAdminSession } from "../../utils/auth";
@@ -16,7 +17,12 @@ export default defineEventHandler(async (event) => {
   const parsed = await readBodyWithSchema(event, landingAccessSchema, "Invalid landing access payload.");
 
   const db = getDb();
+  try {
   const [existingSettings] = await db.select().from(moderationSettings).orderBy(desc(moderationSettings.updatedAt)).limit(1);
+  } catch (error) {
+    if (error && (error as any).statusCode) throw error;
+    throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
+  }
 
   if (existingSettings) {
     await db
@@ -29,7 +35,12 @@ export default defineEventHandler(async (event) => {
         })
       .where(eq(moderationSettings.id, existingSettings.id));
   } else {
+    try {
     await db.insert(moderationSettings).values({
+    } catch (error) {
+      if (error && (error as any).statusCode) throw error;
+      throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
+    }
       allowModeratorAccess: parsed.allowModeratorAccess,
       ...(parsed.allowModeratorAppsAccess !== undefined ? { allowModeratorAppsAccess: parsed.allowModeratorAppsAccess } : {}),
       updatedBy: session.user.id

@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import { createError } from "h3";
 import { profiles } from "@guildora/shared";
 import { getDb } from "../../utils/db";
 import { requireSession } from "../../utils/auth";
@@ -10,6 +11,7 @@ import {
 import { loadCommunitySettingsLocale } from "../../utils/community-settings";
 
 export default defineEventHandler(async (event) => {
+try {
   const session = await requireSession(event);
   const db = getDb();
   const communityDefaultLocale = await loadCommunitySettingsLocale(db);
@@ -42,4 +44,8 @@ export default defineEventHandler(async (event) => {
     localeSource: effectiveLocale.source,
     hasSession: Boolean(userId)
   };
+} catch (error) {
+  if (error && (error as any).statusCode) throw error;
+  throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
+}
 });

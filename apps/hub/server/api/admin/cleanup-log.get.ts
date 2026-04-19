@@ -1,4 +1,5 @@
 import { desc, sql } from "drizzle-orm";
+import { createError } from "h3";
 import { cleanupLog } from "@guildora/shared";
 import { requireAdminSession } from "../../utils/auth";
 import { getDb } from "../../utils/db";
@@ -11,17 +12,23 @@ export default defineEventHandler(async (event) => {
   const limit = Math.min(Math.max(Number(query.limit) || 50, 1), 100);
   const offset = Math.max(Number(query.offset) || 0, 0);
 
-  const [items, countResult] = await Promise.all([
-    db
-      .select()
-      .from(cleanupLog)
-      .orderBy(desc(cleanupLog.createdAt))
-      .limit(limit)
-      .offset(offset),
-    db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(cleanupLog)
-  ]);
+  let items, countResult;
+  try {
+    [items, countResult] = await Promise.all([
+      db
+        .select()
+        .from(cleanupLog)
+        .orderBy(desc(cleanupLog.createdAt))
+        .limit(limit)
+        .offset(offset),
+      db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(cleanupLog)
+    ]);
+  } catch (error) {
+    if (error && (error as any).statusCode) throw error;
+    throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
+  }
 
   return {
     items: items.map((item) => ({

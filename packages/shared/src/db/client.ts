@@ -10,11 +10,9 @@ export function createDb(connectionString = process.env.DATABASE_URL) {
   }
 
   const ssl =
-    process.env.DATABASE_SSL === "false"
-      ? false
-      : process.env.DATABASE_SSL === "true"
-        ? "require"
-        : "require";
+    process.env.DATABASE_SSL === "true"
+      ? "require"
+      : false;
 
   const client = postgres(connectionString, {
     max: 10,

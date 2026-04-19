@@ -1,4 +1,5 @@
 import { requireAdminSession } from "../../../../../utils/auth";
+import { createError } from "h3";
 import { fetchDiscordGuildMembersByRoleFromBot } from "../../../../../utils/botSync";
 import { throwBotBridgeHttpError } from "../../../../../utils/bot-bridge-error";
 import { requireRouterParam } from "../../../../../utils/http";

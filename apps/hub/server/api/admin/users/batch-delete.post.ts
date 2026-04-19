@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import { createError } from "h3";
 import { communityRoles, userCommunityRoles, users } from "@guildora/shared";
 import { z } from "zod";
 import { requireAdminSession } from "../../../utils/auth";
@@ -50,7 +51,12 @@ export default defineEventHandler(async (event) => {
         continue;
       }
 
+      try {
       const targetRows = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+      } catch (error) {
+        if (error && (error as any).statusCode) throw error;
+        throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
+      }
       const targetUser = targetRows[0];
       if (!targetUser) {
         skipped++;

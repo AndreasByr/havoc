@@ -273,6 +273,12 @@
     "allCommunityRoles": "Alle Community-Rollen",
     "noUsers": "Keine Nutzer gefunden."
   },
+  "devResetSetup": {
+    "button": "Setup zuruecksetzen",
+    "confirm": "Dies loescht die Community-Einstellungen und startet den Setup-Assistenten beim naechsten Laden. Fortfahren?",
+    "success": "Setup zurueckgesetzt. Gehe zum Hub-Start, um den Assistenten abzuschliessen.",
+    "error": "Zuruecksetzen fehlgeschlagen."
+  },
   "theme": {
     "label": "Theme"
   },

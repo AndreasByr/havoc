@@ -43,6 +43,10 @@ const selfImportPending = ref(false);
 const selfImportError = ref("");
 const selfImportSuccess = ref("");
 
+const resetSetupPending = ref(false);
+const resetSetupError = ref("");
+const resetSetupSuccess = ref("");
+
 const permissionRoleOptions = computed(() => {
   const roles = new Set<string>();
   for (const item of users.value) {
@@ -94,6 +98,23 @@ const runSelfImport = async () => {
   }
 };
 
+const runResetSetup = async () => {
+  if (!isSuperadmin.value) return;
+  if (!confirm(t("devResetSetup.confirm"))) return;
+  resetSetupError.value = "";
+  resetSetupSuccess.value = "";
+  resetSetupPending.value = true;
+  try {
+    await $fetch("/api/dev/reset-setup", { method: "POST" });
+    resetSetupSuccess.value = t("devResetSetup.success");
+  } catch (err) {
+    console.error(err);
+    resetSetupError.value = t("devResetSetup.error");
+  } finally {
+    resetSetupPending.value = false;
+  }
+};
+
 onMounted(async () => {
   if (isAllowed.value) {
     await fetchUsers();
@@ -123,7 +144,7 @@ onMounted(async () => {
           <p class="text-sm text-base-content/70">{{ t("adminDiscordRoles.superadminDescription") }}</p>
           <div v-if="selfImportError" class="alert alert-error text-sm">{{ selfImportError }}</div>
           <div v-if="selfImportSuccess" class="alert alert-success text-sm">{{ selfImportSuccess }}</div>
-          <div class="flex justify-end">
+          <div class="flex flex-wrap justify-end gap-2">
             <button
               type="button"
               class="btn btn-secondary btn-sm"
@@ -132,7 +153,17 @@ onMounted(async () => {
             >
               {{ selfImportPending ? t("common.loading") : t("adminDiscordRoles.selfImportButton") }}
             </button>
+            <button
+              type="button"
+              class="btn btn-error btn-sm"
+              :disabled="resetSetupPending"
+              @click="runResetSetup"
+            >
+              {{ resetSetupPending ? t("common.loading") : t("devResetSetup.button") }}
+            </button>
           </div>
+          <div v-if="resetSetupError" class="alert alert-error text-sm">{{ resetSetupError }}</div>
+          <div v-if="resetSetupSuccess" class="alert alert-success text-sm">{{ resetSetupSuccess }}</div>
         </div>
       </div>
 

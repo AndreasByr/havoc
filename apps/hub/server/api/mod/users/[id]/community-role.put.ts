@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import { createError } from "h3";
 import { communityRoles, userCommunityRoles } from "@guildora/shared";
 import { z } from "zod";
 import { requireModeratorSession } from "../../../../utils/auth";
@@ -29,7 +30,12 @@ export default defineEventHandler(async (event) => {
 
   await assignCommunityRole(userId, parsed.communityRoleId, session.user.id);
 
+  try {
   const roleRow = await db.select().from(communityRoles).where(eq(communityRoles.id, parsed.communityRoleId)).limit(1);
+  } catch (error) {
+    if (error && (error as any).statusCode) throw error;
+    throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
+  }
   if (roleRow[0]?.name === "Bewerber") {
     const profileRow = await getProfileByUserId(db, userId);
     const nextFields = buildOpenedApplicationCustomFields(profileRow?.customFields ?? null, new Date().toISOString());

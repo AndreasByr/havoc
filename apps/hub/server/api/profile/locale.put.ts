@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import { createError } from "h3";
 import { profiles } from "@guildora/shared";
 import { z } from "zod";
 import { localePreferences, normalizeUserLocalePreference, resolveEffectiveLocale } from "../../../utils/locale-preference";
@@ -19,7 +20,12 @@ export default defineEventHandler(async (event) => {
   const db = getDb();
   const parsed = await readBodyWithSchema(event, schema, "Invalid locale payload.");
 
+  try {
   const existingProfileRows = await db.select().from(profiles).where(eq(profiles.userId, session.user.id)).limit(1);
+  } catch (error) {
+    if (error && (error as any).statusCode) throw error;
+    throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
+  }
   const existingCustomFields = (existingProfileRows[0]?.customFields || {}) as Record<string, unknown>;
 
   const normalizedLocalePreference = normalizeUserLocalePreference(parsed.localePreference, null);

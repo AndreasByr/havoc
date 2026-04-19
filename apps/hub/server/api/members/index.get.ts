@@ -1,4 +1,5 @@
 import {
+import { createError } from "h3";
   parseProfileName,
   permissionRoles,
   userPermissionRoles,
@@ -49,8 +50,18 @@ export default defineEventHandler(async (event) => {
   }
 
   const userQuery = conditions.length > 0
+    try {
     ? db.select(userColumns).from(users).where(and(...conditions))
+    } catch (error) {
+      if (error && (error as any).statusCode) throw error;
+      throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
+    }
+    try {
     : db.select(userColumns).from(users);
+    } catch (error) {
+      if (error && (error as any).statusCode) throw error;
+      throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
+    }
 
   // Load voice sessions only for the relevant time window
   const voiceSince = new Date(Date.now() - days * 24 * 60 * 60 * 1000);

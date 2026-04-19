@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { eq } from "drizzle-orm";
+import { createError } from "h3";
 import { installedApps } from "@guildora/shared";
 import { requireAdminSession } from "../../../../utils/auth";
 import { getDb } from "../../../../utils/db";
@@ -16,9 +17,19 @@ export default defineEventHandler(async (event) => {
   const parsed = await readBodyWithSchema(event, autoUpdateSchema, "Invalid auto-update payload.");
 
   const db = getDb();
-  await db.update(installedApps).set({ autoUpdate: parsed.autoUpdate }).where(eq(installedApps.appId, appId));
+  try {
+    await db.update(installedApps).set({ autoUpdate: parsed.autoUpdate }).where(eq(installedApps.appId, appId));
+  } catch (error) {
+    if (error && (error as any).statusCode) throw error;
+    throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
+  }
 
-  await refreshAppRegistry();
+  try {
+    await refreshAppRegistry();
+  } catch (error) {
+    if (error && (error as any).statusCode) throw error;
+    throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
+  }
 
   return { ok: true };
 });

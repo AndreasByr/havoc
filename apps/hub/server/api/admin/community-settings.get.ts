@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import { createError } from "h3";
 import { communitySettings } from "@guildora/shared";
 import { requireAdminSession } from "../../utils/auth";
 import { getDb } from "../../utils/db";
@@ -6,6 +7,7 @@ import { COMMUNITY_SETTINGS_SINGLETON_ID } from "../../utils/community-settings"
 import { normalizeCommunityDefaultLocale } from "../../../utils/locale-preference";
 
 export default defineEventHandler(async (event) => {
+try {
   await requireAdminSession(event);
   const db = getDb();
   const [row] = await db
@@ -25,4 +27,8 @@ export default defineEventHandler(async (event) => {
     defaultLocale: normalizeCommunityDefaultLocale(row?.defaultLocale, "en"),
     displayNameTemplate: row?.displayNameTemplate ?? []
   };
+} catch (error) {
+  if (error && (error as any).statusCode) throw error;
+  throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
+}
 });

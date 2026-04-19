@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import { createError } from "h3";
 import { communityRoles, membershipSettings, permissionRoles } from "@guildora/shared";
 import { requireAdminSession } from "../../utils/auth";
 import { getDb } from "../../utils/db";
@@ -6,6 +7,7 @@ import { MEMBERSHIP_SETTINGS_SINGLETON_ID } from "../../utils/membership-setting
 import { fetchDiscordGuildRolesFromBot } from "../../utils/botSync";
 
 export default defineEventHandler(async (event) => {
+try {
   await requireAdminSession(event);
   const db = getDb();
 
@@ -50,4 +52,8 @@ export default defineEventHandler(async (event) => {
     permissionRoles: permRoles,
     discordRoles
   };
+} catch (error) {
+  if (error && (error as any).statusCode) throw error;
+  throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
+}
 });

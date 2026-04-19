@@ -273,6 +273,12 @@
     "allCommunityRoles": "All community roles",
     "noUsers": "No users found."
   },
+  "devResetSetup": {
+    "button": "Reset Setup",
+    "confirm": "This will clear community settings and trigger the setup wizard on next load. Continue?",
+    "success": "Setup reset. Navigate to hub root to complete wizard.",
+    "error": "Failed to reset setup."
+  },
   "theme": {
     "label": "Theme"
   },

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { createError } from "h3";
 import { roleGroups } from "@guildora/shared";
 import { requireAdminSession } from "../../../utils/auth";
 import { getDb } from "../../../utils/db";
@@ -11,6 +12,7 @@ const schema = z.object({
 });
 
 export default defineEventHandler(async (event) => {
+try {
   await requireAdminSession(event);
   const parsed = await readBodyWithSchema(event, schema, "Invalid payload.");
   const db = getDb();
@@ -25,4 +27,8 @@ export default defineEventHandler(async (event) => {
     .returning();
 
   return { group: created };
+} catch (error) {
+  if (error && (error as any).statusCode) throw error;
+  throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
+}
 });
