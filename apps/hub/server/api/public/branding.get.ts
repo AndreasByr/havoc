@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { createError } from "h3";
+
 import { communitySettings } from "@guildora/shared";
 import { getDb } from "../../utils/db";
 import { COMMUNITY_SETTINGS_SINGLETON_ID } from "../../utils/community-settings";

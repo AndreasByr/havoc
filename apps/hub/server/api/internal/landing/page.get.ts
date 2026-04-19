@@ -1,5 +1,5 @@
 import { asc } from "drizzle-orm";
-import { createError } from "h3";
+
 import { landingPages, landingSections, landingTemplates } from "@guildora/shared";
 import { requireInternalToken } from "../../../utils/internal-auth";
 import { getDb } from "../../../utils/db";

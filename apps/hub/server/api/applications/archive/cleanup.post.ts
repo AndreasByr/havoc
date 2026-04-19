@@ -1,5 +1,5 @@
 import { requireAdminSession } from "../../../utils/auth";
-import { createError } from "h3";
+
 import { getDb } from "../../../utils/db";
 import { cleanupExpiredArchives } from "../../../utils/application-archive";
 

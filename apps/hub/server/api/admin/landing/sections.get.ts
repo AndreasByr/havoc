@@ -1,5 +1,5 @@
 import { asc } from "drizzle-orm";
-import { createError } from "h3";
+
 import { landingSections } from "@guildora/shared";
 import { getDb } from "../../../utils/db";
 import { requireModeratorRight } from "../../../utils/moderation-rights";

@@ -1,5 +1,5 @@
 import { requireAdminSession } from "../../../utils/auth";
-import { createError } from "h3";
+
 import { adminCommunityRoleSchema, parseCommunityRoleId, updateCommunityRole } from "../../../utils/community-roles";
 import { readBodyWithSchema } from "../../../utils/http";
 

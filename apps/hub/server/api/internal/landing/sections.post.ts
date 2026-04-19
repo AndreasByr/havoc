@@ -1,5 +1,5 @@
 import { landingSections } from "@guildora/shared";
-import { createError } from "h3";
+
 import { z } from "zod";
 import { requireInternalToken } from "../../../utils/internal-auth";
 import { getDb } from "../../../utils/db";

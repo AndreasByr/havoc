@@ -1,5 +1,5 @@
 import { requireSession } from "../../utils/auth";
-import { createError } from "h3";
+
 import { getDb } from "../../utils/db";
 import { loadDisplayNameTemplate } from "../../utils/community-settings";
 

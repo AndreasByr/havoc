@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createError } from "h3";
+
 import { roleGroups } from "@guildora/shared";
 import { requireAdminSession } from "../../../utils/auth";
 import { getDb } from "../../../utils/db";

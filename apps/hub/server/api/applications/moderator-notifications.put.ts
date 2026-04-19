@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createError } from "h3";
+
 import { eq, and } from "drizzle-orm";
 import { applicationModeratorNotifications } from "@guildora/shared";
 import { requireModeratorSession } from "../../utils/auth";

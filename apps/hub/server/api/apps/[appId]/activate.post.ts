@@ -1,5 +1,5 @@
 import { requireAdminSession } from "../../../utils/auth";
-import { createError } from "h3";
+
 import { setInstalledAppStatus } from "../../../utils/apps";
 import { requireRouterParam } from "../../../utils/http";
 

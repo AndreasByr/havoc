@@ -1,5 +1,5 @@
 import { and, isNotNull, eq } from "drizzle-orm";
-import { createError } from "h3";
+
 import { installedApps, safeParseAppManifest } from "@guildora/shared";
 import { requireAdminSession } from "../../../utils/auth";
 import { getDb } from "../../../utils/db";

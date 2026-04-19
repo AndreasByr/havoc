@@ -1,5 +1,5 @@
 import { requireSuperadminSession } from "../../../utils/auth";
-import { createError } from "h3";
+
 import { getMediaService, type MediaFile } from "../../../utils/media";
 
 export default defineEventHandler(async (event) => {

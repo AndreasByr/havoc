@@ -1,5 +1,5 @@
 import { inArray } from "drizzle-orm";
-import { createError } from "h3";
+
 import { z } from "zod";
 import { users } from "@guildora/shared";
 import { requireAdminSession } from "../../../utils/auth";

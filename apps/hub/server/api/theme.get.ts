@@ -1,5 +1,5 @@
 import { desc } from "drizzle-orm";
-import { createError } from "h3";
+
 import { themeSettings } from "@guildora/shared";
 import { getDb } from "../utils/db";
 import { defaultThemeColors, normalizeThemeColors } from "../utils/theme";

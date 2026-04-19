@@ -1,5 +1,5 @@
 import { landingTemplates } from "@guildora/shared";
-import { createError } from "h3";
+
 import { requireAdminSession } from "../../../utils/auth";
 import { getDb } from "../../../utils/db";
 

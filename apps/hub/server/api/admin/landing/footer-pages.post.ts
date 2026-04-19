@@ -1,5 +1,5 @@
 import { footerPages } from "@guildora/shared";
-import { createError } from "h3";
+
 import { z } from "zod";
 import { requireAdminSession } from "../../../utils/auth";
 import { getDb } from "../../../utils/db";

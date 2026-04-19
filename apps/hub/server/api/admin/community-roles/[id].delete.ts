@@ -1,4 +1,4 @@
-import { createError } from "h3";
+
 import { requireAdminSession } from "../../../utils/auth";
 import { deleteCommunityRole, parseCommunityRoleId } from "../../../utils/community-roles";
 

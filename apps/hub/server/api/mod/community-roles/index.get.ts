@@ -1,5 +1,5 @@
 import { requireModeratorSession } from "../../../utils/auth";
-import { createError } from "h3";
+
 import { listCommunityRoles, listPermissionRoles } from "../../../utils/community";
 
 export default defineEventHandler(async (event) => {

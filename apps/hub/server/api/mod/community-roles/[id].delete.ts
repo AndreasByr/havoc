@@ -1,5 +1,5 @@
 import { requireAdminSession } from "../../../utils/auth";
-import { createError } from "h3";
+
 import { deleteCommunityRole, parseCommunityRoleId } from "../../../utils/community-roles";
 
 export default defineEventHandler(async (event) => {

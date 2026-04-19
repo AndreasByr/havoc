@@ -1,5 +1,5 @@
 import { and, desc, eq, gte, lte, sum } from "drizzle-orm";
-import { createError } from "h3";
+
 import {
   communityRoles,
   profileChangeLogs,

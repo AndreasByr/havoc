@@ -1,5 +1,5 @@
 import { parseProfileName, users, userCommunityRoles, communityRoles } from "@guildora/shared";
-import { createError } from "h3";
+
 import { and, asc, count, eq, ilike, or } from "drizzle-orm";
 import { requireModeratorSession } from "../../../utils/auth";
 import { getDb } from "../../../utils/db";

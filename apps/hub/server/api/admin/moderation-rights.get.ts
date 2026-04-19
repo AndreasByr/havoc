@@ -1,5 +1,5 @@
 import { requireAdminSession } from "../../utils/auth";
-import { createError } from "h3";
+
 import { loadModerationRights } from "../../utils/moderation-rights";
 import { getDb } from "../../utils/db";
 

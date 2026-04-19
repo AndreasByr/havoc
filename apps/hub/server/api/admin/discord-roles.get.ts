@@ -1,5 +1,5 @@
 import { requireAdminSession } from "../../utils/auth";
-import { createError } from "h3";
+
 import { throwBotBridgeHttpError } from "../../utils/bot-bridge-error";
 import { fetchDiscordGuildRolesFromBot } from "../../utils/botSync";
 import { listSelectableDiscordRoleRows } from "../../utils/discord-roles";

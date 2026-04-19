@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { createError } from "h3";
+
 import { profiles } from "@guildora/shared";
 import { z } from "zod";
 import { requireSession } from "../../utils/auth";

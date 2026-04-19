@@ -1,5 +1,5 @@
 import { and, asc, eq } from "drizzle-orm";
-import { createError } from "h3";
+
 import { landingPages, landingSections, landingTemplates, resolveLandingColors, migrateColorOverrides } from "@guildora/shared";
 import type { LandingColorOverrides } from "@guildora/shared";
 import { getDb } from "../../utils/db";

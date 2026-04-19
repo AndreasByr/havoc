@@ -3,7 +3,7 @@
  * Used by the login page to dynamically show login buttons.
  */
 import { getActivePlatforms } from "../../utils/platformConfig";
-import { createError } from "h3";
+
 
 export default defineEventHandler(async () => {
   try {

@@ -3,7 +3,7 @@
  * Used by the setup wizard to determine if it should show.
  */
 import { platformConnections } from "@guildora/shared";
-import { createError } from "h3";
+
 import { getDb } from "../../utils/db";
 
 export default defineEventHandler(async () => {

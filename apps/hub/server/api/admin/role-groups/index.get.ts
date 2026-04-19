@@ -1,5 +1,5 @@
 import { requireAdminSession } from "../../../utils/auth";
-import { createError } from "h3";
+
 import { listRoleGroupsWithRoles } from "../../../utils/role-groups";
 
 export default defineEventHandler(async (event) => {

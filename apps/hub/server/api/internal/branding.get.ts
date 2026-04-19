@@ -1,5 +1,5 @@
 import { desc, eq } from "drizzle-orm";
-import { createError } from "h3";
+
 import { communitySettings, themeSettings } from "@guildora/shared";
 import { requireSession } from "../../utils/auth";
 import { getDb } from "../../utils/db";

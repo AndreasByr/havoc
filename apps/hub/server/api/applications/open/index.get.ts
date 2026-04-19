@@ -1,5 +1,5 @@
 import { eq, and, inArray } from "drizzle-orm";
-import { createError } from "h3";
+
 import { applications, applicationFlows } from "@guildora/shared";
 import { requireModeratorSession } from "../../../utils/auth";
 import { getDb } from "../../../utils/db";

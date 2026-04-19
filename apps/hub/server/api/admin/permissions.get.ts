@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { createError } from "h3";
+
 import { userCommunityRoles } from "@guildora/shared";
 import { requireAdminSession } from "../../utils/auth";
 import { loadLandingAccessConfig } from "../../utils/landing-access";

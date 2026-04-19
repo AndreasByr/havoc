@@ -1,5 +1,5 @@
 import { communityCustomFields } from "@guildora/shared";
-import { createError } from "h3";
+
 import { requireAdminSession } from "../../../utils/auth";
 import { createCustomFieldSchema, enforceViewEditConsistency } from "../../../utils/custom-fields";
 import { getDb } from "../../../utils/db";

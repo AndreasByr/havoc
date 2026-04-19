@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { createError } from "h3";
+
 import { landingSections } from "@guildora/shared";
 import { z } from "zod";
 import { getDb } from "../../../../utils/db";

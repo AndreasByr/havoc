@@ -1,4 +1,4 @@
-import { createError } from "h3";
+
 import { z } from "zod";
 import { requireAdminSession } from "../../../../utils/auth";
 import { setInstalledAppStatus } from "../../../../utils/apps";

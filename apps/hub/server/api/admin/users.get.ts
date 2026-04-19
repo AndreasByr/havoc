@@ -1,5 +1,5 @@
 import { users } from "@guildora/shared";
-import { createError } from "h3";
+
 import { ilike, or, and } from "drizzle-orm";
 import { requireAdminSession } from "../../utils/auth";
 import { getDb } from "../../utils/db";

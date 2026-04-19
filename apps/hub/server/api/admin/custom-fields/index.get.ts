@@ -1,5 +1,5 @@
 import { requireAdminSession } from "../../../utils/auth";
-import { createError } from "h3";
+
 import { loadAllCustomFields } from "../../../utils/custom-fields";
 import { getDb } from "../../../utils/db";
 

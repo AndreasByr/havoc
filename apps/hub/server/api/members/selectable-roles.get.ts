@@ -1,5 +1,5 @@
 import { asc } from "drizzle-orm";
-import { createError } from "h3";
+
 import { selectableDiscordRoles, roleGroups } from "@guildora/shared";
 import { requireSession } from "../../utils/auth";
 import { getDb } from "../../utils/db";
