@@ -1358,6 +1358,9 @@
       "by": "by",
       "version": "Version",
       "install": "Install",
+      "installing": "Installing...",
+      "installSuccess": "App installed successfully!",
+      "installError": "Failed to install app.",
       "close": "Close",
       "gallery": "Gallery",
       "description": "Description"
