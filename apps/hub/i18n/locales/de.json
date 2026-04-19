@@ -1345,6 +1345,21 @@
       "saveFailed": "Fehler beim Speichern der Mitgliedschafts-Einstellungen."
     }
   },
+  "marketplace": {
+    "title": "Marktplatz",
+    "loading": "Lade Apps...",
+    "empty": "Noch keine Apps verfuegbar.",
+    "error": "Marketplace-Apps konnten nicht geladen werden.",
+    "retry": "Erneut versuchen",
+    "detail": {
+      "by": "von",
+      "version": "Version",
+      "install": "Installieren",
+      "close": "Schliessen",
+      "gallery": "Galerie",
+      "description": "Beschreibung"
+    }
+  },
   "setup": {
     "welcome": {
       "title": "Willkommen bei Guildora Hub",

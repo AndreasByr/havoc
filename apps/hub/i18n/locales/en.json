@@ -1348,6 +1348,21 @@
       "saveFailed": "Failed to save membership settings."
     }
   },
+  "marketplace": {
+    "title": "Marketplace",
+    "loading": "Loading apps...",
+    "empty": "No apps available yet.",
+    "error": "Could not load marketplace apps.",
+    "retry": "Retry",
+    "detail": {
+      "by": "by",
+      "version": "Version",
+      "install": "Install",
+      "close": "Close",
+      "gallery": "Gallery",
+      "description": "Description"
+    }
+  },
   "setup": {
     "welcome": {
       "title": "Welcome to Guildora Hub",
