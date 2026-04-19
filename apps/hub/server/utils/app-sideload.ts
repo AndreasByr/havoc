@@ -514,7 +514,7 @@ export async function installAppFromUrl(
         version: manifest.version,
         manifest,
         status,
-        source: "sideloaded",
+        source: options.source ?? "sideloaded",
         repositoryUrl,
         verified,
         autoUpdate,
@@ -682,4 +682,6 @@ export async function installAppFromLocalPath(
 
   await refreshAppRegistry();
   return { appId: manifest.id };
+}
+ appId: manifest.id };
 }
