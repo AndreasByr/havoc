@@ -1,5 +1,4 @@
 import { z } from "zod";
-
 import { eq } from "drizzle-orm";
 import { communitySettings, displayNameTemplateSchema } from "@guildora/shared";
 import { requireAdminSession } from "../../utils/auth";
@@ -44,12 +43,7 @@ export default defineEventHandler(async (event) => {
       })
       .where(eq(communitySettings.id, COMMUNITY_SETTINGS_SINGLETON_ID));
   } else {
-    try {
     await db.insert(communitySettings).values({
-    } catch (error) {
-      if (error && (error as any).statusCode) throw error;
-      throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
-    }
       id: COMMUNITY_SETTINGS_SINGLETON_ID,
       communityName: value,
       discordInviteCode,

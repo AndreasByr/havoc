@@ -1,5 +1,4 @@
 import { desc } from "drizzle-orm";
-
 import { installedApps } from "@guildora/shared";
 import { requireSession } from "../../utils/auth";
 import { getDb } from "../../utils/db";
@@ -7,12 +6,7 @@ import { getDb } from "../../utils/db";
 export default defineEventHandler(async (event) => {
   await requireSession(event);
   const db = getDb();
-  try {
   const rows = await db.select().from(installedApps).orderBy(desc(installedApps.updatedAt));
-  } catch (error) {
-    if (error && (error as any).statusCode) throw error;
-    throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
-  }
 
   return {
     items: rows.map((row) => ({

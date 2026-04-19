@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-
 import { profiles } from "@guildora/shared";
 import { buildAppNavigation, hasRequiredRoles } from "../../utils/apps";
 import { getLocalizedCoreNavigation, resolveNavigationLocale } from "../../utils/core-navigation";
@@ -16,7 +15,6 @@ import {
 import { loadCommunitySettingsLocale } from "../../utils/community-settings";
 
 export default defineEventHandler(async (event) => {
-try {
   const session = await requireSession(event);
   const db = getDb();
   const roles = session.user.permissionRoles ?? session.user.roles ?? [];
@@ -73,8 +71,4 @@ try {
       loadedAt: new Date().toISOString()
     }
   };
-} catch (error) {
-  if (error && (error as any).statusCode) throw error;
-  throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
-}
 });

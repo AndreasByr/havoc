@@ -1,5 +1,5 @@
-import { readdir, readFile } from "node:fs/promises";
-import { join, extname } from "node:path";
+import { readdir, readFile, stat } from "node:fs/promises";
+import { join, extname, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { eq } from "drizzle-orm";
 import { users, applicationFileUploads } from "@guildora/shared";
@@ -100,6 +100,7 @@ export default defineEventHandler(async (event) => {
     try {
       const buffer = await readFile(filePath);
       const ext = extname(filePath).slice(1) || "bin";
+      const fileStat = await stat(filePath);
 
       // Look up DB record by storagePath
       const [upload] = await db
@@ -119,7 +120,7 @@ export default defineEventHandler(async (event) => {
         : "application/octet-stream";
 
       const key = applicationUploadKey(upload.flowId, upload.id, ext);
-      await media.upload(key, buffer, mimeType);
+      const publicUrl = await media.upload(key, buffer, mimeType);
 
       await db
         .update(applicationFileUploads)

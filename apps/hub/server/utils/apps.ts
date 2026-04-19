@@ -1,11 +1,5 @@
-import { and, desc, eq } from "drizzle-orm";
-import {
-  appMarketplaceSubmissions,
-  installedApps,
-  roleHierarchy,
-  safeParseAppManifest,
-  type GuildoraAppManifest
-} from "@guildora/shared";
+import { eq } from "drizzle-orm";
+import { installedApps, roleHierarchy, safeParseAppManifest, type GuildoraAppManifest } from "@guildora/shared";
 import { getDb } from "./db";
 import { refreshBotCommands, reloadBotHooks } from "./botSync";
 
@@ -61,12 +55,6 @@ export interface AppNavigationPanelGroup {
   order: number;
   appId: string;
   items: AppNavigationPanelItem[];
-}
-
-interface SubmissionCheckResult {
-  key: string;
-  passed: boolean;
-  message: string;
 }
 
 function getRegistryContainer() {
@@ -250,67 +238,3 @@ export function buildAppNavigation(
   };
 }
 
-export async function runMarketplaceSubmissionChecks(manifest: GuildoraAppManifest) {
-  const db = getDb();
-  const checks: SubmissionCheckResult[] = [];
-
-  checks.push({
-    key: "manifest_id",
-    passed: /^[a-z0-9._-]+$/.test(manifest.id),
-    message: "Manifest-ID verwendet nur erlaubte Zeichen."
-  });
-
-  checks.push({
-    key: "compatibility",
-    passed: Boolean(manifest.compatibility?.core?.minVersion),
-    message: "Core-Kompatibilität ist gesetzt."
-  });
-
-  const installedMatch = await db.select().from(installedApps).where(eq(installedApps.appId, manifest.id)).limit(1);
-  checks.push({
-    key: "duplicate_installed",
-    passed: installedMatch.length === 0,
-    message: installedMatch.length === 0 ? "App-ID ist noch nicht installiert." : "App-ID ist bereits installiert."
-  });
-
-  const pendingMatch = await db
-    .select()
-    .from(appMarketplaceSubmissions)
-    .where(
-      and(eq(appMarketplaceSubmissions.appId, manifest.id), eq(appMarketplaceSubmissions.status, "pending"))
-    )
-    .limit(1);
-  checks.push({
-    key: "duplicate_pending_submission",
-    passed: pendingMatch.length === 0,
-    message:
-      pendingMatch.length === 0 ? "Keine offene Einreichung mit derselben App-ID." : "Es existiert bereits eine offene Einreichung."
-  });
-
-  const latestApproved = await db
-    .select()
-    .from(appMarketplaceSubmissions)
-    .where(
-      and(eq(appMarketplaceSubmissions.appId, manifest.id), eq(appMarketplaceSubmissions.status, "approved"))
-    )
-    .orderBy(desc(appMarketplaceSubmissions.createdAt))
-    .limit(1);
-  const latestApprovedEntry = latestApproved[0];
-  const latestApprovedVersion = latestApprovedEntry?.version;
-  checks.push({
-    key: "version_progression",
-    passed: !latestApprovedEntry || latestApprovedVersion !== manifest.version,
-    message:
-      !latestApprovedEntry
-        ? "Kein früheres Release vorhanden."
-        : latestApprovedVersion !== manifest.version
-          ? "Version unterscheidet sich vom letzten freigegebenen Release."
-          : "Version ist identisch mit letzter freigegebener Version."
-  });
-
-  const passed = checks.every((check) => check.passed);
-  return {
-    passed,
-    checks
-  };
-}

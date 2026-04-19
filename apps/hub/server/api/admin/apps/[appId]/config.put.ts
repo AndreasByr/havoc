@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-
 import { z } from "zod";
 import { installedApps } from "@guildora/shared";
 import { requireAdminSession } from "../../../../utils/auth";
@@ -17,17 +16,7 @@ export default defineEventHandler(async (event) => {
   const parsed = await readBodyWithSchema(event, configSchema, "Invalid config payload.");
 
   const db = getDb();
-  try {
-    await db.update(installedApps).set({ config: parsed.config }).where(eq(installedApps.appId, appId));
-  } catch (error) {
-    if (error && (error as any).statusCode) throw error;
-    throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
-  }
-  try {
-    await refreshAppRegistry();
-  } catch (error) {
-    if (error && (error as any).statusCode) throw error;
-    throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
-  }
+  await db.update(installedApps).set({ config: parsed.config }).where(eq(installedApps.appId, appId));
+  await refreshAppRegistry();
   return { ok: true };
 });

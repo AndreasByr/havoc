@@ -27,6 +27,10 @@ overrides:
 importers:
 
   .:
+    dependencies:
+      '@nuxtjs/color-mode':
+        specifier: ^3.5.2
+        version: 3.5.2(magicast@0.5.2)
     devDependencies:
       turbo:
         specifier: ^2.5.0

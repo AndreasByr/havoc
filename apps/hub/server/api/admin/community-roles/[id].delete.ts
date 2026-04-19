@@ -1,4 +1,3 @@
-
 import { requireAdminSession } from "../../../utils/auth";
 import { deleteCommunityRole, parseCommunityRoleId } from "../../../utils/community-roles";
 
@@ -8,11 +7,6 @@ export default defineEventHandler(async (event) => {
   const params = getRouterParams(event);
   const id = parseCommunityRoleId(params.id);
 
-  try {
-    await deleteCommunityRole(id, { requireUnassigned: true });
-  } catch (error) {
-    if (error && (error as any).statusCode) throw error;
-    throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
-  }
+  await deleteCommunityRole(id, { requireUnassigned: true });
   return { ok: true };
 });

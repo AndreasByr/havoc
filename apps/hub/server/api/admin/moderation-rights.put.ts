@@ -1,5 +1,4 @@
 import { desc, eq } from "drizzle-orm";
-
 import { moderationSettings } from "@guildora/shared";
 import { z } from "zod";
 import { requireAdminSession } from "../../utils/auth";
@@ -50,12 +49,7 @@ export default defineEventHandler(async (event) => {
       .set(updateValues)
       .where(eq(moderationSettings.id, existing.id));
   } else {
-    try {
     await db.insert(moderationSettings).values({
-    } catch (error) {
-      if (error && (error as any).statusCode) throw error;
-      throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
-    }
       ...updateValues,
       allowModeratorAccess: true,
       allowModeratorAppsAccess: true

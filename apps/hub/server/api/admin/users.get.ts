@@ -1,5 +1,4 @@
 import { users } from "@guildora/shared";
-
 import { ilike, or, and } from "drizzle-orm";
 import { requireAdminSession } from "../../utils/auth";
 import { getDb } from "../../utils/db";
@@ -33,18 +32,8 @@ export default defineEventHandler(async (event) => {
   }
 
   const userQuery = conditions.length > 0
-    try {
     ? db.select(userColumns).from(users).where(and(...conditions))
-    } catch (error) {
-      if (error && (error as any).statusCode) throw error;
-      throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
-    }
-    try {
     : db.select(userColumns).from(users);
-    } catch (error) {
-      if (error && (error as any).statusCode) throw error;
-      throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
-    }
 
   const [userRows, permissionMap, communityMap] = await Promise.all([
     userQuery,

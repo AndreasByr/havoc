@@ -1,5 +1,4 @@
 import { parseProfileName, users, userCommunityRoles, communityRoles } from "@guildora/shared";
-
 import { and, asc, count, eq, ilike, or } from "drizzle-orm";
 import { requireModeratorSession } from "../../../utils/auth";
 import { getDb } from "../../../utils/db";
@@ -59,12 +58,7 @@ export default defineEventHandler(async (event) => {
         .orderBy(asc(users.displayName))
         .limit(limit)
         .offset(offset),
-      try {
       db.select({ total: count() }).from(users).where(searchCondition)
-      } catch (error) {
-        if (error && (error as any).statusCode) throw error;
-        throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
-      }
     ]);
     userRows = rows;
     total = countRows[0]?.total ?? 0;

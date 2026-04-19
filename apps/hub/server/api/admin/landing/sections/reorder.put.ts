@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-
 import { landingSections } from "@guildora/shared";
 import { z } from "zod";
 import { getDb } from "../../../../utils/db";
@@ -14,7 +13,6 @@ const reorderSchema = z.object({
 });
 
 export default defineEventHandler(async (event) => {
-try {
   const session = await requireModeratorRight(event, "allowModeratorAccess");
   const body = await readBodyWithSchema(event, reorderSchema, "Invalid reorder payload.");
 
@@ -27,8 +25,4 @@ try {
   }
 
   return { success: true };
-} catch (error) {
-  if (error && (error as any).statusCode) throw error;
-  throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
-}
 });

@@ -1,5 +1,4 @@
 import { footerPages } from "@guildora/shared";
-
 import { z } from "zod";
 import { requireAdminSession } from "../../../utils/auth";
 import { getDb } from "../../../utils/db";
@@ -19,12 +18,7 @@ export default defineEventHandler(async (event) => {
   const body = await readBodyWithSchema(event, createPageSchema, "Invalid footer page payload.");
 
   const db = getDb();
-  try {
   const [page] = await db.insert(footerPages).values({
-  } catch (error) {
-    if (error && (error as any).statusCode) throw error;
-    throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
-  }
     slug: body.slug,
     title: sanitizeRecordStrings(body.title),
     content: sanitizeRecordStrings(body.content),

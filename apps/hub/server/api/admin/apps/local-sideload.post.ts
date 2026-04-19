@@ -21,7 +21,5 @@ export default defineEventHandler(async (event) => {
     preserveConfig: true
   });
 
-  console.log(JSON.stringify({ appId: result.appId, event: "app.installed" }));
-
   return { ok: true, appId: result.appId };
 });

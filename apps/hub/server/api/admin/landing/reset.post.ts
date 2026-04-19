@@ -1,5 +1,4 @@
 import { asc, eq } from "drizzle-orm";
-
 import { landingPages, landingSections, landingPageVersions } from "@guildora/shared";
 import { z } from "zod";
 import { requireAdminSession } from "../../../utils/auth";
@@ -20,45 +19,20 @@ export default defineEventHandler(async (event) => {
   const db = getDb();
 
   // Snapshot current state before reset
-  try {
   const currentSections = await db.select().from(landingSections).orderBy(asc(landingSections.sortOrder));
-  } catch (error) {
-    if (error && (error as any).statusCode) throw error;
-    throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
-  }
-  try {
   const [currentPage] = await db.select().from(landingPages).limit(1);
-  } catch (error) {
-    if (error && (error as any).statusCode) throw error;
-    throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
-  }
   if (currentSections.length > 0) {
-    try {
     await db.insert(landingPageVersions).values({
-    } catch (error) {
-      if (error && (error as any).statusCode) throw error;
-      throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
-    }
       snapshot: { sections: currentSections, pageConfig: currentPage ?? null },
       label: "Before reset",
       createdBy: session.user.id
     });
   }
 
-  try {
   await db.delete(landingSections);
-  } catch (error) {
-    if (error && (error as any).statusCode) throw error;
-    throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
-  }
 
   for (const section of sections) {
-    try {
     await db.insert(landingSections).values({
-    } catch (error) {
-      if (error && (error as any).statusCode) throw error;
-      throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
-    }
       blockType: section.blockType,
       sortOrder: section.sortOrder,
       visible: section.visible,
@@ -68,12 +42,7 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  try {
   const [page] = await db.select().from(landingPages).limit(1);
-  } catch (error) {
-    if (error && (error as any).statusCode) throw error;
-    throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
-  }
   if (page) {
     await db
       .update(landingPages)

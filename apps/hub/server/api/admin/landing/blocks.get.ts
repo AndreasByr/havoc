@@ -1,6 +1,5 @@
 import { requireAdminSession } from "../../../utils/auth";
 
-
 const blockTypes = [
   {
     type: "hero",
@@ -83,11 +82,6 @@ const blockTypes = [
 ];
 
 export default defineEventHandler(async (event) => {
-try {
   await requireAdminSession(event);
   return { blocks: blockTypes };
-} catch (error) {
-  if (error && (error as any).statusCode) throw error;
-  throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
-}
 });

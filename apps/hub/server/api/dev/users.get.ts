@@ -5,9 +5,6 @@ import { getDb } from "../../utils/db";
 import { loadUserCommunityRolesMap, loadUserPermissionRolesMap } from "../../utils/user-directory";
 
 export default defineEventHandler(async (event) => {
-  if (!import.meta.dev) {
-    throw createError({ statusCode: 404, statusMessage: "Not Found." });
-  }
   const session = await requireSession(event);
   assertDevRoleSwitcherAccess(event, session);
   const db = getDb();

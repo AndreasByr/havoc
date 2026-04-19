@@ -6,9 +6,10 @@ import {
   applications,
   applicationFileUploads,
   applicationModeratorNotifications,
-  users, linearizeFlowGraph 
+  users
 } from "@guildora/shared";
 import type { ApplicationFlowSettings, ApplicationFlowGraph } from "@guildora/shared";
+import { linearizeFlowGraph } from "@guildora/shared";
 import { verifyAndLoadToken, markTokenUsed } from "../../../utils/application-tokens";
 import { requireRouterParam, readBodyWithSchema } from "../../../utils/http";
 import { getDb } from "../../../utils/db";

@@ -24,7 +24,5 @@ export default defineEventHandler(async (event) => {
     preserveAutoUpdate: false
   });
 
-  console.log(JSON.stringify({ appId, event: "app.installed" }));
-
   return { ok: true, appId };
 });

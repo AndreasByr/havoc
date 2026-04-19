@@ -10,8 +10,6 @@ import { replaceUserDiscordRolesSnapshotFromMember } from "../../utils/discord-r
 import { persistDiscordAvatarLocally } from "../../utils/avatar-storage";
 import { loadMembershipSettings } from "../../utils/membership-settings";
 import { getDb } from "../../utils/db";
-import { normalizeReturnTo } from "../../utils/redirect-safety";
-import { getDiscordCredentials } from "../../utils/platformConfig";
 
 type DiscordUser = {
   id: string;
@@ -95,10 +93,22 @@ export default defineEventHandler(async (event) => {
   const code = typeof query.code === "string" ? query.code : null;
   const state = typeof query.state === "string" ? query.state : null;
   const isDev = import.meta.dev || process.env.NODE_ENV === "development";
-  const sessionCookieConfig = (config as { session?: { cookie?: { secure?: boolean } } }).session?.cookie;
-  const secureCookie = sessionCookieConfig?.secure ?? true;
   const devBypassEnabled = isDev && config.authDevBypass === true;
   const superadminDiscordId = typeof config.superadminDiscordId === "string" ? config.superadminDiscordId : "";
+
+  const normalizeReturnTo = (rawValue: string | null | undefined, fallback = "/dashboard") => {
+    if (!rawValue) {
+      return fallback;
+    }
+
+    let value = rawValue;
+    try {
+      value = decodeURIComponent(rawValue);
+    } catch {
+      value = rawValue;
+    }
+    return value.startsWith("/") && !value.startsWith("//") ? value : fallback;
+  };
 
   if (isDev && devBypassEnabled) {
     if (!superadminDiscordId) {
@@ -136,19 +146,8 @@ export default defineEventHandler(async (event) => {
     return sendRedirect(event, returnTo);
   }
 
-  let clientId = typeof config.discordClientId === "string" ? config.discordClientId : "";
-  let clientSecret = typeof config.discordClientSecret === "string" ? config.discordClientSecret : "";
-
-  // Fall back to platform_connections credentials when env vars are not set
-  // (e.g. after setup wizard stored credentials in the database)
-  if (!clientId || !clientSecret) {
-    const dbCreds = await getDiscordCredentials();
-    if (dbCreds) {
-      clientId = clientId || dbCreds.clientId;
-      clientSecret = clientSecret || dbCreds.clientSecret;
-    }
-  }
-
+  const clientId = typeof config.discordClientId === "string" ? config.discordClientId : "";
+  const clientSecret = typeof config.discordClientSecret === "string" ? config.discordClientSecret : "";
   const hubUrl = typeof config.public.hubUrl === "string" ? config.public.hubUrl : "http://localhost:3003";
   const redirectUri =
     typeof config.discordRedirectUri === "string" && config.discordRedirectUri.length > 0
@@ -178,7 +177,7 @@ export default defineEventHandler(async (event) => {
       httpOnly: true,
       maxAge: oauthStateTtlSeconds,
       sameSite: "lax",
-      secure: secureCookie,
+      secure: !isDev,
       path: "/"
     });
 
@@ -337,13 +336,6 @@ export default defineEventHandler(async (event) => {
     // instead of redirecting to /login (which causes an infinite loop in dev mode).
     if (isError(error)) throw error;
     console.error("Discord OAuth failed:", error);
-    if (error instanceof Error && error.name === "BotBridgeError") {
-      throw createError({
-        statusCode: 503,
-        statusMessage: "Bot service unavailable",
-        message: "The Discord bot is not reachable. Please try again later or contact an admin."
-      });
-    }
     const msg = error instanceof Error ? error.message : String(error);
     const isDbError =
       msg.includes("Failed query") ||

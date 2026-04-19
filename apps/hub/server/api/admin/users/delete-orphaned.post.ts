@@ -1,5 +1,4 @@
 import { inArray } from "drizzle-orm";
-
 import { z } from "zod";
 import { users } from "@guildora/shared";
 import { requireAdminSession } from "../../../utils/auth";
@@ -35,12 +34,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const db = getDb();
-  try {
   const existingRows = await db.select({ id: users.id }).from(users).where(inArray(users.id, deletableIds));
-  } catch (error) {
-    if (error && (error as any).statusCode) throw error;
-    throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
-  }
   const existingIds = existingRows.map((row) => row.id);
   const deleted = await deleteUsersByIds(existingIds);
   return {

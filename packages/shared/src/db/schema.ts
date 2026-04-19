@@ -27,7 +27,6 @@ export const platformConnectionStatusEnum = pgEnum("platform_connection_status",
 export const absenceStatusEnum = pgEnum("absence_status", ["away", "maintenance"]);
 export const appInstallStatusEnum = pgEnum("app_install_status", ["active", "inactive", "error"]);
 export const appInstallSourceEnum = pgEnum("app_install_source", ["marketplace", "sideloaded"]);
-export const appSubmissionStatusEnum = pgEnum("app_submission_status", ["pending", "approved", "rejected"]);
 export const applicationFlowStatusEnum = pgEnum("application_flow_status", ["draft", "active", "inactive"]);
 export const applicationStatusEnum = pgEnum("application_status", ["pending", "approved", "rejected"]);
 export const editorModeEnum = pgEnum("editor_mode", ["simple", "advanced"]);
@@ -265,25 +264,6 @@ export const appKv = pgTable(
   ]
 );
 
-export const appMarketplaceSubmissions = pgTable("app_marketplace_submissions", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  appId: text("app_id").notNull(),
-  name: text("name").notNull(),
-  version: text("version").notNull(),
-  sourceUrl: text("source_url"),
-  manifest: jsonb("manifest").$type<GuildoraAppManifest>().notNull(),
-  status: appSubmissionStatusEnum("status").notNull().default("pending"),
-  automatedChecks: jsonb("automated_checks").$type<Record<string, unknown>>().notNull().default({}),
-  reviewNotes: text("review_notes"),
-  submittedByUserId: uuid("submitted_by_user_id").references(() => users.id, { onDelete: "set null" }),
-  reviewedByUserId: uuid("reviewed_by_user_id").references(() => users.id, { onDelete: "set null" }),
-  reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .defaultNow()
-    .notNull()
-    .$onUpdateFn(() => new Date())
-});
 
 export const themeSettings = pgTable("theme_settings", {
   id: serial("id").primaryKey(),
@@ -693,12 +673,6 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   voiceSessions: many(voiceSessions),
   profileChangeLogs: many(profileChangeLogs),
   createdApps: many(installedApps),
-  submittedAppSubmissions: many(appMarketplaceSubmissions, {
-    relationName: "app_submission_submitter"
-  }),
-  reviewedAppSubmissions: many(appMarketplaceSubmissions, {
-    relationName: "app_submission_reviewer"
-  }),
   updatedModerationSettings: many(moderationSettings),
   updatedLandingPages: many(landingPages),
   updatedLandingSections: many(landingSections),
@@ -800,19 +774,6 @@ export const installedAppsRelations = relations(installedApps, ({ one }) => ({
   createdByUser: one(users, {
     fields: [installedApps.createdBy],
     references: [users.id]
-  })
-}));
-
-export const appMarketplaceSubmissionsRelations = relations(appMarketplaceSubmissions, ({ one }) => ({
-  submittedByUser: one(users, {
-    fields: [appMarketplaceSubmissions.submittedByUserId],
-    references: [users.id],
-    relationName: "app_submission_submitter"
-  }),
-  reviewedByUser: one(users, {
-    fields: [appMarketplaceSubmissions.reviewedByUserId],
-    references: [users.id],
-    relationName: "app_submission_reviewer"
   })
 }));
 

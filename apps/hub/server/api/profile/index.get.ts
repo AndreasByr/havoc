@@ -8,7 +8,6 @@ import {
 import { readAppearancePreferenceFromCustomFields } from "../../../utils/appearance";
 import { normalizeUserLocalePreference, readLegacyLocalePreferenceFromCustomFields, resolveEffectiveLocale } from "../../../utils/locale-preference";
 import { requireSession, requireStaffRole } from "../../utils/auth";
-import { resolveAvatarUrl } from "../../utils/avatar-storage";
 import { getDb } from "../../utils/db";
 import { buildEditableDiscordRolesForUser } from "../../utils/discord-roles";
 import { jsonResponse } from "../../utils/jsonResponse";
@@ -80,19 +79,6 @@ export default defineEventHandler(async (event) => {
     ? parseWithTemplate(userRow.displayName, displayNameTemplate)
     : undefined;
 
-  // Re-persist avatar if local file is missing (e.g. after container restart)
-  let avatarUrl = userRow.avatarUrl;
-  if (userRow.avatarSource === "local" && avatarUrl) {
-    const resolved = await resolveAvatarUrl(avatarUrl, userRow.discordId);
-    avatarUrl = resolved.url;
-    if (resolved.sourceChanged) {
-      await db
-        .update(users)
-        .set({ avatarUrl, avatarSource: avatarUrl ? "discord" : null })
-        .where(eq(users.id, userRow.id));
-    }
-  }
-
   const body = {
     id: userRow.id,
     discordId: userRow.discordId,
@@ -101,7 +87,7 @@ export default defineEventHandler(async (event) => {
     rufname: parsedName.rufname,
     displayNameTemplate,
     displayNameParts,
-    avatarUrl,
+    avatarUrl: userRow.avatarUrl,
     avatarSource: userRow.avatarSource,
     permissionRoles: permissionRolesForUser,
     roles: permissionRolesForUser,

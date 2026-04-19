@@ -49,5 +49,8 @@
       "vite": ">=7.3.2",
       "eslint>ajv": "^6"
     }
+  },
+  "dependencies": {
+    "@nuxtjs/color-mode": "^3.5.2"
   }
 }

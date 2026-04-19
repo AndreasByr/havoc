@@ -8,9 +8,6 @@ const schema = z.object({
 });
 
 export default defineEventHandler(async (event) => {
-  if (!import.meta.dev) {
-    throw createError({ statusCode: 404, statusMessage: "Not Found." });
-  }
   const session = await requireSession(event);
   assertDevRoleSwitcherAccess(event, session);
 

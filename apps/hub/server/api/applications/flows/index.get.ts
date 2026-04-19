@@ -1,11 +1,9 @@
 import type { ApplicationFlowGraph, ApplicationFlowSettings } from "@guildora/shared";
-
 import { requireModeratorSession } from "../../../utils/auth";
 import { getDb } from "../../../utils/db";
 import { listFlows, validateFlowActivation } from "../../../utils/application-flows";
 
 export default defineEventHandler(async (event) => {
-try {
   await requireModeratorSession(event);
   const db = getDb();
   const flows = await listFlows(db);
@@ -24,8 +22,4 @@ try {
       )
     }))
   };
-} catch (error) {
-  if (error && (error as any).statusCode) throw error;
-  throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
-}
 });

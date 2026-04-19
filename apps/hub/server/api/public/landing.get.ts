@@ -1,11 +1,9 @@
 import { and, asc, eq } from "drizzle-orm";
-
-import { landingPages, landingSections, landingTemplates, resolveLandingColors, migrateColorOverrides } from "@guildora/shared";
+import { landingPages, landingSections, landingTemplates, resolveLandingColors } from "@guildora/shared";
 import type { LandingColorOverrides } from "@guildora/shared";
 import { getDb } from "../../utils/db";
 
 export default defineEventHandler(async (event) => {
-try {
   setResponseHeader(event, "Cache-Control", "public, max-age=30, stale-while-revalidate=120");
 
   const query = getQuery(event);
@@ -46,13 +44,9 @@ try {
     };
   });
 
-  const perTemplate = migrateColorOverrides(
-    page.colorOverrides as Record<string, unknown> ?? {},
-    page.activeTemplate
-  );
   const resolvedColors = resolveLandingColors(
     page.activeTemplate,
-    (perTemplate[page.activeTemplate] ?? {}) as LandingColorOverrides
+    (page.colorOverrides ?? {}) as LandingColorOverrides
   );
 
   return {
@@ -67,8 +61,4 @@ try {
     },
     colors: resolvedColors
   };
-} catch (error) {
-  if (error && (error as any).statusCode) throw error;
-  throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
-}
 });

@@ -1,5 +1,4 @@
 import {
-
   parseProfileName,
   permissionRoles,
   userPermissionRoles,
@@ -7,7 +6,7 @@ import {
   users,
   voiceSessions
 } from "@guildora/shared";
-import { and, eq, gte, ilike, inArray, or } from "drizzle-orm";
+import { and, eq, gte, ilike, inArray, or, sql } from "drizzle-orm";
 import { requireSession } from "../../utils/auth";
 import { getDb } from "../../utils/db";
 import { parsePaginationQuery, paginateArray } from "../../utils/http";
@@ -50,18 +49,8 @@ export default defineEventHandler(async (event) => {
   }
 
   const userQuery = conditions.length > 0
-    try {
     ? db.select(userColumns).from(users).where(and(...conditions))
-    } catch (error) {
-      if (error && (error as any).statusCode) throw error;
-      throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
-    }
-    try {
     : db.select(userColumns).from(users);
-    } catch (error) {
-      if (error && (error as any).statusCode) throw error;
-      throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
-    }
 
   // Load voice sessions only for the relevant time window
   const voiceSince = new Date(Date.now() - days * 24 * 60 * 60 * 1000);

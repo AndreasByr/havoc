@@ -1,5 +1,4 @@
 import { eq, and, inArray } from "drizzle-orm";
-
 import { applications, applicationFlows } from "@guildora/shared";
 import { requireModeratorSession } from "../../../utils/auth";
 import { getDb } from "../../../utils/db";
@@ -22,12 +21,7 @@ export default defineEventHandler(async (event) => {
 
   const flowIds = [...new Set(filtered.map((r) => r.flowId))];
   const flows = flowIds.length > 0
-    try {
     ? await db.select().from(applicationFlows).where(inArray(applicationFlows.id, flowIds))
-    } catch (error) {
-      if (error && (error as any).statusCode) throw error;
-      throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
-    }
     : [];
   const flowMap = new Map(flows.map((f) => [f.id, f.name]));
 
