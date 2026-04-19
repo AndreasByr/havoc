@@ -1,16 +1,15 @@
 import { eq, desc, and } from "drizzle-orm";
+import {
+  applicationFlows,
+  applicationFlowEmbeds,
+  applications
+} from "@guildora/shared";
 import type {
   ApplicationFlowGraph,
   ApplicationFlowSettings,
-  ApplicationFlowStatus,
-  applicationFlows,
-  applicationFlowEmbeds,
-  applications,
-  type GuildoraDatabase
-
-
-
+  ApplicationFlowStatus
 } from "@guildora/shared";
+import type { GuildoraDatabase } from "@guildora/shared/db/client";
 
 export async function getFlowById(db: GuildoraDatabase, flowId: string) {
   const [flow] = await db
