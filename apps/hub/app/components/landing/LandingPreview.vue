@@ -39,6 +39,12 @@ const localizedSections = computed(() =>
     })
 );
 
+useHead({
+  style: computed(() =>
+    props.customCss ? [{ innerHTML: props.customCss }] : []
+  )
+});
+
 const colorStyle = computed(() => {
   const c = props.colors;
   if (!c) return "";
@@ -71,7 +77,6 @@ const colorStyle = computed(() => {
       />
     </template>
 
-    <style v-if="customCss" v-text="customCss" />
   </div>
 </template>
 
