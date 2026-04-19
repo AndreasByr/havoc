@@ -1,6 +1,6 @@
 <script setup lang="ts">
 definePageMeta({
-  layout: "auth"
+  layout: "bare"
 });
 
 const route = useRoute();
