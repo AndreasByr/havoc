@@ -9,8 +9,9 @@ const COMMUNITY_SETTINGS_SINGLETON_ID = 1;
 export default defineEventHandler(async (event) => {
   await requireSession(event);
   const db = getDb();
+  let storedTheme;
   try {
-  const [storedTheme] = await db.select().from(themeSettings).orderBy(desc(themeSettings.updatedAt)).limit(1);
+    [storedTheme] = await db.select().from(themeSettings).orderBy(desc(themeSettings.updatedAt)).limit(1);
   } catch (error) {
     if (error && (error as any).statusCode) throw error;
     throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
