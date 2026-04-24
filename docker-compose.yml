@@ -72,12 +72,9 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
-    labels:
-      caddy: ${APP_HOST}
-      caddy.reverse_proxy: "{{upstreams 3000}}"
     networks:
-      - internal
-      - caddy
+      - guildora_internal
+      - guildora_caddy
 
   hub:
     build:
@@ -123,12 +120,9 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
-    labels:
-      caddy: ${HUB_HOST}
-      caddy.reverse_proxy: "{{upstreams 3003}}"
     networks:
-      - internal
-      - caddy
+      - guildora_internal
+      - guildora_caddy
 
   bot:
     build:
@@ -151,14 +145,15 @@ services:
       BOT_INTERNAL_TOKEN: ${BOT_INTERNAL_TOKEN}
       BOT_INTERNAL_PORT: ${BOT_INTERNAL_PORT:-3050}
     networks:
-      - internal
+      - guildora_internal
 
 volumes:
   db_data:
+  caddy_data:
+  caddy_config:
 
 networks:
-  internal:
+  guildora_internal:
     driver: bridge
-  caddy:
-    external: true
-    name: ${CADDY_NETWORK:-caddy}
+  guildora_caddy:
+    driver: bridge
