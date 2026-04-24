@@ -76,7 +76,7 @@ function mockDbUpdate(returnValue: unknown = {}) {
 
 describe("POST /api/setup/platform", () => {
   beforeEach(async () => {
-    mocks = stubNuxtAutoImports();
+    _mocks = stubNuxtAutoImports();
     vi.spyOn(console, "warn").mockImplementation(() => {});
 
     // Make readBody return the body from the mock event so tests can pass

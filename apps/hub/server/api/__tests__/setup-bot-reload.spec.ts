@@ -11,7 +11,7 @@ const fetchMock = vi.fn();
 
 describe("setup bot reload endpoint (POST /api/setup/bot-reload)", () => {
   beforeEach(() => {
-    mocks = stubNuxtAutoImports();
+    _mocks = stubNuxtAutoImports();
     vi.stubGlobal("$fetch", fetchMock);
     fetchMock.mockReset();
     vi.stubEnv("NUXT_BOT_INTERNAL_URL", "");

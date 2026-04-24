@@ -28,7 +28,7 @@ function mockDbChain(returnValue: unknown = []) {
 
 describe("setup status endpoint (GET /api/setup/status)", () => {
   beforeEach(() => {
-    mocks = stubNuxtAutoImports();
+    _mocks = stubNuxtAutoImports();
     vi.stubEnv("DISCORD_BOT_TOKEN", "");
     vi.stubEnv("DISCORD_GUILD_ID", "");
     vi.spyOn(console, "warn").mockImplementation(() => {});
