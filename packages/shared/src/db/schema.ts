@@ -31,6 +31,14 @@ export const applicationFlowStatusEnum = pgEnum("application_flow_status", ["dra
 export const applicationStatusEnum = pgEnum("application_status", ["pending", "approved", "rejected"]);
 export const editorModeEnum = pgEnum("editor_mode", ["simple", "advanced"]);
 export const landingSectionStatusEnum = pgEnum("landing_section_status", ["draft", "published"]);
+export const deletionRequestStatusEnum = pgEnum("deletion_request_status", [
+  "pending",
+  "approved",
+  "rejected",
+  "processing",
+  "completed",
+  "failed"
+]);
 export type ThemeContentTone = "light" | "dark";
 
 export const users = pgTable("users", {
@@ -649,6 +657,24 @@ export const cleanupLog = pgTable(
   (table) => [index("cleanup_log_created_at_idx").on(table.createdAt.desc())]
 );
 
+export const deletionRequests = pgTable("deletion_requests", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  status: deletionRequestStatusEnum("status").notNull().default("pending"),
+  reason: text("reason"),
+  reviewedBy: uuid("reviewed_by").references(() => users.id, { onDelete: "set null" }),
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+  failureReason: text("failure_reason"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull()
+    .$onUpdateFn(() => new Date())
+});
+
 // ─── Relations ────────────────────────────────────────────────────────────
 
 export const userPlatformAccountsRelations = relations(userPlatformAccounts, ({ one }) => ({
@@ -680,7 +706,9 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   createdApplicationFlows: many(applicationFlows),
   reviewedApplications: many(applications, { relationName: "application_reviewer" }),
   applicationModeratorNotifications: many(applicationModeratorNotifications),
-  createdCommunityTags: many(communityTags)
+  createdCommunityTags: many(communityTags),
+  deletionRequests: many(deletionRequests, { relationName: "deletion_request_user" }),
+  reviewedDeletionRequests: many(deletionRequests, { relationName: "deletion_request_reviewer" })
 }));
 
 export const profilesRelations = relations(profiles, ({ one, many }) => ({
@@ -917,5 +945,18 @@ export const membershipSettingsRelations = relations(membershipSettings, ({ one 
   defaultCommunityRole: one(communityRoles, {
     fields: [membershipSettings.defaultCommunityRoleId],
     references: [communityRoles.id]
+  })
+}));
+
+export const deletionRequestsRelations = relations(deletionRequests, ({ one }) => ({
+  user: one(users, {
+    fields: [deletionRequests.userId],
+    references: [users.id],
+    relationName: "deletion_request_user"
+  }),
+  reviewer: one(users, {
+    fields: [deletionRequests.reviewedBy],
+    references: [users.id],
+    relationName: "deletion_request_reviewer"
   })
 }));
