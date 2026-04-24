@@ -683,5 +683,3 @@ export async function installAppFromLocalPath(
   await refreshAppRegistry();
   return { appId: manifest.id };
 }
- appId: manifest.id };
-}
