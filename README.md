@@ -39,6 +39,94 @@ Useful workspace scripts:
 - `pnpm db:seed`
 - `pnpm bot:deploy-commands`
 
+## Deployment
+
+For self-hosting, Guildora currently supports two paths: `Coolify` (recommended for non-technical admins) and `Docker Compose` (for technical operators who manage their own Linux host). Full-stack deployment on `Vercel` is not supported; see the note below.
+
+<!-- Coolify subsection added in T02 -->
+
+### Docker Compose (self-managed)
+
+#### Prerequisites
+
+- A Linux host with `Docker` and `Docker Compose v2`
+- A domain where `APP_HOST` and `HUB_HOST` DNS records (`A`/`AAAA`) point to your host IP
+
+#### Runbook
+
+1. Clone the repository.
+2. Copy environment defaults:
+
+```bash
+cp .env.example .env
+```
+
+3. Fill required values in `.env`.
+4. Start the stack:
+
+```bash
+docker compose up -d --build
+```
+
+5. Verify services are healthy:
+
+```bash
+docker compose ps
+```
+
+All services (including `guildora-db`, `web`, `hub`, `bot`, and `caddy`) should show healthy/running state.
+
+6. Tail hub logs when needed:
+
+```bash
+docker compose logs -f hub
+```
+
+7. Open your hub URL and complete the `/setup` wizard.
+
+> [!IMPORTANT]
+> **Hard required for hub startup**
+> The hub validates exactly these two env vars on boot: `DATABASE_URL` and `NUXT_SESSION_PASSWORD`.
+> If either is missing/empty, the env validation plugin throws and the `hub` process exits non-zero.
+
+#### Operationally required for a usable platform
+
+- `APP_HOST`
+- `HUB_HOST`
+- `NUXT_PUBLIC_APP_URL`
+- `NUXT_PUBLIC_HUB_URL`
+- `POSTGRES_PASSWORD`
+- `NUXT_OAUTH_DISCORD_CLIENT_ID`
+- `NUXT_OAUTH_DISCORD_CLIENT_SECRET`
+- `NUXT_OAUTH_DISCORD_REDIRECT_URI`
+- `SUPERADMIN_DISCORD_ID`
+- `DISCORD_BOT_TOKEN`
+- `DISCORD_CLIENT_ID`
+- `DISCORD_GUILD_ID`
+- `BOT_INTERNAL_TOKEN`
+- `APPLICATION_TOKEN_SECRET`
+
+Migrations run automatically on `hub` startup, so no manual `pnpm db:migrate` is needed in production.
+
+`caddy` is built into the compose stack (no external reverse proxy required) and handles TLS via Let's Encrypt once DNS points to your host.
+
+#### Updating
+
+```bash
+git pull && docker compose up -d --build
+```
+
+#### Persistence
+
+Named volumes `db_data`, `caddy_data`, and `caddy_config` persist state across `docker compose down` / `docker compose up` cycles. Use `docker compose down -v` only when you intentionally want to wipe persisted data.
+
+### Vercel (not supported for full stack)
+
+Guildora requires a long-running PostgreSQL database, a continuously running Discord bot process, and compose-based internal service networking between `web`, `hub`, `bot`, and `guildora-db`.
+`Vercel` does not provide this full runtime model for a single deployment.
+The public landing app in `apps/web` could be hosted on `Vercel` in isolation.
+The full platform (`hub` + `bot` + `db`) must run on a self-hosted environment.
+
 ## Contributing
 
 `main` is protected — no direct pushes. Development flow:

@@ -118,6 +118,7 @@ export function stubNuxtAutoImports() {
       err.statusMessage = opts.statusMessage;
       return err;
     }),
+    readBody: vi.fn(),
     defineEventHandler: vi.fn((handler: (...args: unknown[]) => unknown) => handler),
     getMethod: vi.fn((event: H3Event) => event.method ?? "GET"),
     getHeader: vi.fn(
