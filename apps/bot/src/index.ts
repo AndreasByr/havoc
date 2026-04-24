@@ -2,6 +2,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { Client, Collection, GatewayIntentBits } from "discord.js";
 import { and, eq } from "drizzle-orm";
+import type { BotCommand } from "./types";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 try {
