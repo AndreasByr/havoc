@@ -1,8 +1,8 @@
 import crypto from "node:crypto";
 import { createServer } from "node:http";
 import { ChannelType, type GuildChannelTypes, Collection, REST, Routes, SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, type Client } from "discord.js";
-import { eq } from "drizzle-orm";
-import { installedApps, safeParseAppManifest, applicationTokens } from "@guildora/shared";
+import { and, eq } from "drizzle-orm";
+import { installedApps, safeParseAppManifest, applicationTokens, platformConnections, type DiscordPlatformCredentials } from "@guildora/shared";
 import type { BotCommand } from "../types";
 import { setupCommand } from "../commands/setup";
 import { getDb } from "./db";
@@ -232,7 +232,13 @@ export async function loadAndDeployAppCommands(commands: Collection<string, BotC
   return commands.size;
 }
 
-export function startInternalSyncServer(client: Client, commands: Collection<string, BotCommand>) {
+type DiscordClientRestartFn = () => Promise<{ ok: boolean; guildId: string }>;
+
+export function startInternalSyncServer(
+  client: Client,
+  commands: Collection<string, BotCommand>,
+  restartDiscordClient?: DiscordClientRestartFn
+) {
   const portValue = process.env.BOT_INTERNAL_PORT || "3050";
   const port = Number.parseInt(portValue, 10);
   if (!Number.isFinite(port) || port <= 0) {
@@ -595,6 +601,48 @@ export function startInternalSyncServer(client: Client, commands: Collection<str
         await loadInstalledAppHooks(client);
         logger.info("App hooks reloaded via internal sync.");
         json(res, 200, { ok: true });
+        return;
+      }
+
+      if (method === "POST" && pathname === "/internal/bot/reload-credentials") {
+        const db = getDb();
+        const rows = await db
+          .select()
+          .from(platformConnections)
+          .where(and(eq(platformConnections.platform, "discord"), eq(platformConnections.enabled, true)))
+          .limit(1);
+
+        const row = rows[0];
+        if (!row) {
+          jsonError(res, 404, "NOT_FOUND", "Discord platform connection not found");
+          return;
+        }
+
+        const creds = row.credentials as DiscordPlatformCredentials;
+        const botToken = creds?.botToken?.trim();
+        const clientId = creds?.clientId?.trim();
+        const guildIdFromDb = creds?.guildId?.trim();
+
+        if (!botToken || !clientId || !guildIdFromDb) {
+          jsonError(res, 400, "SYNC_FAILED", "Discord credentials are incomplete in DB");
+          return;
+        }
+
+        process.env.DISCORD_BOT_TOKEN = botToken;
+        process.env.DISCORD_CLIENT_ID = clientId;
+        process.env.DISCORD_GUILD_ID = guildIdFromDb;
+
+        if (!restartDiscordClient) {
+          jsonError(res, 500, "SYNC_FAILED", "Discord client restart handler is not configured");
+          return;
+        }
+
+        const restartResult = await restartDiscordClient();
+        logger.info("Discord credentials reloaded via internal sync.", {
+          guildId: restartResult.guildId,
+          ready: restartResult.ok
+        });
+        json(res, 200, { ok: restartResult.ok, guildId: restartResult.guildId });
         return;
       }
 

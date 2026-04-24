@@ -1,6 +1,7 @@
 import path from "path";
 import { fileURLToPath } from "url";
 import { Client, Collection, GatewayIntentBits } from "discord.js";
+import { and, eq } from "drizzle-orm";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 try {
@@ -10,7 +11,8 @@ try {
   // dotenv not available in production Docker — env vars injected by container
 }
 
-import type { BotCommand } from "./types";
+import { platformConnections, type DiscordPlatformCredentials } from "@guildora/shared";
+import { getDb } from "./utils/db";
 import { setupCommand } from "./commands/setup";
 import { registerGuildMemberAddEvent } from "./events/guildMemberAdd";
 import { registerInteractionCreateEvent } from "./events/interactionCreate";
@@ -48,6 +50,73 @@ for (const command of [setupCommand]) {
   commands.set(command.data.name, command);
 }
 
+async function waitForClientReady(targetClient: Client, timeoutMs = 15_000) {
+  if (targetClient.isReady()) {
+    return;
+  }
+
+  await new Promise<void>((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      cleanup();
+      reject(new Error("Timed out waiting for Discord client ready event"));
+    }, timeoutMs);
+
+    const onReady = () => {
+      cleanup();
+      resolve();
+    };
+
+    const cleanup = () => {
+      clearTimeout(timeout);
+      targetClient.off("clientReady", onReady);
+    };
+
+    targetClient.once("clientReady", onReady);
+  });
+}
+
+async function restartDiscordClient() {
+  const db = getDb();
+  const rows = await db
+    .select()
+    .from(platformConnections)
+    .where(and(eq(platformConnections.platform, "discord"), eq(platformConnections.enabled, true)))
+    .limit(1);
+
+  const row = rows[0];
+  if (!row) {
+    throw new Error("No enabled discord platform connection found in DB");
+  }
+
+  const creds = row.credentials as DiscordPlatformCredentials;
+  const botToken = creds?.botToken?.trim();
+  const clientId = creds?.clientId?.trim();
+  const guildId = creds?.guildId?.trim();
+
+  if (!botToken || !clientId || !guildId) {
+    throw new Error("Discord platform credentials are incomplete in DB");
+  }
+
+  process.env.DISCORD_BOT_TOKEN = botToken;
+  process.env.DISCORD_CLIENT_ID = clientId;
+  process.env.DISCORD_GUILD_ID = guildId;
+
+  logger.info("Restarting Discord client with DB credentials", { guildId });
+
+  if (client.isReady()) {
+    client.destroy();
+  }
+
+  await client.login(botToken);
+  await waitForClientReady(client);
+
+  await loadAndDeployAppCommands(commands);
+  await loadInstalledAppHooks(client);
+
+  logger.info("Discord client reconnected and bot state reloaded", { guildId });
+  return { ok: client.isReady(), guildId };
+}
+
 registerReadyEvent(client);
 registerInteractionCreateEvent(client, commands);
 registerGuildMemberAddEvent(client);
@@ -66,7 +135,7 @@ loadAndDeployAppCommands(commands)
   .then(() => logger.info("App commands loaded and deployed."))
   .catch((error) => logger.error("App command loading failed.", error));
 
-startInternalSyncServer(client, commands);
+startInternalSyncServer(client, commands, restartDiscordClient);
 
 let shuttingDown = false;
 
