@@ -1212,6 +1212,31 @@
         "experimentalCaveats": "Missing features: native embeds, button interactions, rich role management. Messages use plain text with HTML formatting.",
         "experimentalAck": "I understand that Matrix integration is experimental and has limited features compared to Discord."
       }
+    },
+    "retention": {
+      "title": "Data Retention",
+      "description": "Configure how long different data categories are retained before automatic cleanup. Disabled categories will retain data indefinitely.",
+      "columnCategory": "Category",
+      "columnDays": "Retention Period",
+      "columnEnabled": "Enabled",
+      "daysUnit": "days",
+      "days": "{days} days",
+      "years": "{years} years",
+      "disabled": "Disabled",
+      "unsavedChanges": "Unsaved changes",
+      "saveSuccess": "Retention policies saved successfully.",
+      "saveError": "Failed to save retention policies.",
+      "infoNotice": "Changes take effect on the next scheduled cleanup run. Reducing retention periods will permanently delete data older than the new threshold.",
+      "currentConfig": "Current Configuration",
+      "lastUpdated": "Last updated:",
+      "categoryVoiceSessions": "Voice Sessions",
+      "categoryVoiceDesc": "Voice channel join/leave events and session duration data",
+      "categoryAuditLogs": "Audit Logs",
+      "categoryAuditDesc": "Administrative action logs and moderation history",
+      "categoryApplicationData": "Application Data",
+      "categoryApplicationDesc": "Submitted applications and review records",
+      "categoryInactiveUsers": "Inactive Users",
+      "categoryInactiveDesc": "Users with no activity within the retention period"
     }
   },
   "settingsFiles": {

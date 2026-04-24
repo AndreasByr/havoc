@@ -1209,6 +1209,31 @@
         "accessToken": "Bot Access Token",
         "spaceId": "Space ID"
       }
+    },
+    "retention": {
+      "title": "Datenaufbewahrung",
+      "description": "Konfiguriere, wie lange verschiedene Datenkategorien aufbewahrt werden, bevor sie automatisch bereinigt werden. Deaktivierte Kategorien behalten Daten unbegrenzt.",
+      "columnCategory": "Kategorie",
+      "columnDays": "Aufbewahrungsdauer",
+      "columnEnabled": "Aktiv",
+      "daysUnit": "Tage",
+      "days": "{days} Tage",
+      "years": "{years} Jahre",
+      "disabled": "Deaktiviert",
+      "unsavedChanges": "Ungespeicherte Änderungen",
+      "saveSuccess": "Aufbewahrungsrichtlinien erfolgreich gespeichert.",
+      "saveError": "Aufbewahrungsrichtlinien konnten nicht gespeichert werden.",
+      "infoNotice": "Änderungen werden beim nächsten geplanten Bereinigungslauf wirksam. Eine Verkürzung der Aufbewahrungsdauer löscht Daten, die älter als der neue Schwellenwert sind, dauerhaft.",
+      "currentConfig": "Aktuelle Konfiguration",
+      "lastUpdated": "Zuletzt aktualisiert:",
+      "categoryVoiceSessions": "Voice-Sitzungen",
+      "categoryVoiceDesc": "Voice-Channel Beitritts-/Austrittsereignisse und Sitzungsdauer",
+      "categoryAuditLogs": "Audit-Protokolle",
+      "categoryAuditDesc": "Administrative Aktionsprotokolle und Moderationsverlauf",
+      "categoryApplicationData": "Bewerbungsdaten",
+      "categoryApplicationDesc": "Eingereichte Bewerbungen und Bewertungsdatensätze",
+      "categoryInactiveUsers": "Inaktive Benutzer",
+      "categoryInactiveDesc": "Benutzer ohne Aktivität innerhalb des Aufbewahrungszeitraums"
     }
   },
   "settingsFiles": {

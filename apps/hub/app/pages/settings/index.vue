@@ -10,7 +10,8 @@ const allowedTargets = new Set([
   "/settings/custom-fields",
   "/settings/permissions",
   "/settings/moderation-rights",
-  "/settings/design"
+  "/settings/design",
+  "/settings/retention"
 ]);
 const target = allowedTargets.has(lastPath.value || "") ? lastPath.value || "/settings/community" : "/settings/community";
 
