@@ -24,7 +24,6 @@ export const platformConnectionStatusEnum = pgEnum("platform_connection_status",
   "disconnected",
   "error"
 ]);
-export const absenceStatusEnum = pgEnum("absence_status", ["away", "maintenance"]);
 export const appInstallStatusEnum = pgEnum("app_install_status", ["active", "inactive", "error"]);
 export const appInstallSourceEnum = pgEnum("app_install_source", ["marketplace", "sideloaded"]);
 export const applicationFlowStatusEnum = pgEnum("application_flow_status", ["draft", "active", "inactive"]);
@@ -92,9 +91,6 @@ export const profiles = pgTable("profiles", {
     .notNull()
     .references(() => users.id, { onDelete: "cascade" })
     .unique(),
-  absenceStatus: absenceStatusEnum("absence_status"),
-  absenceMessage: text("absence_message"),
-  absenceUntil: timestamp("absence_until", { withTimezone: true }),
   customFields: jsonb("custom_fields").$type<Record<string, unknown>>().default({}),
   localePreference: text("locale_preference").$type<LocaleCode | null>(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
@@ -1001,6 +997,11 @@ export const deletionRequestsRelations = relations(deletionRequests, ({ one }) =
 
 export const privacyConsentsRelations = relations(privacyConsents, ({ one }) => ({
   user: one(users, {
+    fields: [privacyConsents.userId],
+    references: [users.id]
+  })
+}));
+rs, {
     fields: [privacyConsents.userId],
     references: [users.id]
   })

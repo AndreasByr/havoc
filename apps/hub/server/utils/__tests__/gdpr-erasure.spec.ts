@@ -88,9 +88,6 @@ const {
       userId: "profiles.userId",
       customFields: "profiles.customFields",
       localePreference: "profiles.localePreference",
-      absenceStatus: "profiles.absenceStatus",
-      absenceMessage: "profiles.absenceMessage",
-      absenceUntil: "profiles.absenceUntil",
       updatedAt: "profiles.updatedAt"
     },
     permissionRoles: {
@@ -449,9 +446,6 @@ describe("assembleUserDataExport", () => {
       profileRow: {
         customFields: { bio: "hello" },
         localePreference: "en",
-        absenceStatus: "away",
-        absenceMessage: "vacation",
-        absenceUntil: new Date("2024-04-01T00:00:00Z"),
         updatedAt: new Date("2024-02-15T00:00:00Z")
       },
       communityRoleRows: [{ communityRoleName: "member", assignedAt: new Date("2024-01-02T00:00:00Z") }],

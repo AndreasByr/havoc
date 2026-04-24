@@ -154,9 +154,6 @@ export async function assembleUserDataExport(userId: string) {
     .select({
       customFields: profiles.customFields,
       localePreference: profiles.localePreference,
-      absenceStatus: profiles.absenceStatus,
-      absenceMessage: profiles.absenceMessage,
-      absenceUntil: profiles.absenceUntil,
       updatedAt: profiles.updatedAt
     })
     .from(profiles)
