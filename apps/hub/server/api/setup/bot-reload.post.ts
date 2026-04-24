@@ -17,7 +17,7 @@ export default defineEventHandler(async () => {
   if (!botInternalToken) {
     throw createError({
       statusCode: 503,
-      statusMessage: "Bot internal token is not configured. Set BOT_INTERNAL_TOKEN in .env."
+      statusMessage: "Bot internal token is not configured. Set NUXT_BOT_INTERNAL_TOKEN in .env."
     });
   }
 
