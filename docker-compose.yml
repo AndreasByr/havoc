@@ -1,4 +1,36 @@
 services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      ACME_EMAIL: ${ACME_EMAIL:-}
+      HUB_HOST: ${HUB_HOST}
+      APP_HOST: ${APP_HOST}
+    command: >
+      sh -c "cat <<'EOF' > /etc/caddy/Caddyfile
+      {$APP_HOST} {
+        reverse_proxy web:3000
+      }
+
+      {$HUB_HOST} {
+        reverse_proxy hub:3003
+      }
+      EOF
+      && caddy run --config /etc/caddy/Caddyfile --adapter caddyfile"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      web:
+        condition: service_healthy
+      hub:
+        condition: service_healthy
+    networks:
+      - guildora_caddy
+
   db:
     image: postgres:16
     container_name: guildora-db
@@ -17,7 +49,7 @@ services:
       timeout: 5s
       retries: 10
     networks:
-      - internal
+      - guildora_internal
 
   web:
     build:
