@@ -12,5 +12,6 @@ const { data: branding } = await useCommunityName();
       <slot />
     </main>
     <AppFooter />
+    <CookieConsentBanner />
   </div>
 </template>

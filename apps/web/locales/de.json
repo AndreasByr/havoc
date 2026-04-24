@@ -33,5 +33,10 @@
     "terms": "Nutzungsbedingungen",
     "imprint": "Impressum",
     "aiDisclosure": "Inhalte dieser Website wurden mit Unterstützung von KI erstellt."
+  },
+  "cookieConsent": {
+    "message": "Wir verwenden Cookies, um deine Erfahrung zu verbessern und die Seitennutzung zu analysieren.",
+    "privacyLink": "Datenschutzerklärung",
+    "accept": "Akzeptieren"
   }
 }

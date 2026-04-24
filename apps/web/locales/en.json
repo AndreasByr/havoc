@@ -33,5 +33,10 @@
     "terms": "Terms",
     "imprint": "Imprint",
     "aiDisclosure": "Content on this website was created with the assistance of AI."
+  },
+  "cookieConsent": {
+    "message": "We use cookies to improve your experience and analyze site usage.",
+    "privacyLink": "Privacy Policy",
+    "accept": "Accept"
   }
 }
