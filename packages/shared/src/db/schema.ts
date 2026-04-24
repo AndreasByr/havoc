@@ -39,6 +39,12 @@ export const deletionRequestStatusEnum = pgEnum("deletion_request_status", [
   "completed",
   "failed"
 ]);
+export const retentionCategoryEnum = pgEnum("retention_category", [
+  "voice_sessions",
+  "audit_logs",
+  "application_data",
+  "inactive_users"
+]);
 export type ThemeContentTone = "light" | "dark";
 
 export const users = pgTable("users", {
@@ -675,6 +681,35 @@ export const deletionRequests = pgTable("deletion_requests", {
     .$onUpdateFn(() => new Date())
 });
 
+// ─── Privacy & Data Retention ────────────────────────────────────────────
+
+export const privacyConsents = pgTable(
+  "privacy_consents",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
+    acceptedAt: timestamp("accepted_at", { withTimezone: true }).defaultNow().notNull(),
+    policyVersion: text("policy_version").notNull(),
+    ipHash: text("ip_hash"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
+  },
+  (table) => [
+    index("privacy_consents_user_id_idx").on(table.userId),
+    index("privacy_consents_created_at_idx").on(table.createdAt.desc())
+  ]
+);
+
+export const retentionPolicies = pgTable("retention_policies", {
+  id: serial("id").primaryKey(),
+  category: retentionCategoryEnum("category").notNull().unique(),
+  retentionDays: integer("retention_days").notNull().default(90),
+  enabled: boolean("enabled").notNull().default(true),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull()
+    .$onUpdateFn(() => new Date())
+});
+
 // ─── Relations ────────────────────────────────────────────────────────────
 
 export const userPlatformAccountsRelations = relations(userPlatformAccounts, ({ one }) => ({
@@ -708,7 +743,8 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   applicationModeratorNotifications: many(applicationModeratorNotifications),
   createdCommunityTags: many(communityTags),
   deletionRequests: many(deletionRequests, { relationName: "deletion_request_user" }),
-  reviewedDeletionRequests: many(deletionRequests, { relationName: "deletion_request_reviewer" })
+  reviewedDeletionRequests: many(deletionRequests, { relationName: "deletion_request_reviewer" }),
+  privacyConsents: many(privacyConsents)
 }));
 
 export const profilesRelations = relations(profiles, ({ one, many }) => ({
@@ -958,5 +994,14 @@ export const deletionRequestsRelations = relations(deletionRequests, ({ one }) =
     fields: [deletionRequests.reviewedBy],
     references: [users.id],
     relationName: "deletion_request_reviewer"
+  })
+}));
+
+// ─── Privacy & Data Retention Relations ───────────────────────────────────
+
+export const privacyConsentsRelations = relations(privacyConsents, ({ one }) => ({
+  user: one(users, {
+    fields: [privacyConsents.userId],
+    references: [users.id]
   })
 }));
