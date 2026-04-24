@@ -1,6 +1,5 @@
 <script setup lang="ts">
 const { t } = useI18n();
-const config = useRuntimeConfig();
 
 const CONSENT_COOKIE = "guildora_consent_accepted";
 const POLICY_VERSION = "1.0";
@@ -21,11 +20,10 @@ onMounted(async () => {
     return;
   }
 
-  // 2. Check consent status via hub API (covers authenticated users
+  // 2. Check consent status via web proxy API (covers authenticated users
   //    who accepted on another device/browser)
   try {
-    const hubUrl = String(config.public.hubUrl || "").trim() || "http://localhost:3003";
-    const status = await $fetch<{ hasConsented: boolean }>(`${hubUrl}/api/consent/status`);
+    const status = await $fetch<{ hasConsented: boolean }>("/api/consent/status");
 
     if (status.hasConsented) {
       consentCookie.value = "1";
@@ -44,8 +42,7 @@ onMounted(async () => {
 
 async function accept() {
   try {
-    const hubUrl = String(config.public.hubUrl || "").trim() || "http://localhost:3003";
-    await $fetch(`${hubUrl}/api/consent`, {
+    await $fetch("/api/consent", {
       method: "POST",
       body: { policyVersion: POLICY_VERSION },
     });
