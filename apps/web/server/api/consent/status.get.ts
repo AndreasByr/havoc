@@ -18,9 +18,10 @@ export default defineEventHandler(async (event) => {
     );
 
     return result;
-  } catch (err: any) {
+  } catch (err: unknown) {
     // If hub is unreachable, default to no consent — banner will show
-    console.warn("[web-consent-proxy] Failed to check consent status via hub:", err?.message || err);
+    const message = err instanceof Error ? err.message : String(err);
+    console.warn("[web-consent-proxy] Failed to check consent status via hub:", message);
     return { hasConsented: false };
   }
 });

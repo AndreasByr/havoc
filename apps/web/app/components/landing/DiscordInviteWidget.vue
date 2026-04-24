@@ -53,7 +53,7 @@ function formatCount(n: number): string {
             :src="iconUrl"
             :alt="serverName"
             class="h-full w-full rounded-2xl object-cover shadow-sm"
-          />
+          >
           <div
             v-else
             class="flex h-full w-full items-center justify-center rounded-2xl bg-[#5865F2]/20 text-2xl shadow-sm"
@@ -90,8 +90,8 @@ function formatCount(n: number): string {
       <div class="flex items-center gap-4 px-6 py-5">
         <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-success/15">
           <span class="relative flex h-3 w-3">
-            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-60"></span>
-            <span class="relative inline-flex h-3 w-3 rounded-full bg-success"></span>
+            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-60"/>
+            <span class="relative inline-flex h-3 w-3 rounded-full bg-success"/>
           </span>
         </div>
         <div>

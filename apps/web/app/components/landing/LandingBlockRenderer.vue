@@ -22,8 +22,8 @@ const styleVariant = computed(() => {
 
 <template>
   <component
-    v-if="isResolved"
     :is="resolved"
+    v-if="isResolved"
     :content="section.content"
     :config="section.config"
     :data-style-variant="styleVariant"

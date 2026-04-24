@@ -27,7 +27,7 @@ useGsapStagger(gridRef, '.landing-card')
         <p class="landing-text-muted text-sm leading-relaxed md:text-base">"{{ item.quote }}"</p>
         <div class="mt-5 flex items-center gap-3">
           <div v-if="item.avatarUrl" class="h-10 w-10 shrink-0 overflow-hidden rounded-full">
-            <img :src="String(item.avatarUrl)" :alt="String(item.name || '')" class="h-full w-full object-cover" />
+            <img :src="String(item.avatarUrl)" :alt="String(item.name || '')" class="h-full w-full object-cover" >
           </div>
           <div>
             <p class="landing-section-title text-sm font-semibold">{{ item.name }}</p>

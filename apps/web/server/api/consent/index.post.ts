@@ -29,8 +29,9 @@ export default defineEventHandler(async (event) => {
 
     console.log(`[web-consent-proxy] Forwarded consent to hub: policyVersion=${body.policyVersion}, success=${result.success}`);
     return result;
-  } catch (err: any) {
-    console.warn("[web-consent-proxy] Failed to forward consent to hub:", err?.message || err);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.warn("[web-consent-proxy] Failed to forward consent to hub:", message);
     throw createError({
       statusCode: 502,
       statusMessage: "Failed to record consent via hub API"

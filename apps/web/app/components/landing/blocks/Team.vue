@@ -25,7 +25,7 @@ useGsapStagger(gridRef, ':scope > div')
         class="flex flex-col items-center text-center"
       >
         <div class="mb-4 h-24 w-24 overflow-hidden rounded-full shadow-md">
-          <img v-if="member.avatarUrl" :src="String(member.avatarUrl)" :alt="String(member.name || '')" class="h-full w-full object-cover" />
+          <img v-if="member.avatarUrl" :src="String(member.avatarUrl)" :alt="String(member.name || '')" class="h-full w-full object-cover" >
           <div v-else class="flex h-full w-full items-center justify-center text-2xl font-bold landing-text-muted" style="background-color: var(--landing-surface)">
             {{ String(member.name || '?')[0] }}
           </div>
