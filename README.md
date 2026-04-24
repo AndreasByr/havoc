@@ -43,7 +43,95 @@ Useful workspace scripts:
 
 For self-hosting, Guildora currently supports two paths: `Coolify` (recommended for non-technical admins) and `Docker Compose` (for technical operators who manage their own Linux host). Full-stack deployment on `Vercel` is not supported; see the note below.
 
-<!-- Coolify subsection added in T02 -->
+### Coolify (recommended for non-technical admins)
+
+If you want the easiest path, use Coolify to run this repository as a managed Docker Compose app. You do not need to manually install a reverse proxy or write Docker commands.
+
+#### 1) Before you start
+
+- A running Coolify instance. If you still need one, follow the official install docs: https://coolify.io/docs
+- A domain you control, plus two subdomains you can point to your server:
+  - `community.example.com` (public landing page)
+  - `hub.example.com` (member/admin hub)
+- A Discord application and bot token from https://discord.com/developers/applications:
+  1. Create an application.
+  2. Add a bot user to that application.
+  3. Copy the bot token for `DISCORD_BOT_TOKEN`.
+  4. Configure OAuth redirect URL with this pattern from `.env.example`:
+     `https://<HUB_HOST>/api/auth/discord` (example: `https://hub.example.com/api/auth/discord`)
+
+#### 2) Create the project in Coolify
+
+1. Create a new Coolify project for Guildora.
+2. Add a new resource that deploys **Docker Compose from a Git repository**.
+3. Set the repository URL to this repo and use branch `main`.
+4. Set the compose file path to `docker-compose.yml`.
+
+> Tip: Coolify UI wording can vary by version. Focus on the deployment intent above instead of exact button names.
+
+#### 3) Configure environment variables
+
+Add variables in Coolify grouped by purpose:
+
+- **Hostnames + URLs** (where users access web + hub)
+  - `APP_HOST`
+  - `HUB_HOST`
+  - `NUXT_PUBLIC_APP_URL`
+  - `NUXT_PUBLIC_HUB_URL`
+
+- **Database** (how services connect to PostgreSQL)
+  - `POSTGRES_PASSWORD`
+  - `DATABASE_URL`
+
+  Use `guildora-db:5432` as host inside `DATABASE_URL` (container-internal DNS), and make sure the password in `DATABASE_URL` exactly matches `POSTGRES_PASSWORD`.
+
+- **Sessions (hard required)** (encrypts login sessions)
+  - `NUXT_SESSION_PASSWORD`
+
+  Use a random string with at least 32 characters. The hub refuses to start without this value.
+
+- **Discord OAuth (for hub login)**
+  - `NUXT_OAUTH_DISCORD_CLIENT_ID`
+  - `NUXT_OAUTH_DISCORD_CLIENT_SECRET`
+  - `NUXT_OAUTH_DISCORD_REDIRECT_URI`
+  - `SUPERADMIN_DISCORD_ID`
+
+- **Discord Bot** (bot login + internal auth)
+  - `DISCORD_BOT_TOKEN`
+  - `DISCORD_CLIENT_ID`
+  - `DISCORD_GUILD_ID`
+  - `BOT_INTERNAL_TOKEN`
+  - `APPLICATION_TOKEN_SECRET`
+
+The remaining variables in `.env.example` (for example S3/media storage, MCP token, sideloading toggles) are optional and can be added later.
+
+#### 4) Deploy
+
+Start the deployment in Coolify and wait until all services report healthy. On first deploy, this usually takes about 2–5 minutes because Docker images must be built.
+
+#### 5) Point DNS at your server
+
+Create `A` and/or `AAAA` records for `APP_HOST` and `HUB_HOST` so both names resolve to your Coolify host public IP.
+
+After DNS resolves, the built-in `caddy` service automatically requests Let's Encrypt certificates.
+
+#### 6) Complete the setup wizard
+
+Open `https://<HUB_HOST>/setup` and complete the 3-step wizard:
+
+1. Community Info
+2. Platform Config
+3. Admin Login
+
+After successful admin login, the dashboard loads and the bot reconnects automatically (no container restart needed).
+
+> Hot-reload path details were implemented in S01 (`POST /internal/bot/reload-credentials`).
+
+> [!TIP]
+> ### Troubleshooting
+> - **Hub container exits immediately:** check logs for `[env-validate] FATAL` and add the missing required variable.
+> - **`docker compose ps` shows bot as `(unhealthy)`:** verify `DISCORD_BOT_TOKEN` is valid and the bot is invited to `DISCORD_GUILD_ID`.
+> - **TLS certificates are not issued:** confirm DNS records for `APP_HOST` and `HUB_HOST` already resolve to your Coolify host before first deploy.
 
 ### Docker Compose (self-managed)
 
