@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { assembleUserDataExport, executeGdprErasure } from "../gdpr-erasure";
+
 const {
   mockGetDb,
   mockDeleteUsersByIds,
@@ -26,7 +28,7 @@ const {
   // mockEq/mockAnd must be callable constructors (can be invoked with `new`)
   // so that `new eq(column, value)` works in Drizzle-style usage.
   // They also track call arguments for test assertions.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const makeEqMock = () => Object.assign(
     (left: unknown, right: unknown) => {
       eqCalls.push({ left, right });
@@ -34,7 +36,7 @@ const {
     },
     { kind: "mock-constructor" }
   );
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const makeAndMock = () => Object.assign(
     (...conditions: unknown[]) => {
       andCalls.push(conditions as unknown[][]);
@@ -158,8 +160,6 @@ vi.mock("../admin-mirror", () => ({
 vi.mock("../platformBridge", () => ({
   requestPlatform: mockRequestPlatform
 }));
-
-import { assembleUserDataExport, executeGdprErasure } from "../gdpr-erasure";
 
 function createDbMock(options: {
   userRow?: Record<string, unknown> | null;

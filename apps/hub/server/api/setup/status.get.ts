@@ -14,7 +14,7 @@ export default defineEventHandler(async () => {
     rows = await db.select({ id: platformConnections.id }).from(platformConnections).limit(1);
   } catch (error) {
     console.warn("[setup/status] platform lookup failed", error);
-    if (error && (error as any).statusCode) throw error;
+    if (error && (error as { statusCode?: number }).statusCode) throw error;
     throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
   }
 

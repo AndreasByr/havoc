@@ -1,7 +1,7 @@
 import { privacyConsents } from "@guildora/shared";
 import { eq, and } from "drizzle-orm";
 import { z } from "zod";
-import { getRequestIP, createError } from "h3";
+import { getRequestIP } from "h3";
 import { getDb } from "../../utils/db";
 import { readBodyWithSchema } from "../../utils/http";
 import { checkRateLimit, getRateLimitKey } from "../../utils/rate-limit";

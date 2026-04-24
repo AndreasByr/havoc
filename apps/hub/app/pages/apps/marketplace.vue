@@ -104,7 +104,7 @@ function handleInstalled() {
               :src="app.thumbnailUrl"
               :alt="app.name"
               class="w-full h-full object-cover"
-            />
+            >
             <div v-else class="text-[--color-text-secondary] text-4xl">
               📦
             </div>
@@ -125,7 +125,7 @@ function handleInstalled() {
               :src="app.developer.avatarUrl"
               :alt="app.developer.username"
               class="w-5 h-5 rounded-full"
-            />
+            >
             <span v-if="app.developer" class="text-xs text-[--color-text-secondary]">
               {{ t('marketplace.detail.by') }} {{ app.developer.username }}
             </span>

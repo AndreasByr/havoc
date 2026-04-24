@@ -82,7 +82,7 @@ export default defineEventHandler(async (event) => {
     // The executed code receives a scoped app DB (createAppDb) and its own config.
     // Risk: No true sandboxing — code shares the Node.js process. Accepted trade-off
     // for the plugin system. Consider isolated-vm for stricter isolation in the future.
-    // eslint-disable-next-line no-new-func
+     
     new Function("module", "exports", "require", ...h3Names, handlerCode)(mod, mod.exports, restrictedRequire, ...h3Values);
   } catch (error: unknown) {
     const reason = (error as Error)?.message || "Unknown runtime error.";

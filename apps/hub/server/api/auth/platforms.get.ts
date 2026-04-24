@@ -20,7 +20,7 @@ export default defineEventHandler(async () => {
       matrix: hasMatrix,
     };
   } catch (error) {
-    if (error && (error as any).statusCode) throw error;
+    if (error && (error as { statusCode?: number }).statusCode) throw error;
     throw createError({ statusCode: 500, statusMessage: "INTERNAL_ERROR" });
   }
 });

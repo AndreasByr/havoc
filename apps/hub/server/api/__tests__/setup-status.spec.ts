@@ -5,7 +5,7 @@ import {
   stubNuxtAutoImports,
 } from "../../utils/__tests__/test-helpers";
 
-let mocks: ReturnType<typeof stubNuxtAutoImports>;
+let _mocks: ReturnType<typeof stubNuxtAutoImports>;
 
 vi.mock("../../utils/db", () => ({
   getDb: vi.fn(),

@@ -29,8 +29,9 @@ async function install() {
       emit("installed");
       emit("close");
     }
-  } catch (err: any) {
-    installError.value = err.data?.message || t("marketplace.detail.installError");
+  } catch (err: unknown) {
+    const message = (err as { data?: { message?: string } })?.data?.message || t("marketplace.detail.installError");
+    installError.value = message;
   } finally {
     installing.value = false;
   }
@@ -75,7 +76,7 @@ async function refresh() {
     await useFetch(`/api/admin/marketplace/apps/${props.appId}`, {
       onResponse({ response }) {
         if (response.ok) {
-          // @ts-ignore - TypeScript doesn't know about the reactive response
+          // @ts-expect-error - TypeScript doesn't know about the reactive response
           app.value = response._data;
         }
       },
@@ -135,7 +136,7 @@ function handleClose() {
                 :src="app.thumbnailUrl"
                 :alt="app.name"
                 class="w-full h-full object-cover"
-              />
+              >
               <div v-else class="w-full h-full flex items-center justify-center text-6xl">
                 📦
               </div>
@@ -158,7 +159,7 @@ function handleClose() {
                       :src="app.developer.avatarUrl"
                       :alt="app.developer.username"
                       class="w-5 h-5 rounded-full"
-                    />
+                    >
                     <span>{{ t('marketplace.detail.by') }} {{ app.developer.username }}</span>
                   </div>
                   <!-- Version -->
@@ -210,7 +211,7 @@ function handleClose() {
                     :src="img.src"
                     :alt="img.alt || `Screenshot ${idx + 1}`"
                     class="w-full h-full object-cover"
-                  />
+                  >
                 </div>
               </div>
             </div>

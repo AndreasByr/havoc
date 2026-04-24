@@ -31,7 +31,7 @@ test.describe("members", () => {
     await page.waitForTimeout(2000);
 
     // Look for search input (various possible selectors)
-    const searchInput = page.locator('input[type="search"], input[placeholder*="search" i], input[placeholder*="suche" i], input[aria-label*="search" i]');
+    const _searchInput = page.locator('input[type="search"], input[placeholder*="search" i], input[placeholder*="suche" i], input[aria-label*="search" i]');
     
     // Search may or may not be present depending on page state - just check page loads
     const url = new URL(page.url());
@@ -68,7 +68,7 @@ test.describe("members", () => {
     await page.waitForTimeout(2000);
 
     // Check for bulk action UI elements
-    const bulkActionCandidates = page.locator(
+    const _bulkActionCandidates = page.locator(
       "button:has-text('bulk'), button:has-text('select'), checkbox, [data-testid*='bulk']"
     );
     

@@ -1,4 +1,4 @@
-import { asc, eq } from "drizzle-orm";
+import { asc } from "drizzle-orm";
 import { landingPages, landingSections, landingTemplates } from "@guildora/shared";
 import { requireInternalToken } from "../../../utils/internal-auth";
 import { getDb } from "../../../utils/db";

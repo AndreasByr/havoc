@@ -1,4 +1,4 @@
-import { eq, and, isNotNull, lt, sql } from "drizzle-orm";
+import { eq, and, isNotNull, lt } from "drizzle-orm";
 import { retentionPolicies, voiceSessions } from "@guildora/shared";
 import { getDb } from "../utils/db";
 

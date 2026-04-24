@@ -39,7 +39,7 @@ test.describe("login page", () => {
 
   test("/login redirects unauthenticated requests to login page", async ({ page }) => {
     // Attempt to access protected page without auth - use { failOnStatusCode: false } to handle redirects
-    const response = await page.goto("/dashboard", { waitUntil: "domcontentloaded", failOnStatusCode: false }).catch(() => null);
+    const _response = await page.goto("/dashboard", { waitUntil: "domcontentloaded", failOnStatusCode: false }).catch(() => null);
     
     // Wait for redirect
     await page.waitForTimeout(3000);

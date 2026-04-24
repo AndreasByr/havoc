@@ -19,7 +19,7 @@ import {
   stubNuxtAutoImports,
 } from "../../utils/__tests__/test-helpers";
 
-let mocks: ReturnType<typeof stubNuxtAutoImports>;
+let _mocks: ReturnType<typeof stubNuxtAutoImports>;
 let mockValidateDiscordToken: ReturnType<typeof vi.fn>;
 let mockInvalidatePlatformCache: ReturnType<typeof vi.fn>;
 
@@ -139,7 +139,7 @@ describe("POST /api/setup/platform", () => {
     );
 
     expect(result).toMatchObject({ ok: true });
-    expect(mockValidateDiscordToken).toHaveBeenCalledOnce;
+    expect(mockValidateDiscordToken).toHaveBeenCalledOnce();
   });
 
   // ── Re-save guard ────────────────────────────────────────────────────────

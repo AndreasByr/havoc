@@ -2,7 +2,7 @@ import { communitySettings } from "@guildora/shared";
 import { getDb } from "../../utils/db";
 import { eq } from "drizzle-orm";
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async (_event) => {
   if (!import.meta.dev) {
     throw createError({ statusCode: 404, statusMessage: "Not Found." });
   }

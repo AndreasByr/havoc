@@ -6,7 +6,7 @@ import {
   users,
   voiceSessions
 } from "@guildora/shared";
-import { and, eq, gte, ilike, inArray, or, sql } from "drizzle-orm";
+import { and, eq, gte, ilike, inArray, or } from "drizzle-orm";
 import { requireSession } from "../../utils/auth";
 import { getDb } from "../../utils/db";
 import { parsePaginationQuery, paginateArray } from "../../utils/http";
