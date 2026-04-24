@@ -36,6 +36,8 @@ const matrixBotInternalToken = ref("");
 const platformSaving = ref(false);
 const platformError = ref("");
 const platformSaved = ref(false);
+const botReloadMessage = ref("");
+const botReloadMessageType = ref<"success" | "warning" | "">("");
 
 // ─── Step 3: Admin Login ───────────────────────────────────────────────
 const completePending = ref(false);
@@ -91,6 +93,8 @@ function prevStep() {
 async function savePlatform() {
   platformSaving.value = true;
   platformError.value = "";
+  botReloadMessage.value = "";
+  botReloadMessageType.value = "";
 
   try {
     const body: Record<string, unknown> = {
@@ -120,6 +124,17 @@ async function savePlatform() {
 
     await $fetch("/api/setup/platform", { method: "POST", body });
     platformSaved.value = true;
+
+    if (platformType.value === "discord") {
+      try {
+        await $fetch("/api/setup/bot-reload", { method: "POST" });
+        botReloadMessageType.value = "success";
+        botReloadMessage.value = "Discord bot connected";
+      } catch {
+        botReloadMessageType.value = "warning";
+        botReloadMessage.value = "Bot credentials saved. Restart the bot container to apply: docker compose restart bot";
+      }
+    }
 
     // Invalidate setup status cache so middleware knows setup is progressing
     const setupStatus = useState<{ needsSetup: boolean; hasPlatforms: boolean } | null>("setup-status");
@@ -303,6 +318,14 @@ const stepLabels = computed(() => [
 
           <div v-if="platformError" class="mt-4 rounded-lg bg-[var(--color-error)]/10 px-4 py-3 text-sm text-[var(--color-error)]">
             {{ platformError }}
+          </div>
+
+          <div
+            v-if="botReloadMessage"
+            class="mt-4 rounded-lg px-4 py-3 text-sm"
+            :class="botReloadMessageType === 'success' ? 'bg-[var(--color-success)]/10 text-[var(--color-success)]' : 'bg-[var(--color-warning)]/10 text-[var(--color-warning)]'"
+          >
+            {{ botReloadMessage }}
           </div>
 
           <div class="mt-8 flex justify-between">
