@@ -1001,8 +1001,3 @@ export const privacyConsentsRelations = relations(privacyConsents, ({ one }) => 
     references: [users.id]
   })
 }));
-rs, {
-    fields: [privacyConsents.userId],
-    references: [users.id]
-  })
-}));
