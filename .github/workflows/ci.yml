@@ -9,6 +9,20 @@ on:
 jobs:
   ci:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: guildora_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -23,3 +37,75 @@ jobs:
         continue-on-error: true
       - run: pnpm typecheck
       - run: pnpm build
+
+      # ── Migration Smoke Test ──────────────────────────────────────────
+      # Runs all Drizzle migrations against a fresh Postgres instance to
+      # catch issues like CREATE TABLE IF NOT EXISTS silently skipping
+      # existing tables while subsequent CREATE INDEX statements fail on
+      # missing columns.  Also validates the final DB shape.
+      - name: Migration Smoke Test
+        working-directory: packages/shared
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/guildora_test
+          DATABASE_SSL: "false"
+        run: |
+          # Run all migrations via drizzle-orm migrator
+          node --input-type=module -e "
+          import { drizzle } from 'drizzle-orm/postgres-js';
+          import { migrate } from 'drizzle-orm/postgres-js/migrator';
+          import postgres from 'postgres';
+
+          const client = postgres(process.env.DATABASE_URL, { max: 1, ssl: false });
+          const db = drizzle(client);
+
+          try {
+            await migrate(db, { migrationsFolder: 'drizzle/migrations' });
+            console.log('✅ All migrations applied successfully');
+          } catch (err) {
+            console.error('❌ Migration failed:', err);
+            process.exit(1);
+          } finally {
+            await client.end({ timeout: 5 });
+          }
+          "
+
+          # Validate critical tables and columns exist
+          node --input-type=module -e "
+          import postgres from 'postgres';
+
+          const sql = postgres(process.env.DATABASE_URL, { ssl: false });
+          const errors = [];
+
+          // Check applications table has expected columns
+          const appCols = await sql\`
+            SELECT column_name FROM information_schema.columns
+            WHERE table_name = 'applications'
+          \`;
+          const colNames = appCols.map(r => r.column_name);
+          const required = ['id', 'flow_id', 'discord_id', 'discord_username', 'discord_avatar_url', 'answers_json', 'status', 'roles_assigned', 'pending_role_assignments', 'display_name_composed', 'reviewed_by', 'reviewed_at', 'created_at', 'updated_at'];
+          for (const col of required) {
+            if (!colNames.includes(col)) {
+              errors.push('applications.' + col + ' is missing');
+            }
+          }
+
+          // Check other critical tables exist (created by migrations, not fixups)
+          const tables = ['retention_policies', 'privacy_consents', 'deletion_requests', 'application_flows', 'application_tokens'];
+          for (const t of tables) {
+            const [{ exists }] = await sql\`
+              SELECT EXISTS (
+                SELECT 1 FROM information_schema.tables
+                WHERE table_schema = 'public' AND table_name = \${t}
+              )
+            \`;
+            if (!exists) errors.push(t + ' table is missing');
+          }
+
+          await sql.end();
+          if (errors.length > 0) {
+            console.error('❌ Schema validation failed:');
+            errors.forEach(e => console.error('  - ' + e));
+            process.exit(1);
+          }
+          console.log('✅ Schema validation passed');
+          "

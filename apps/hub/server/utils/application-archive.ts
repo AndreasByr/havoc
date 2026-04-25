@@ -1,13 +1,13 @@
 import { lt, eq, and, or, isNotNull, inArray } from "drizzle-orm";
 import { rm } from "node:fs/promises";
-import type { ApplicationFlowSettings,
-  applications,
+import {
   applicationFlows,
+  applications,
   applicationFileUploads,
-  applicationTokens,
-  type GuildoraDatabase 
- 
+  applicationTokens
 } from "@guildora/shared";
+import type { ApplicationFlowSettings } from "@guildora/shared";
+import type { GuildoraDatabase } from "@guildora/shared/db/client";
 
 /**
  * Cleans up archived applications older than their flow's archiveRetentionDays.

@@ -1,6 +1,10 @@
 -- Base tables for the application flow system
 -- These tables were previously created via auto-migration at server startup.
 -- This migration ensures they exist for clean drizzle-migrate runs.
+--
+-- IMPORTANT: If the "applications" table already exists with the old schema
+-- (user_id, answers, reviewer_id columns), this migration is a no-op for that table.
+-- The schema migration is handled by 0048_hotfix_migrate_applications_schema.sql.
 
 DO $$ BEGIN
   CREATE TYPE "application_flow_status" AS ENUM ('draft', 'active', 'inactive');
@@ -65,6 +69,20 @@ CREATE TABLE IF NOT EXISTS "applications" (
   "updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS "applications_flow_id_idx" ON "applications" ("flow_id");
-CREATE INDEX IF NOT EXISTS "applications_discord_id_idx" ON "applications" ("discord_id");
-CREATE INDEX IF NOT EXISTS "applications_status_idx" ON "applications" ("status");
+-- Indexes for "applications": use exception handling to avoid failing when
+-- the table exists with old schema (missing discord_id column).
+-- The 0048 hotfix migration handles the actual schema migration.
+DO $$ BEGIN
+  CREATE INDEX IF NOT EXISTS "applications_flow_id_idx" ON "applications" ("flow_id");
+EXCEPTION WHEN undefined_column THEN RAISE NOTICE 'applications.flow_id does not exist yet — skipping index (handled by 0048)';
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+  CREATE INDEX IF NOT EXISTS "applications_discord_id_idx" ON "applications" ("discord_id");
+EXCEPTION WHEN undefined_column THEN RAISE NOTICE 'applications.discord_id does not exist yet — skipping index (handled by 0048)';
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+  CREATE INDEX IF NOT EXISTS "applications_status_idx" ON "applications" ("status");
+EXCEPTION WHEN undefined_column THEN RAISE NOTICE 'applications.status column type mismatch — skipping index (handled by 0048)';
+END $$;

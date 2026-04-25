@@ -173,176 +173,176 @@
     {
       "idx": 24,
       "version": "7",
-      "when": 1773980000000,
-      "tag": "0044_application_tables_base",
-      "breakpoints": true
-    },
-    {
-      "idx": 25,
-      "version": "7",
       "when": 1774000000000,
       "tag": "0024_app_auto_update",
       "breakpoints": true
     },
     {
-      "idx": 26,
+      "idx": 25,
       "version": "7",
       "when": 1774100000000,
       "tag": "0025_community_custom_fields",
       "breakpoints": true
     },
     {
-      "idx": 27,
+      "idx": 26,
       "version": "7",
       "when": 1774100100000,
       "tag": "0026_community_tags",
       "breakpoints": true
     },
     {
-      "idx": 28,
+      "idx": 27,
       "version": "7",
       "when": 1774100200000,
       "tag": "0027_moderation_rights",
       "breakpoints": true
     },
     {
-      "idx": 29,
+      "idx": 28,
       "version": "7",
       "when": 1774200000000,
       "tag": "0028_display_name_template",
       "breakpoints": true
     },
     {
-      "idx": 30,
+      "idx": 29,
       "version": "7",
       "when": 1774300000000,
       "tag": "0029_performance_indexes",
       "breakpoints": true
     },
     {
-      "idx": 31,
+      "idx": 30,
       "version": "7",
       "when": 1774400000000,
       "tag": "0030_draft_flow_json",
       "breakpoints": true
     },
     {
-      "idx": 32,
+      "idx": 31,
       "version": "7",
       "when": 1774500000000,
       "tag": "0031_membership_settings",
       "breakpoints": true
     },
     {
-      "idx": 33,
+      "idx": 32,
       "version": "7",
       "when": 1774600000000,
       "tag": "0032_fix_membership_settings_columns",
       "breakpoints": true
     },
     {
-      "idx": 34,
+      "idx": 33,
       "version": "7",
       "when": 1774886892484,
       "tag": "0033_bumpy_xavin",
       "breakpoints": true
     },
     {
-      "idx": 35,
+      "idx": 34,
       "version": "7",
       "when": 1774900000000,
       "tag": "0034_role_groups_and_picker",
       "breakpoints": true
     },
     {
-      "idx": 36,
+      "idx": 35,
       "version": "7",
       "when": 1743552000000,
       "tag": "0035_add_editor_mode",
       "breakpoints": true
     },
     {
-      "idx": 37,
+      "idx": 36,
       "version": "7",
       "when": 1775000000000,
       "tag": "0036_landing_page_system",
       "breakpoints": true
     },
     {
-      "idx": 38,
+      "idx": 37,
       "version": "7",
       "when": 1775100000000,
       "tag": "0037_drop_payload_schema",
       "breakpoints": true
     },
     {
-      "idx": 39,
+      "idx": 38,
       "version": "7",
       "when": 1775200000000,
       "tag": "0038_landing_draft_publish",
       "breakpoints": true
     },
     {
-      "idx": 40,
+      "idx": 39,
       "version": "7",
       "when": 1775300000000,
       "tag": "0039_landing_enabled_locales",
       "breakpoints": true
     },
     {
-      "idx": 41,
+      "idx": 40,
       "version": "7",
       "when": 1775400000000,
       "tag": "0040_footer_pages",
       "breakpoints": true
     },
     {
-      "idx": 42,
+      "idx": 41,
       "version": "7",
       "when": 1775500000000,
       "tag": "0041_landing_color_overrides",
       "breakpoints": true
     },
     {
-      "idx": 43,
+      "idx": 42,
       "version": "7",
       "when": 1775600000000,
       "tag": "0042_platform_connections",
       "breakpoints": true
     },
     {
-      "idx": 44,
+      "idx": 43,
       "version": "7",
       "when": 1775700000000,
       "tag": "0043_user_platform_accounts",
       "breakpoints": true
     },
     {
-      "idx": 45,
+      "idx": 44,
       "version": "7",
       "when": 1775750000000,
       "tag": "0044_application_tables_base",
       "breakpoints": true
     },
     {
-      "idx": 46,
+      "idx": 45,
       "version": "7",
       "when": 1775800000000,
       "tag": "0045_drop_marketplace_submissions",
       "breakpoints": true
     },
     {
-      "idx": 47,
+      "idx": 46,
       "version": "7",
       "when": 1775850000000,
       "tag": "0046_privacy_and_retention",
       "breakpoints": true
     },
     {
-      "idx": 48,
+      "idx": 47,
       "version": "7",
       "when": 1775900000000,
       "tag": "0047_schema_cleanup",
+      "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1775950000000,
+      "tag": "0048_hotfix_migrate_applications_schema",
       "breakpoints": true
     }
   ]

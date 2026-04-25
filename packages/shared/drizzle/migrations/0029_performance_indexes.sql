@@ -10,8 +10,11 @@ CREATE INDEX IF NOT EXISTS "profiles_updated_at_idx" ON "profiles" ("updated_at"
 CREATE INDEX IF NOT EXISTS "voice_sessions_user_id_idx" ON "voice_sessions" ("user_id");
 CREATE INDEX IF NOT EXISTS "voice_sessions_started_at_idx" ON "voice_sessions" ("started_at" DESC);
 
--- Applications: sorting and filtering
-CREATE INDEX IF NOT EXISTS "applications_created_at_idx" ON "applications" ("created_at" DESC);
+-- Applications: sorting and filtering (guarded — table may not exist yet on fresh DBs)
+DO $$ BEGIN
+  CREATE INDEX IF NOT EXISTS "applications_created_at_idx" ON "applications" ("created_at" DESC);
+EXCEPTION WHEN undefined_table THEN RAISE NOTICE 'applications table does not exist yet — skipping index';
+END $$;
 
 -- Community custom fields: filtering active fields and sorting
 CREATE INDEX IF NOT EXISTS "community_custom_fields_active_sort_idx" ON "community_custom_fields" ("active", "sort_order");

@@ -360,12 +360,22 @@ export async function runMigrations(connectionString: string, migrationsFolder: 
     await db.execute(sql`
       CREATE INDEX IF NOT EXISTS "applications_flow_id_idx" ON "applications" ("flow_id")
     `);
-    await db.execute(sql`
-      CREATE INDEX IF NOT EXISTS "applications_discord_id_idx" ON "applications" ("discord_id")
-    `);
-    await db.execute(sql`
-      CREATE INDEX IF NOT EXISTS "applications_status_idx" ON "applications" ("status")
-    `);
+    // discord_id and status indexes may fail on legacy schema (column doesn't exist yet).
+    // The 0048 hotfix migration handles the schema migration; these indexes are recreated there.
+    try {
+      await db.execute(sql`
+        CREATE INDEX IF NOT EXISTS "applications_discord_id_idx" ON "applications" ("discord_id")
+      `);
+    } catch {
+      // Column may not exist yet on legacy DB — will be created by migration 0048
+    }
+    try {
+      await db.execute(sql`
+        CREATE INDEX IF NOT EXISTS "applications_status_idx" ON "applications" ("status")
+      `);
+    } catch {
+      // Column type may not match yet on legacy DB — will be fixed by migration 0048
+    }
 
     await db.execute(sql`
       CREATE TABLE IF NOT EXISTS "application_file_uploads" (
