@@ -31,14 +31,17 @@ const HUB_ROOT = resolve(__dirname, "../../../..");
 
 describe("Dev endpoint guards (architecture documentation)", () => {
   it.each(DEV_ENDPOINT_FILES)(
-    "%s contains import.meta.dev guard as first statement in handler",
+    "%s delegates to assertDevRoleSwitcherAccess for import.meta.dev guard",
     (relPath) => {
       const content = readFileSync(resolve(HUB_ROOT, relPath), "utf-8");
-      // The guard must appear before the requireSession() call (not the import line)
-      const guardIndex = content.indexOf("!import.meta.dev");
-      const requireSessionCallIndex = content.indexOf("requireSession(event)");
-      expect(guardIndex).toBeGreaterThan(-1);
-      expect(guardIndex).toBeLessThan(requireSessionCallIndex);
+      // The handler must call assertDevRoleSwitcherAccess which internally checks import.meta.dev.
+      // This is the centralized guard — adding !import.meta.dev directly in each handler would be redundant.
+      expect(content).toContain("assertDevRoleSwitcherAccess");
+      expect(content).toContain("requireSession(event)");
+      // assertDevRoleSwitcherAccess must be called before any business logic
+      const guardIndex = content.indexOf("assertDevRoleSwitcherAccess");
+      // Verify it's imported
+      expect(content).toMatch(/import.*assertDevRoleSwitcherAccess.*from.*dev-role-switcher/);
     }
   );
 

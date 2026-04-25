@@ -108,5 +108,25 @@ export default defineEventHandler(async (event) => {
     }
   };
 
-  return handler(event);
+  // Execute handler with timeout and error logging
+  const HOOK_TIMEOUT_MS = 5000;
+  const handlerPromise = handler(event);
+
+  const timeoutPromise = new Promise<never>((_resolve, reject) => {
+    setTimeout(() => {
+      console.warn(JSON.stringify({ event: "route.timeout", appId, route: route.handler, timeoutMs: HOOK_TIMEOUT_MS }));
+      reject(createError({ statusCode: 504, statusMessage: `Handler for app '${appId}' timed out after ${HOOK_TIMEOUT_MS}ms.` }));
+    }, HOOK_TIMEOUT_MS);
+  });
+
+  try {
+    return await Promise.race([handlerPromise, timeoutPromise]);
+  } catch (error: unknown) {
+    if (error && typeof error === "object" && "statusCode" in error && (error as { statusCode: number }).statusCode === 504) {
+      throw error; // Re-throw timeout as-is
+    }
+    const reason = (error as Error)?.message || "Unknown handler error.";
+    console.error(JSON.stringify({ event: "route.error", appId, route: route.handler, error: reason }));
+    throw createError({ statusCode: 500, statusMessage: `Handler error for app '${appId}': ${reason}` });
+  }
 });

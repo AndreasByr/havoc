@@ -21,5 +21,7 @@ export default defineEventHandler(async (event) => {
     preserveConfig: true
   });
 
+  console.log(JSON.stringify({ event: "app.installed", appId: result.appId, source: "local-sideload" }));
+
   return { ok: true, appId: result.appId };
 });

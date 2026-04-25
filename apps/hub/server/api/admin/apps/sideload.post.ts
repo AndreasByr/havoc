@@ -24,5 +24,7 @@ export default defineEventHandler(async (event) => {
     preserveAutoUpdate: false
   });
 
+  console.log(JSON.stringify({ event: "app.installed", appId, source: "sideload", userId: session.user.id }));
+
   return { ok: true, appId };
 });

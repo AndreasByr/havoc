@@ -18,6 +18,8 @@ export default defineEventHandler(async (event) => {
 
   await refreshAppRegistry();
 
+  console.log(JSON.stringify({ event: "app.uninstalled", appId: deleted.appId, id: deleted.id }));
+
   return {
     success: true,
     id: deleted.id
