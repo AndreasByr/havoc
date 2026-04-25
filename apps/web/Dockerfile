@@ -5,6 +5,10 @@ RUN corepack enable
 FROM base AS deps
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 COPY apps/web/package.json apps/web/package.json
+COPY packages/shared/package.json packages/shared/package.json
+COPY packages/app-sdk/package.json packages/app-sdk/package.json
+COPY packages/motion/package.json packages/motion/package.json
+COPY packages/mcp-server/package.json packages/mcp-server/package.json
 RUN pnpm install --frozen-lockfile
 
 FROM base AS build
