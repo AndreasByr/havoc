@@ -30,6 +30,16 @@ const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
 const STARTUP_DELAY_MS = 30 * 1000;
 
 export default defineNitroPlugin((nitroApp) => {
+  const config = useRuntimeConfig();
+
+  if (!import.meta.dev && !config.enableSideloading) {
+    return;
+  }
+
+  if (!import.meta.dev && config.enableSideloading) {
+    console.warn("[auto-updater] Running in non-dev mode because sideloading is enabled.");
+  }
+
   const timer = setTimeout(async () => {
     await runAutoUpdates();
     const interval = setInterval(runAutoUpdates, SIX_HOURS_MS);

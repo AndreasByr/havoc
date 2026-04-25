@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
-import { MatrixClient, SimpleFsStorageProvider, AutojoinRoomsMixin } from "matrix-bot-sdk";
+import { createRequire } from "node:module";
+import type { MatrixClient } from "matrix-bot-sdk";
 import { startInternalSyncServer } from "./utils/internal-sync-server.js";
 import { isPlaceholderToken } from "./utils/startup-checks.js";
 import { registerRoomMessageHandler } from "./events/roomMessage.js";
@@ -12,11 +13,43 @@ const HOMESERVER_URL = process.env.MATRIX_HOMESERVER_URL;
 const ACCESS_TOKEN = process.env.MATRIX_ACCESS_TOKEN;
 const SPACE_ID = process.env.MATRIX_SPACE_ID;
 const BOT_INTERNAL_PORT = parseInt(process.env.BOT_INTERNAL_PORT || "3051", 10);
-const BOT_INTERNAL_TOKEN = process.env.BOT_INTERNAL_TOKEN;
+const BOT_INTERNAL_TOKEN = process.env.BOT_INTERNAL_TOKEN || "";
+const IS_PROD = process.env.NODE_ENV === "production";
+const require = createRequire(import.meta.url);
 
 if (!HOMESERVER_URL || !ACCESS_TOKEN) {
-  console.error("MATRIX_HOMESERVER_URL and MATRIX_ACCESS_TOKEN are required.");
-  process.exit(1);
+  if (IS_PROD) {
+    console.error("MATRIX_HOMESERVER_URL and MATRIX_ACCESS_TOKEN are required.");
+    process.exit(1);
+  }
+  console.warn("[matrix-bot] MATRIX_HOMESERVER_URL/MATRIX_ACCESS_TOKEN not set; skipping startup in development.");
+  process.exit(0);
+}
+
+interface MatrixSdkRuntime {
+  MatrixClient: new (homeserverUrl: string, accessToken: string, storage?: unknown) => MatrixClient;
+  SimpleFsStorageProvider: new (filename: string) => unknown;
+  AutojoinRoomsMixin: { setupOnClient(client: MatrixClient): void };
+}
+
+function isMissingNativeCrypto(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  return error.message.includes("matrix-sdk-crypto-nodejs");
+}
+
+async function loadMatrixSdkRuntime(): Promise<MatrixSdkRuntime | null> {
+  try {
+    const { MatrixClient } = require("matrix-bot-sdk/lib/MatrixClient");
+    const { SimpleFsStorageProvider } = require("matrix-bot-sdk/lib/storage/SimpleFsStorageProvider");
+    const { AutojoinRoomsMixin } = require("matrix-bot-sdk/lib/mixins/AutojoinRoomsMixin");
+    return { MatrixClient, SimpleFsStorageProvider, AutojoinRoomsMixin };
+  } catch (error) {
+    if (!IS_PROD && isMissingNativeCrypto(error)) {
+      console.warn("[matrix-bot] Missing native Matrix crypto module; skipping startup in development.");
+      return null;
+    }
+    throw error;
+  }
 }
 
 if (!BOT_INTERNAL_TOKEN || isPlaceholderToken(BOT_INTERNAL_TOKEN)) {
@@ -27,8 +60,12 @@ if (!BOT_INTERNAL_TOKEN || isPlaceholderToken(BOT_INTERNAL_TOKEN)) {
 }
 
 async function main() {
+  const sdk = await loadMatrixSdkRuntime();
+  if (!sdk) return;
+
+  const { MatrixClient, SimpleFsStorageProvider, AutojoinRoomsMixin } = sdk;
   const storage = new SimpleFsStorageProvider("matrix-bot-state.json");
-  const client = new MatrixClient(HOMESERVER_URL!, ACCESS_TOKEN!, storage);
+  const client: MatrixClient = new MatrixClient(HOMESERVER_URL!, ACCESS_TOKEN!, storage);
 
   // Auto-join rooms the bot is invited to
   AutojoinRoomsMixin.setupOnClient(client);

@@ -4,11 +4,16 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod/v4";
 
 const HUB_URL = process.env.MCP_HUB_URL || "http://localhost:3003";
-const TOKEN = process.env.MCP_INTERNAL_TOKEN || "";
+const TOKEN = process.env.MCP_INTERNAL_TOKEN?.trim() || "";
+const IS_PROD = process.env.NODE_ENV === "production";
 
 if (!TOKEN) {
-  console.error("[mcp-server] MCP_INTERNAL_TOKEN is required.");
-  process.exit(1);
+  if (IS_PROD) {
+    console.error("[mcp-server] MCP_INTERNAL_TOKEN is required.");
+    process.exit(1);
+  }
+  console.warn("[mcp-server] MCP_INTERNAL_TOKEN is not set; skipping MCP server startup in development.");
+  process.exit(0);
 }
 
 async function hubFetch<T>(path: string, options: RequestInit = {}): Promise<T> {

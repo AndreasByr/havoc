@@ -61,7 +61,7 @@ export async function getUserByPlatformId(
 /**
  * Legacy helper — wraps getUserByPlatformId for backward compatibility.
  */
-export async function getUserByDiscordId(discordId: string) {
+export async function findPlatformUserByDiscordId(discordId: string) {
   return getUserByPlatformId("discord", discordId);
 }
 

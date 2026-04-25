@@ -161,6 +161,103 @@ vi.mock("../platformBridge", () => ({
   requestPlatform: mockRequestPlatform
 }));
 
+// Select call order for executeGdprErasure:
+//   0: users (where+limit)
+//   1: userCommunityRoles innerJoin communityRoles (where, no limit)
+//   2: userPlatformAccounts (where, no limit)
+function createErasureMock(options: {
+  userRow?: Record<string, unknown> | null;
+  roleRows?: Array<Record<string, unknown>>;
+  platformAccounts?: Array<Record<string, unknown>>;
+  insertSpy?: ReturnType<typeof vi.fn>;
+}) {
+  const { userRow = null, roleRows = [], platformAccounts = [], insertSpy = vi.fn() } = options;
+
+  let callIdx = 0;
+  const sequences: Array<Promise<unknown[]>> = [
+    Promise.resolve(userRow ? [userRow] : []),
+    Promise.resolve(roleRows),
+    Promise.resolve(platformAccounts)
+  ];
+  const joinSteps = new Set([1]);
+
+  function makeChain(idx: number) {
+    const p = sequences[idx] ?? Promise.resolve([]);
+    const whereRet = { limit: () => p, then: p.then.bind(p), catch: p.catch.bind(p) };
+    const fromRet: Record<string, unknown> = { where: () => whereRet };
+    if (joinSteps.has(idx)) {
+      fromRet.innerJoin = () => ({ where: () => whereRet });
+    }
+    const chain: Record<string, unknown> = { ...fromRet, from: () => chain };
+    return chain;
+  }
+
+  const select = vi.fn(() => makeChain(callIdx++));
+  const insert = vi.fn((table: unknown) => {
+    if (table !== cleanupLog) throw new Error("Unexpected table insert: " + String(table));
+    return { values: insertSpy };
+  });
+
+  return { db: { select, insert }, insertSpy };
+}
+
+// Select call order for assembleUserDataExport:
+//   0: users (where+limit)
+//   1: profiles (where+limit)
+//   2: userCommunityRoles innerJoin communityRoles (where, no limit)  [Promise.all]
+//   3: userPermissionRoles innerJoin permissionRoles (where, no limit) [Promise.all]
+//   4: voiceSessions (where, no limit)                                 [Promise.all]
+//   5: applications innerJoin applicationFlows (where, no limit)       [Promise.all]
+//   6: userPlatformAccounts (where, no limit)                          [Promise.all]
+function createExportMock(options: {
+  userRow?: Record<string, unknown> | null;
+  profileRow?: Record<string, unknown> | null;
+  communityRoleRows?: Array<Record<string, unknown>>;
+  permissionRoleRows?: Array<Record<string, unknown>>;
+  voiceRows?: Array<Record<string, unknown>>;
+  applicationRows?: Array<Record<string, unknown>>;
+  platformAccountRows?: Array<Record<string, unknown>>;
+}) {
+  const {
+    userRow = null,
+    profileRow = null,
+    communityRoleRows = [],
+    permissionRoleRows = [],
+    voiceRows = [],
+    applicationRows = [],
+    platformAccountRows = []
+  } = options;
+
+  let callIdx = 0;
+  const sequences: Array<Promise<unknown[]>> = [
+    Promise.resolve(userRow ? [userRow] : []),
+    Promise.resolve(profileRow ? [profileRow] : []),
+    Promise.resolve(communityRoleRows),
+    Promise.resolve(permissionRoleRows),
+    Promise.resolve(voiceRows),
+    Promise.resolve(applicationRows),
+    Promise.resolve(platformAccountRows)
+  ];
+  const joinSteps = new Set([2, 3, 5]);
+
+  function makeChain(idx: number) {
+    const p = sequences[idx] ?? Promise.resolve([]);
+    const whereRet = { limit: () => p, then: p.then.bind(p), catch: p.catch.bind(p) };
+    const fromRet: Record<string, unknown> = { where: () => whereRet };
+    if (joinSteps.has(idx)) {
+      fromRet.innerJoin = () => ({ where: () => whereRet });
+    }
+    const chain: Record<string, unknown> = { ...fromRet, from: () => chain };
+    return chain;
+  }
+
+  const select = vi.fn(() => makeChain(callIdx++));
+  const db = { select };
+
+  return { db };
+}
+
+// Legacy alias kept for backwards compat with existing test callsites.
 function createDbMock(options: {
   userRow?: Record<string, unknown> | null;
   roleRows?: Array<Record<string, unknown>>;
@@ -173,73 +270,16 @@ function createDbMock(options: {
   applicationRows?: Array<Record<string, unknown>>;
   platformAccountRows?: Array<Record<string, unknown>>;
 }) {
-  const {
-    userRow = null,
-    roleRows = [],
-    platformAccounts = [],
-    insertSpy = vi.fn(),
-    profileRow = null,
-    communityRoleRows = [],
-    permissionRoleRows = [],
-    voiceRows = [],
-    applicationRows = [],
-    platformAccountRows = []
-  } = options;
-
-  // callIdx is LOCAL to each createDbMock call — each test gets a fresh counter.
-  let callIdx = 0;
-
-  function resolveFor(idx: number): Promise<unknown[]> {
-    switch (idx) {
-      case 0: return Promise.resolve(userRow ? [userRow] : []);
-      case 1: return Promise.resolve(roleRows);
-      case 2: return Promise.resolve(platformAccounts);
-      case 3: return Promise.resolve(userRow ? [userRow] : []);
-      case 4: return Promise.resolve(profileRow ? [profileRow] : []);
-      case 5: return Promise.resolve(communityRoleRows);
-      case 6: return Promise.resolve(permissionRoleRows);
-      case 7: return Promise.resolve(voiceRows);
-      case 8: return Promise.resolve(applicationRows);
-      case 9: return Promise.resolve(platformAccountRows);
-      default: throw new Error(`Unexpected select call ${idx + 1}`);
-    }
+  if ("communityRoleRows" in options || "permissionRoleRows" in options || "voiceRows" in options) {
+    const { db } = createExportMock(options);
+    const insertSpy = vi.fn();
+    const insert = vi.fn((table: unknown) => {
+      if (table !== cleanupLog) throw new Error("Unexpected table insert: " + String(table));
+      return { values: insertSpy };
+    });
+    return { db: { ...db, insert }, insertSpy };
   }
-
-  const joinSteps = new Set([1, 5, 6, 8]);
-
-  function makeSelectChain(idx: number) {
-    const hasJoin = joinSteps.has(idx);
-    const limitFn = function _limit() { return resolveFor(idx); };
-    const whereRet = { limit: limitFn };
-    const fromRet: Record<string, unknown> = {
-      where: function _where(_?: unknown) { return whereRet; }
-    };
-    if (hasJoin) {
-      fromRet.innerJoin = function _ij(_?: unknown, __?: unknown) {
-        return { where: function _w(_?: unknown) { return whereRet; } };
-      };
-    }
-    const chain: Record<string, unknown> = { ...fromRet };
-    chain.from = function _from(_?: unknown) { return chain; };
-    return chain;
-  }
-
-  // Only the top-level select/insert are vi.fn mocks. Internal chain uses
-  // plain functions so closure variables (callIdx, roleRows, etc.) are
-  // always current at call time.
-  const select = vi.fn(function _select(_arg?: unknown) {
-    const idx = callIdx++;
-    return makeSelectChain(idx);
-  });
-
-  const insert = vi.fn(function _insert(table: unknown) {
-    if (table !== cleanupLog) throw new Error("Unexpected table insert: " + String(table));
-    return { values: insertSpy };
-  });
-
-  const db = { select, insert };
-
-  return { db, insertSpy };
+  return createErasureMock(options);
 }
 
 describe("executeGdprErasure", () => {

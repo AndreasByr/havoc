@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "nuxt dev -p 3003 --dotenv ../../.env.local",
+    "dev": "nuxt dev -p 3003 --host 0.0.0.0 --dotenv ../../.env.local",
     "build": "nuxt build --dotenv ../../.env",
     "start": "node --max-old-space-size=1024 --env-file=../../.env .output/server/index.mjs",
     "prelint": "nuxt prepare",

@@ -22,7 +22,8 @@ setInterval(() => {
 }, 5 * 60 * 1000);
 
 export function getRateLimitKey(event: H3Event, prefix: string): string {
-  const ip = getRequestIP(event, { xForwardedFor: true }) ?? "unknown";
+  const config = typeof useRuntimeConfig === "function" ? useRuntimeConfig() : null;
+  const ip = getRequestIP(event, { xForwardedFor: !!config?.trustProxy }) ?? "unknown";
   return `${prefix}:${ip}`;
 }
 

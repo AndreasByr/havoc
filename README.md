@@ -1,31 +1,63 @@
-# Guildora
+# Guildora (Self-Hosting)
 
-![CI](https://github.com/guildora/guildora/actions/workflows/ci.yml/badge.svg)
-![Test](https://github.com/guildora/guildora/actions/workflows/test.yml/badge.svg)
+## Requirements
 
-> **Status: Experimental / Active Development**
-> Guildora is under active development. APIs, database schema, and features may change without notice. Not recommended for production use yet.
+- Docker + Docker Compose
+- Node.js `>=20`
+- pnpm `>=10`
+- A Discord application (OAuth + bot token)
+- A reverse proxy setup using a Docker network (default network name: `caddy`)
 
-Guildora is a monorepo for a Discord-centered community platform. It combines:
+## 1) Configure Environment
 
-- **`apps/web`** — Nuxt 4 public landing page
-- **`apps/hub`** — Nuxt 4 internal hub for members, moderation, admin, auth, and APIs
-- **`apps/bot`** — Discord bot for voice tracking, guild sync, and setup helpers
-- **`packages/shared`** — Shared TypeScript package with Drizzle schema, DB client, and cross-service types
-- **`packages/app-sdk`** — TypeScript SDK types for sideloaded community apps
+```bash
+cp .env.example .env
+```
 
-### App Extension System
+Edit `.env` and set at least:
 
-Guildora supports community-built apps that extend the hub with custom pages, API routes, bot hooks, and slash commands. Apps are installed via sideloading (GitHub URL or local path) and run sandboxed within the platform. Vue SFC pages support relative imports for components, composables, and utilities. See the [developer docs](https://github.com/guildora/docs/tree/main/for-developers) for details.
+- `APP_HOST`
+- `HUB_HOST`
+- `NUXT_PUBLIC_APP_URL`
+- `NUXT_PUBLIC_HUB_URL`
+- `NUXT_SESSION_PASSWORD` (strong, 32+ chars)
+- `NUXT_OAUTH_DISCORD_CLIENT_ID`
+- `NUXT_OAUTH_DISCORD_CLIENT_SECRET`
+- `NUXT_OAUTH_DISCORD_REDIRECT_URI` (must be `https://<hub-domain>/api/auth/discord`)
+- `SUPERADMIN_DISCORD_ID`
+- `DISCORD_BOT_TOKEN`
+- `DISCORD_CLIENT_ID`
+- `DISCORD_GUILD_ID`
+- `BOT_INTERNAL_TOKEN`
+- `APPLICATION_TOKEN_SECRET`
 
-## Quick Start
+Optional:
+
+- `MCP_INTERNAL_TOKEN` (only needed if you run MCP integration)
+- S3/R2/MinIO bucket vars (only needed for object storage)
+
+## 2) Create Reverse-Proxy Docker Network
+
+`docker-compose.yml` expects an external Docker network (default: `caddy`):
+
+```bash
+docker network create caddy
+```
+
+If you use another name, set `CADDY_NETWORK` in `.env`.
+
+## 3) Start Database
+
+```bash
+docker compose up -d db
+```
+
+## 4) Initialize Schema and Seed Data
 
 ```bash
 pnpm install
-cp .env.example .env
 pnpm db:migrate
 pnpm db:seed
-pnpm dev
 ```
 
 Useful workspace scripts:
@@ -225,48 +257,88 @@ Feature branch → PR on dev → PR on main → Tag → Release
 
 To create a release:
 
-```bash
-git tag v0.1.0-alpha && git push --tags
-```
 
-The release pipeline validates, publishes a GitHub Pre-release, and pushes Docker images automatically.
-
-## Local Testing
-
-### Hub unit tests (also run in CI)
+## 5) Start Application Services
 
 ```bash
-pnpm --filter @guildora/hub test
+docker compose up -d --build web hub bot
 ```
 
-### Landing integration tests (local only)
+## 6) Verify
 
-Requires web app on port 3000 and CMS on port 3002.
+- Web: `https://<APP_HOST>`
+- Hub: `https://<HUB_HOST>`
+- Bot internal API: port `3050` (internal, not public)
+
+## Operations
+
+### Update to latest code
 
 ```bash
-pnpm dev
-node --test apps/web/tests/landing.test.mjs
+git pull
+docker compose up -d --build web hub bot
+pnpm db:migrate
 ```
 
-### Hub E2E tests (local only)
-
-Requires all services running, PostgreSQL, and Discord credentials.
+### Check logs
 
 ```bash
-pnpm dev
-# see apps/hub/e2e/README.md for setup
+docker compose logs -f hub
+docker compose logs -f web
+docker compose logs -f bot
+docker compose logs -f db
 ```
+
+### Restart services
+
+```bash
+docker compose restart web hub bot
+```
+
+## Troubleshooting
+
+### `Cannot connect to the Docker daemon`
+
+Docker is not running. Start Docker Desktop/daemon and retry.
+
+### `network caddy declared as external, but could not be found`
+
+Create the network or set `CADDY_NETWORK` to your existing reverse-proxy network.
+
+### Hub/Bot show `Failed query` or `ECONNREFUSED`
+
+Database is unreachable or not initialized:
+
+```bash
+docker compose up -d db
+pnpm db:migrate
+pnpm db:seed
+```
+
+### Discord OAuth login fails
+
+Verify:
+
+- `NUXT_OAUTH_DISCORD_REDIRECT_URI` exactly matches Discord app settings
+- Hub is reachable at `NUXT_PUBLIC_HUB_URL`
+- Client ID/secret are correct
+
+### Port already in use
+
+```bash
+lsof -nP -iTCP:3000 -sTCP:LISTEN
+lsof -nP -iTCP:3003 -sTCP:LISTEN
+lsof -nP -iTCP:3050 -sTCP:LISTEN
+lsof -nP -iTCP:5433 -sTCP:LISTEN
+```
+
+Stop conflicting processes and restart.
 
 ## Documentation
 
-All documentation lives in the central docs repository: **[guildora/docs](https://github.com/guildora/docs)**
-
-- [Architecture](https://github.com/guildora/docs/blob/main/architecture-systems/guildora/index.md)
-- [Developer Guide (Apps)](https://github.com/guildora/docs/tree/main/for-developers)
-- [Design System](https://github.com/guildora/docs/blob/main/DESIGN_SYSTEM.md)
-- [Workflows](https://github.com/guildora/docs/blob/main/architecture-systems/guildora/workflows/)
-- [AI Working Context](./ai/README.md)
+- https://github.com/guildora/docs
+- Self-hosting guide: https://github.com/guildora/docs/blob/main/for-hosters/setup.md
 
 ## License
 
-[PolyForm Noncommercial 1.0.0](LICENSE) — free for non-commercial use (self-hosting, modification, and forking allowed; commercial use prohibited)
+[PolyForm Noncommercial 1.0.0](LICENSE)
